@@ -1,5 +1,7 @@
 #pragma once
 
+#include "scene.hpp"
+
 #include <stdexcept>
 #include <charconv>
 #include <format>
@@ -26,6 +28,46 @@ T parseNum(std::string_view sv) {
         throw ParseException(std::format("Trailing characters in number: '{}'", sv));
     }
     return value;
+}
+
+inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
+    auto cmd = tokens[0];
+    if (cmd == "size") {
+        if (tokens.size() != 3) {
+            throw ParseException("Expected 'size <width> <height>'");
+        }
+        auto width = parseNum<int>(tokens[1]);
+        auto height = parseNum<int>(tokens[2]);
+        scene.image = Image(width, height);
+        return true;
+    }
+    else if (cmd == "maxdepth") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'maxdepth <depth>'");
+        }
+        scene.depth = parseNum<int>(tokens[1]);
+        return true;
+    }
+    else if (cmd == "output") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'output <filename>'");
+        }
+        scene.output = tokens[1];
+        return true;
+    }
+    else if (cmd == "camera") {
+        if (tokens.size() != 11) {
+            throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fov>'");
+        }
+        Camera c;
+        c.position = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        c.center = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
+        c.up = { parseNum<float>(tokens[7]), parseNum<float>(tokens[8]), parseNum<float>(tokens[9]) };
+        c.fov = parseNum<float>(tokens[10]);
+        scene.camera = c;
+        return true;
+    }
+    return false;
 }
 
 }

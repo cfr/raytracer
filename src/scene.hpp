@@ -3,6 +3,7 @@
 #include "image.hpp"
 
 #include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <vector>
 #include <array>
@@ -10,6 +11,7 @@
 namespace raytracer {
 
 using vec3 = glm::vec3;
+using mat4 = glm::mat4;
 
 struct Material {
     enum class Type: int {
@@ -46,20 +48,44 @@ struct Ambient {
 
 struct Camera {
     vec3 position;
-    vec3 right;
+    vec3 center;
     vec3 up;
     float fov;
+};
+
+struct Sphere {
+    vec3 position;
+    float radius;
+};
+
+struct Node {
+    Material material;
+    mat4 transform;
+};
+
+struct SphereNode: Node {
+    Sphere sphere;
 };
 
 struct Triangle {
     std::array<int, 3> indices;
 };
 
+struct MeshNode: Node {
+    std::vector<vec3> vertices;
+    std::vector<vec3> normals;
+    std::vector<Triangle> triangles;
+};
+
 struct Scene {
     Image image {0, 0};
+    size_t depth = 5;
+    std::string output;
     Camera camera;
-    std::vector<vec3> vertices;
-    std::vector<Triangle> triangles;
+    Ambient ambient;
+    Attenuation attenuation;
+    std::vector<Light> lights;
+    std::vector<Node> nodes;
 };
 
 }

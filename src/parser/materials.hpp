@@ -17,33 +17,35 @@ inline std::optional<Material::Type> materialType(const std::string& token) {
     return {};
 }
 
-inline bool isMaterial(const std::vector<std::string>& tokens) {
-    //if (tokens.empty()) return false;
+inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
     auto type = materialType(tokens[0]);
-    if (!type) return false;
-    if (type == Material::Type::Shininess) return tokens.size() >= 2; // name + s
-    return tokens.size() >= 4; // name + rgb
-}
-
-inline void parseUpdateMaterial(const std::vector<std::string>& tokens, Material& latest) {
-    auto type = *materialType(tokens[0]);
+    if (!type) {
+        return false;
+    }
     if (type == Material::Type::Shininess) {
-        latest.shininess = parseNum<float>(tokens[1]);
-        return;
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'shininess s'");
+        }
+        mat.shininess = parseNum<float>(tokens[1]);
+        return true;
+    }
+    // parse specular or diffuse or emission
+    if (tokens.size() != 4) {
+        throw ParseException("Expected 'material r g b'");
     }
     float r = parseNum<float>(tokens[1]);
     float g = parseNum<float>(tokens[2]);
     float b = parseNum<float>(tokens[3]);
-    switch (type) {
+    switch (*type) {
         case Material::Type::Specular:
-            latest.specular = {r, g, b};
-            return;
+            mat.specular = {r, g, b};
+            return true;
         case Material::Type::Diffuse:
-            latest.diffuse = {r, g, b};
-            return;
+            mat.diffuse = {r, g, b};
+            return true;
         case Material::Type::Emission:
-            latest.emission = {r, g, b};
-            return;
+            mat.emission = {r, g, b};
+            return true;
         default:
             throw ParseException("Expected material type");
     }
