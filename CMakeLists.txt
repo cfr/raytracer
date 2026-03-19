@@ -32,6 +32,7 @@ else()
     message(STATUS "Using system-provided GLM.")
 endif()
 
+include_directories(src)
 
 add_executable(raytracer
     src/parser.hpp
