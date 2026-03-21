@@ -1,9 +1,12 @@
 #pragma once
 
 #include "scene.hpp"
+#include "tstack.hpp"
 #include "parser/common.hpp"
 #include "parser/materials.hpp"
 #include "parser/geometry.hpp"
+#include "parser/transform.hpp"
+#include "parser/lights.hpp"
 
 #include <glm/vec3.hpp>
 
@@ -14,49 +17,60 @@
 #include <algorithm>
 #include <regex>
 
+#include <print>
+
 namespace raytracer::parser {
 
-// NOTE: possible optimization using string_view
+// TODO: take string_view
 inline std::vector<std::string> tokenize(const std::string& line) {
     const auto re = std::regex{R"(\s+)"};
-    const auto vec = std::vector<std::string>(
+    auto vec = std::vector<std::string>(
         std::sregex_token_iterator{begin(line), end(line), re, -1},
         std::sregex_token_iterator{}
     );
+
+    // skip empty tokens
+    std::erase_if(vec, [](const auto& s) { return s.empty(); });
+    // remove comments
+    auto cit = std::find_if(vec.begin(), vec.end(), [](const auto& s) { return s[0] == '#'; });
+    if (cit != vec.end()) { vec.erase(cit, vec.end()); }
+
     return vec;
 }
 
-// https://medium.com/@ryan_forrester_/using-switch-statements-with-strings-in-c-a-complete-guide-efa12f64a59d
 inline Scene parseScene(std::istream& input) {
 
     std::string line;
-    int lineNo = 1;
+    int lineNo = 0;
 
     Scene scene;
     Node node;
     Material material;
+    TStack stack;
 
     while (std::getline(input, line)) {
+        lineNo++;
         auto tokens = tokenize(line);
         if (tokens.empty()) continue;
-        if (tokens[0][0] == '#') { continue; }
 
         try {
 
             if (parseScene(tokens, scene)) { continue; }
             if (parseGeometry(tokens, node, scene)) { continue; }
+            if (parseLights(tokens, node, scene)) { continue; }
             if (parseMaterial(tokens, material)) {
                 node.material = material;
                 continue;
             }
-
-            continue;
-            //throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
+            if (parseTransform(tokens, stack)) {
+                node.transform = stack.top();
+                continue;
+            }
+            throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
         } catch (const ParseException& e) {
             // Add line number
             throw ParseException(std::format("{}: {}", lineNo, e.what()));
         }
-        lineNo++;
     }
 
     return scene;

@@ -37,8 +37,8 @@ struct Light {
     enum class Type: int {
         Directional,
         Point
-        // Ambient?
     };
+    Type type;
     vec3 position;
     vec3 rgb;
 };
@@ -57,6 +57,7 @@ struct Camera {
 struct Node {
     Material material;
     mat4 transform;
+    Ambient ambient; // ambient light changes between objs
 };
 
 struct Sphere {
@@ -83,7 +84,6 @@ struct Scene {
     size_t depth = 5;
     std::string output;
     Camera camera;
-    Ambient ambient;
     Attenuation attenuation;
     std::vector<vec3> vertices;
     std::vector<Light> lights;

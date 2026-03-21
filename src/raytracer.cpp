@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     try {
         auto scene = parser::readScene(argv[1]);
         for(auto pixel: scene.image) {
-            std::print("({},{}) ", pixel.x, pixel.y);
+            //std::print("({},{}) ", pixel.x, pixel.y);
         }
         std::println("\ndone");
     } catch (const std::exception& e) {

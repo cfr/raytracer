@@ -3,3 +3,4 @@ raytracer
 testscenes
 build
 .DS_Store
+*.swp
