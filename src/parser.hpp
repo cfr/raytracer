@@ -28,32 +28,35 @@ inline std::vector<std::string> tokenize(const std::string& line) {
 
 // https://medium.com/@ryan_forrester_/using-switch-statements-with-strings-in-c-a-complete-guide-efa12f64a59d
 inline Scene parseScene(std::istream& input) {
-    Scene scene;
-    std::string line;
-    int lineNo = 0;
 
-    MeshNode node;
+    std::string line;
+    int lineNo = 1;
+
+    Scene scene;
+    Node node;
+    Material material;
 
     while (std::getline(input, line)) {
-        lineNo++;
         auto tokens = tokenize(line);
         if (tokens.empty()) continue;
-
-        std::string_view cmd = tokens[0];
-        if (cmd[0] == '#') { continue; }
+        if (tokens[0][0] == '#') { continue; }
 
         try {
 
-            if (parseScene(tokens, scene)) continue;
-            if (parseMesh(tokens, node)) continue;
-            if (parseMaterial(tokens, node.material)) continue;
+            if (parseScene(tokens, scene)) { continue; }
+            if (parseGeometry(tokens, node, scene)) { continue; }
+            if (parseMaterial(tokens, material)) {
+                node.material = material;
+                continue;
+            }
 
             continue;
-            //throw ParseException(std::format("Unknown command: '{}'", cmd));
+            //throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
         } catch (const ParseException& e) {
             // Add line number
             throw ParseException(std::format("{}: {}", lineNo, e.what()));
         }
+        lineNo++;
     }
 
     return scene;

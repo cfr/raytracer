@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <array>
+#include <memory>
 
 namespace raytracer {
 
@@ -53,14 +54,14 @@ struct Camera {
     float fov;
 };
 
-struct Sphere {
-    vec3 position;
-    float radius;
-};
-
 struct Node {
     Material material;
     mat4 transform;
+};
+
+struct Sphere {
+    vec3 position;
+    float radius;
 };
 
 struct SphereNode: Node {
@@ -69,13 +70,13 @@ struct SphereNode: Node {
 
 struct Triangle {
     std::array<int, 3> indices;
+    std::array<vec3, 3> normals;
 };
 
-struct MeshNode: Node {
-    std::vector<vec3> vertices;
-    std::vector<vec3> normals;
-    std::vector<Triangle> triangles;
+struct TriangleNode: Node {
+    Triangle tri;
 };
+
 
 struct Scene {
     Image image {0, 0};
@@ -84,8 +85,9 @@ struct Scene {
     Camera camera;
     Ambient ambient;
     Attenuation attenuation;
+    std::vector<vec3> vertices;
     std::vector<Light> lights;
-    std::vector<Node> nodes;
+    std::vector<std::shared_ptr<Node>> nodes;
 };
 
 }
