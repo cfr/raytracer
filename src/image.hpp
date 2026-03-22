@@ -1,18 +1,22 @@
 #pragma once
 
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 #include <iterator>
 #include <compare>
+#include <cstdint>
+#include <ostream>
 
 namespace raytracer {
 
 class Image {
 public:
     using Point = glm::ivec2;
+    using RGB = glm::vec3;
 
     struct Size {
-        int width, height;
+        size_t width, height;
     };
 
     class Iterator {
@@ -23,7 +27,7 @@ public:
         using pointer = Point*;
         using reference = Point&;
 
-        Iterator(int x, int y, Size size)
+        Iterator(size_t x, size_t y, Size size)
             : x_(x), y_(y), size_(size) {}
 
         Point operator*() const {
@@ -57,15 +61,15 @@ public:
         }
 
     private:
-        int x_, y_;
+        size_t x_, y_;
         Size size_;
     };
 
-    explicit Image(Size size)
-        : size_(size) {}
+    explicit Image(Size s)
+        : size_{s}, data_{s.width*s.height, {0, 0, 0}} {}
 
-    Image(int width, int height)
-        : size_(width, height) {}
+    Image(size_t width, size_t height)
+        : Image(Size{width, height}) {}
 
     Iterator begin() const {
         return Iterator(0, 0, size_);
@@ -76,8 +80,29 @@ public:
     }
 
     Size size() const { return size_; }
+
+    RGB get(Point pt) {
+        return data_[size_.width * pt.y + pt.x];
+    }
+
+    void set(Point pt, RGB color) {
+        data_[size_.width * pt.y + pt.x] = color;
+    }
+
+    void writePPM(std::ostream& out) {
+        out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
+        for(auto px: *this) {
+            auto rgb = get(px);
+            auto r = static_cast<int>(255.999 * rgb.r);
+            auto g = static_cast<int>(255.999 * rgb.g);
+            auto b = static_cast<int>(255.999 * rgb.b);
+            out << r << ' ' << g << ' ' << b << '\n';
+        }
+    }
+
 private:
     Size size_;
+    std::vector<RGB> data_;
 };
 
 } // namespace raytracer

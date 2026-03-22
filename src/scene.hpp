@@ -83,7 +83,7 @@ struct TriangleNode: Node {
 struct Scene {
     Image image {0, 0};
     size_t depth = 5;
-    std::string output;
+    std::string output = "out.ppm";
     Camera camera;
     Attenuation attenuation;
     std::vector<vec3> vertices;

@@ -2,5 +2,7 @@ hw3-submissionscenes
 raytracer
 testscenes
 build
+raytracer.dSYM
 .DS_Store
 *.swp
+*.ppm

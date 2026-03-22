@@ -13,39 +13,39 @@ using vec4 = glm::vec4;
 using mat4 = glm::mat4;
 
 class TStack {
-    std::stack<mat4> stack;
+    std::stack<mat4> stack_;
 
     void rmultiply(const mat4& m) {
-        mat4& t = stack.top();
+        mat4& t = stack_.top();
         t = t * m;
     }
 
 public:
 
     TStack() {
-        stack.push(mat4(1));
+        stack_.push(mat4(1));
     }
 
     mat4 top() {
-        return stack.top();
+        return stack_.top();
     }
 
     void push() {
-        stack.push(stack.top());
+        stack_.push(stack_.top());
     }
 
     void pop() {
-        if (stack.size() <= 1) {
+        if (stack_.size() <= 1) {
             throw std::length_error("Can't pop transformation stack last item");
             return;
         }
-        stack.pop();
+        stack_.pop();
     }
 
     vec3 transform(vec3 v) {
         auto v4 = vec4(v, 1);
-        auto t = stack.top() * v4;
-        return {v4 / v4.w};
+        auto t = stack_.top() * v4;
+        return {t / t.w};
     }
 
     void rotate(vec3 axis, float angle) {
@@ -65,3 +65,4 @@ public:
 };
 
 }
+

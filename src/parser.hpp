@@ -78,7 +78,7 @@ inline Scene parseScene(std::istream& input) {
 
 inline Scene readScene(const std::string& path) {
     std::ifstream file;
-    file.open(path, std::ios::in);
+    file.open(path);
     if (!file) { throw ParseException("Can't open file '" + path + "'"); }
     return parseScene(file);
 }
