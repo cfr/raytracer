@@ -45,7 +45,6 @@ public:
     vec3 transform(vec3 v) {
         auto v4 = vec4(v, 1);
         auto t = stack.top() * v4;
-        auto v3 = v4 / v4.w;
         return {v4 / v4.w};
     }
 

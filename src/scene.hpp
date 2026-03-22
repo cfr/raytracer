@@ -41,6 +41,7 @@ struct Light {
     Type type;
     vec3 position;
     vec3 rgb;
+    mat4 transform;
 };
 
 struct Ambient {

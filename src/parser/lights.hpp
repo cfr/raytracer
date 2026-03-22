@@ -30,7 +30,7 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
         }
         vec3 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
         vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(Light::Type::Directional, pos, rgb);
+        scene.lights.emplace_back(Light::Type::Directional, pos, rgb, node.transform);
         return true;
     }
     else if (cmd == "point") {
@@ -39,7 +39,7 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
         }
         vec3 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
         vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(Light::Type::Point, pos, rgb);
+        scene.lights.emplace_back(Light::Type::Point, pos, rgb, node.transform);
         return true;
     }
     return false;
