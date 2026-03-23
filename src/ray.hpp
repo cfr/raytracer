@@ -24,10 +24,12 @@ struct Hit {
 
 class RayCaster {
 
-    float thfovx_; // tan(fovx/2)
-    float thfovy_; // tan(fovy/2)
     float hwidth_;  // width/2
     float hheight_; // height/2
+
+    float thfovy_; // tan(fovy/2)
+    float thfovx_; // tan(fovx/2)
+
     vec3 eye_;
     Basis basis_;
 
@@ -35,23 +37,23 @@ public:
 
     RayCaster(Camera cam, Image::Size size) : eye_{cam.eye}, basis_{cam} {
 
-        auto aspect = hwidth_/hheight_;
-        auto fovy = glm::radians(cam.fovy);
-        thfovx_ = glm::tan(fovy * aspect / 2);
-        thfovy_ = glm::tan(fovy / 2);
-
         hwidth_ = static_cast<float>(size.width) / 2;
         hheight_ = static_cast<float>(size.height) / 2;
+
+        auto aspect = hwidth_/hheight_;
+        auto fovy = glm::radians(cam.fovy);
+        thfovy_ = glm::tan(fovy / 2);
+        thfovx_ = aspect * thfovy_;
     }
 
     Ray cast(Image::Point pixel) {
 
         float x = static_cast<float>(pixel.x) + 0.5;
         float y = static_cast<float>(pixel.y) + 0.5;
-        auto alpha = thfovx_ * (x - hwidth_)/hwidth_;
-        auto beta = thfovy_ * (y - hheight_)/hheight_;
+        auto alpha = thfovx_ * (x - hwidth_) / hwidth_;
+        auto beta = thfovy_ * (hheight_ - y) / hheight_;
 
-        auto dir = alpha*basis_.u + beta*basis_.v - basis_.w;
+        auto dir = alpha * basis_.u + beta * basis_.v - basis_.w;
 
         return {eye_, glm::normalize(dir)};
     }

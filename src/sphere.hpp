@@ -42,7 +42,7 @@ struct Sphere: Hittable {
         auto tPoint = tRay.eye + t * tRay.dir;
         auto point = transform * vec4(tPoint, 1);
         auto tNormal = vec4(tPoint - center, 0);
-        auto normal = normalize(vec3(glm::transpose(inv)*tNormal));
+        auto normal = glm::normalize(vec3(glm::transpose(inv)*tNormal));
 
         return Hit { t, vec3(point/point.w), normal };
     }
