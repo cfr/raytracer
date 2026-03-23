@@ -1,6 +1,8 @@
 #pragma once
 
 #include "image.hpp"
+#include "camera.hpp"
+#include "ray.hpp"
 
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
@@ -8,6 +10,7 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <optional>
 
 namespace raytracer {
 
@@ -21,16 +24,16 @@ struct Material {
         Shininess,
         Emission
     };
-    vec3 diffuse = {0.0, 0.0, 0.0};
-    vec3 specular = {0.0, 0.0, 0.0};
-    vec3 emission = {0.0, 0.0, 0.0};
-    float shininess = 0.0;
+    vec3 diffuse = {0, 0, 0};
+    vec3 specular = {0, 0, 0};
+    vec3 emission = {0, 0, 0};
+    float shininess = 0;
 };
 
 struct Attenuation {
-    float constant  = 1.0;
-    float linear    = 0.0;
-    float quadratic = 0.0;
+    float constant  = 1;
+    float linear    = 0;
+    float quadratic = 0;
 };
 
 struct Light {
@@ -39,46 +42,22 @@ struct Light {
         Point
     };
     Type type;
-    vec3 position;
-    vec3 rgb;
-    mat4 transform;
-};
-
-struct Ambient {
-    vec3 rgb = {0.2f, 0.2f, 0.2f};
-};
-
-struct Camera {
-    vec3 position;
-    vec3 center;
-    vec3 up;
-    float fov;
+    vec3 position = {0, 0, 0};
+    vec3 rgb = {0, 0, 0};
+    mat4 transform = mat4{1};
 };
 
 struct Node {
     Material material;
-    mat4 transform;
-    Ambient ambient; // ambient light changes between objs
+    mat4 transform = mat4{1};
+    vec3 ambient; // ambient light changes between objs
 };
 
-struct Sphere {
-    vec3 position;
-    float radius;
+struct Hittable: Node {
+    Hittable(const Node& n) : Node{n} {};
+    virtual std::optional<Hit> hit(Ray ray) = 0;
+    virtual ~Hittable() = default;
 };
-
-struct SphereNode: Node {
-    Sphere sphere;
-};
-
-struct Triangle {
-    std::array<int, 3> indices;
-    std::array<vec3, 3> normals;
-};
-
-struct TriangleNode: Node {
-    Triangle tri;
-};
-
 
 struct Scene {
     Image image {0, 0};
@@ -88,7 +67,7 @@ struct Scene {
     Attenuation attenuation;
     std::vector<vec3> vertices;
     std::vector<Light> lights;
-    std::vector<std::shared_ptr<Node>> nodes;
+    std::vector<std::shared_ptr<Hittable>> nodes;
 };
 
 }

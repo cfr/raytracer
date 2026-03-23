@@ -23,7 +23,7 @@ class TStack {
 public:
 
     TStack() {
-        stack_.push(mat4(1));
+        stack_.push(mat4{1});
     }
 
     mat4 top() {

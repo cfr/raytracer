@@ -57,13 +57,13 @@ inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
     }
     else if (cmd == "camera") {
         if (tokens.size() != 11) {
-            throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fov>'");
+            throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fovy>'");
         }
         Camera c;
-        c.position = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        c.eye = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
         c.center = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
         c.up = { parseNum<float>(tokens[7]), parseNum<float>(tokens[8]), parseNum<float>(tokens[9]) };
-        c.fov = parseNum<float>(tokens[10]);
+        c.fovy = parseNum<float>(tokens[10]);
         scene.camera = c;
         return true;
     }

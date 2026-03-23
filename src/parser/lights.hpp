@@ -12,7 +12,7 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
             throw ParseException("Expected 'ambient <r> <g> <b>'");
         }
         vec3 rgb = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
-        node.ambient.rgb = rgb;
+        node.ambient = rgb;
         return true;
     }
     else if (cmd == "attenuation") {

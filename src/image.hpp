@@ -16,7 +16,8 @@ public:
     using RGB = glm::vec3;
 
     struct Size {
-        size_t width, height;
+        size_t width = 0;
+        size_t height = 0;
     };
 
     class Iterator {
@@ -81,7 +82,7 @@ public:
 
     Size size() const { return size_; }
 
-    RGB get(Point pt) {
+    RGB get(Point pt) const {
         return data_[size_.width * pt.y + pt.x];
     }
 
@@ -89,7 +90,7 @@ public:
         data_[size_.width * pt.y + pt.x] = color;
     }
 
-    void writePPM(std::ostream& out) {
+    void writePPM(std::ostream& out) const {
         out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
         for(auto px: *this) {
             auto rgb = get(px);
@@ -98,6 +99,7 @@ public:
             auto b = static_cast<int>(255.999 * rgb.b);
             out << r << ' ' << g << ' ' << b << '\n';
         }
+        out << std::endl;
     }
 
 private:

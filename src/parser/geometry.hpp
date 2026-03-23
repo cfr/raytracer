@@ -1,6 +1,8 @@
 #pragma once
 
 #include "scene.hpp"
+#include "sphere.hpp"
+#include "triangle.hpp"
 #include "parser/common.hpp"
 
 namespace raytracer::parser {
@@ -30,11 +32,11 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         if (tokens.size() != 4) {
             throw ParseException("Expected 'tri <idx1> <idx2> <idx3>'");
         }
-        Triangle t;
-        t.indices[0] = parseNum<int>(tokens[1]);
-        t.indices[1] = parseNum<int>(tokens[2]);
-        t.indices[2] = parseNum<int>(tokens[3]);
-        auto tri = std::make_shared<TriangleNode>(node, t);
+        std::array<int, 3> ids;
+        ids[0] = parseNum<int>(tokens[1]);
+        ids[1] = parseNum<int>(tokens[2]);
+        ids[2] = parseNum<int>(tokens[3]);
+        auto tri = std::make_shared<Triangle>(node, ids);
         scene.nodes.push_back(tri);
         return true;
     }
@@ -42,12 +44,12 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         if (tokens.size() != 5) {
             throw ParseException("Expected 'sphere <x> <y> <z> <r>'");
         }
-        Sphere s;
-        s.position.x = parseNum<float>(tokens[1]);
-        s.position.y = parseNum<float>(tokens[2]);
-        s.position.z = parseNum<float>(tokens[3]);
-        s.radius = parseNum<float>(tokens[4]);
-        auto sphere = std::make_shared<SphereNode>(node, s);
+        vec3 c;
+        c.x = parseNum<float>(tokens[1]);
+        c.y = parseNum<float>(tokens[2]);
+        c.z = parseNum<float>(tokens[3]);
+        float r = parseNum<float>(tokens[4]);
+        auto sphere = std::make_shared<Sphere>(node, c, r);
         scene.nodes.push_back(sphere);
         return true;
     }
