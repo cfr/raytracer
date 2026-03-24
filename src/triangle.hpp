@@ -18,9 +18,6 @@ struct Triangle: Hittable {
     vec3 nb_;
     vec3 nc_;
 
-    // std::array<int, 3> indices;
-    // std::array<vec3, 3> normals;
-
     Triangle(const Node& n, vec3 a, vec3 b, vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
@@ -30,43 +27,51 @@ struct Triangle: Hittable {
         nc_ = normal;
     }
 
-    bool contains(vec3 point) {
-        auto u = b_ - a_;
-        auto v = c_ - a_;
-        auto w = point - a_;
-
-        auto vw = glm::cross(v, w);
-        auto vu = glm::cross(v, u);
-        if (glm::dot(vw, vu) < 0) {
-            return false;
-        }
-
-        auto uw = glm::cross(u, w);
-        auto uv = glm::cross(u, v);
-
-        if (glm::dot(uw, uv) < 0) {
-            return false;
-        }
-
-        float d = glm::length(uv);
-        float r = glm::length(vw) / d;
-        float t = glm::length(uw) / d;
-
-        return r + t <= 1;
-    }
-
     std::optional<Hit> intersect(Ray ray) override {
-        float denom = glm::dot(ray.dir, na_);
-        if (std::abs(denom) < step) { return {}; } // parallel
 
-        float t = (glm::dot(a_, na_) - glm::dot(ray.eye, na_)) / denom;
-        if (t < step) { return {}; }; // behind
+        auto inv = glm::inverse(transform);
+        auto tEye = vec3(inv * vec4(ray.eye, 1));
+        auto tDir = glm::normalize(vec3(inv * vec4(ray.dir, 0)));
+        Ray tRay{tEye, tDir};
 
-        auto p = ray.at(t);
-        if (contains(p)) {
-            return Hit { t, p, na_ };
+        auto edge1 = b_ - a_;
+        auto edge2 = c_ - a_;
+
+        auto h = glm::cross(tRay.dir, edge2);
+        auto a = glm::dot(edge1, h);
+
+        if (std::abs(a) < step) {
+            return {}; // parallel
         }
-        return {};
+
+        auto f = 1.0f / a;
+        auto s = tRay.eye - a_;
+
+        auto u = f * glm::dot(s, h);
+        if (u < 0.0f || u > 1.0f) {
+            return {};
+        }
+
+        auto q = glm::cross(s, edge1);
+        auto v = f * glm::dot(tRay.dir, q);
+        if (v < 0.0f || u + v > 1.0f) {
+            return {};
+        }
+
+        auto t = f * glm::dot(edge2, q);
+        if (t < step) {
+            return {};  // behind
+        }
+
+        auto tPoint = tRay.at(t);
+
+        auto point = transformVec(transform, tPoint);
+        auto tNormal = vec4(na_, 0);
+        auto normal = glm::normalize(vec3(glm::transpose(inv) * tNormal));
+
+        float wt = glm::length(point - ray.eye);
+
+        return Hit{wt, point, normal};
     }
 };
 

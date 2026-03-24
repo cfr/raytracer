@@ -3,6 +3,7 @@
 #include "image.hpp"
 #include "ray.hpp"
 #include "light.hpp"
+#include "trace.hpp"
 
 #include <print>
 #include <fstream>
@@ -31,17 +32,13 @@ int main(int argc, char** argv) {
         auto caster = RayCaster{scene.camera, scene.image.size()};
         for(auto px: scene.image) {
             auto ray = caster.cast(px);
-            Image::RGB color = {0, 0, 0};
-            auto t = std::numeric_limits<float>::max();
-            for (const auto& node: scene.nodes) {
-                auto h = node->intersect(ray);
-                if (h && h->t < t) {
-                    t = h->t;
-                    color = colorOf(scene.camera.eye, *node, *h, scene);
-                    // TODO: recursive
-                }
-            }
-            scene.image.set(px, color);
+            vec4 color = trace(ray, scene, scene.depth, scene.camera.eye);
+            Image::RGB rgb = {
+                std::clamp(color.r, 0.0f, 1.0f),
+                std::clamp(color.g, 0.0f, 1.0f),
+                std::clamp(color.b, 0.0f, 1.0f)
+            };
+            scene.image.set(px, rgb);
         }
         write(scene.output, scene.image);
     } catch (std::exception& e) {

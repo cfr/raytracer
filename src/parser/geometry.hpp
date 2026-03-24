@@ -35,9 +35,10 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         auto id0 = parseNum<int>(tokens[1]);
         auto id1 = parseNum<int>(tokens[2]);
         auto id2 = parseNum<int>(tokens[3]);
-        auto a = transformVec(node.transform, scene.vertices[id0]);
-        auto b = transformVec(node.transform, scene.vertices[id1]);
-        auto c = transformVec(node.transform, scene.vertices[id2]);
+        auto transform = mat4(1); // node.transform
+        auto a = transformVec(transform, scene.vertices[id0]);
+        auto b = transformVec(transform, scene.vertices[id1]);
+        auto c = transformVec(transform, scene.vertices[id2]);
         auto tri = std::make_shared<Triangle>(node, a, b, c);
         scene.nodes.push_back(tri);
         return true;

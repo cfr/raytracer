@@ -45,9 +45,8 @@ vec4 colorOf(const vec3 eye, const Node& object, const Hit& hit, const Scene& sc
 
     for(const auto& source: scene.lights) {
         auto srcDir = vec3(source.position) - hit.point;
-        float disp = 0.001f; // to prevent self-intersection
-        auto displacement = disp * srcDir;
-        auto shadowRay = Ray{hit.point + displacement, glm::normalize(srcDir)};
+        float offset = 0.001f; // to prevent self-intersection
+        auto shadowRay = Ray{hit.point + offset*srcDir, srcDir};
         bool shadowed = false;
         for (const auto& node: scene.nodes) {
             auto h = node->intersect(shadowRay);
@@ -61,8 +60,11 @@ vec4 colorOf(const vec3 eye, const Node& object, const Hit& hit, const Scene& sc
         auto diff = vec4{object.material.diffuse, 1};
         auto spec = vec4{object.material.specular, 1};
         auto lcol = vec4{source.rgb, 1};
-        float distance = glm::distance(vec3{source.position}, eye);
-        float attenuation = scene.attenuation.factor(distance);
+        float attenuation = 1.0f;
+        if (source.position.w > 0) { // point light
+            float distance = glm::distance(vec3{source.position}, hit.point);
+            attenuation = scene.attenuation.factor(distance);
+        }
 
         color += attenuation*light(eye, hit.point, hit.normal, diff, object.material.shininess, spec, source.position, lcol);
     }
