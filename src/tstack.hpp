@@ -42,12 +42,6 @@ public:
         stack_.pop();
     }
 
-    vec3 transform(vec3 v) {
-        auto v4 = vec4(v, 1);
-        auto t = stack_.top() * v4;
-        return {t / t.w};
-    }
-
     void rotate(vec3 axis, float angle) {
         auto r = glm::rotate(mat4(1), angle, axis);
         rmultiply(r);

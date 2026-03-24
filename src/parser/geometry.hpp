@@ -32,11 +32,13 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         if (tokens.size() != 4) {
             throw ParseException("Expected 'tri <idx1> <idx2> <idx3>'");
         }
-        std::array<int, 3> ids;
-        ids[0] = parseNum<int>(tokens[1]);
-        ids[1] = parseNum<int>(tokens[2]);
-        ids[2] = parseNum<int>(tokens[3]);
-        auto tri = std::make_shared<Triangle>(node, ids);
+        auto id0 = parseNum<int>(tokens[1]);
+        auto id1 = parseNum<int>(tokens[2]);
+        auto id2 = parseNum<int>(tokens[3]);
+        auto a = transformVec(node.transform, scene.vertices[id0]);
+        auto b = transformVec(node.transform, scene.vertices[id1]);
+        auto c = transformVec(node.transform, scene.vertices[id2]);
+        auto tri = std::make_shared<Triangle>(node, a, b, c);
         scene.nodes.push_back(tri);
         return true;
     }

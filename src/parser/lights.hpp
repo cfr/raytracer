@@ -28,18 +28,18 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
         if (tokens.size() != 7) {
             throw ParseException("Expected 'directional <x> <y> <z> <r> <g> <b>'");
         }
-        vec3 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        vec4 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 0};
         vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(Light::Type::Directional, pos, rgb, node.transform);
+        scene.lights.emplace_back(transformVec(node.transform, pos), rgb);
         return true;
     }
     else if (cmd == "point") {
         if (tokens.size() != 7) {
             throw ParseException("Expected 'point <x> <y> <z> <r> <g> <b>'");
         }
-        vec3 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        vec4 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 1};
         vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(Light::Type::Point, pos, rgb, node.transform);
+        scene.lights.emplace_back(transformVec(node.transform, pos), rgb);
         return true;
     }
     return false;

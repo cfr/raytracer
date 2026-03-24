@@ -14,6 +14,10 @@ using vec3 = glm::vec3;
 struct Ray {
     vec3 eye = {0, 0, 0};
     vec3 dir = {0, 0, -1};
+
+    vec3 at(float t) {
+        return eye + t*dir;
+    }
 };
 
 struct Hit {

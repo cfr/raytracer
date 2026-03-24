@@ -52,7 +52,7 @@ inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
         }
-        scene.output = tokens[1];
+        scene.output = tokens[1] + ".ppm";
         return true;
     }
     else if (cmd == "camera") {

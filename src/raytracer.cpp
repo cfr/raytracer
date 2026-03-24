@@ -2,6 +2,7 @@
 #include "scene.hpp"
 #include "image.hpp"
 #include "ray.hpp"
+#include "light.hpp"
 
 #include <print>
 #include <fstream>
@@ -31,10 +32,13 @@ int main(int argc, char** argv) {
         for(auto px: scene.image) {
             auto ray = caster.cast(px);
             Image::RGB color = {0, 0, 0};
+            auto t = std::numeric_limits<float>::max();
             for (const auto& node: scene.nodes) {
-                auto h = node->hit(ray);
-                if (h) {
-                    color = node->ambient;
+                auto h = node->intersect(ray);
+                if (h && h->t < t) {
+                    t = h->t;
+                    color = colorOf(scene.camera.eye, *node, *h, scene);
+                    // TODO: recursive
                 }
             }
             scene.image.set(px, color);

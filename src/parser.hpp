@@ -54,7 +54,6 @@ inline Scene parseScene(std::istream& input) {
         if (tokens.empty()) continue;
 
         try {
-
             if (parseScene(tokens, scene)) { continue; }
             if (parseGeometry(tokens, node, scene)) { continue; }
             if (parseLights(tokens, node, scene)) { continue; }
