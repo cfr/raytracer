@@ -10,7 +10,7 @@
 
 namespace raytracer {
 
-vec4 trace(Ray ray, const Scene& scene, int depth, const vec3& originalEye) {
+vec4 trace(const Ray ray, const vec3 eye, const Scene& scene, int depth) {
 
     if (depth <= 0) {
         return vec4{0, 0, 0, 1};
@@ -21,7 +21,7 @@ vec4 trace(Ray ray, const Scene& scene, int depth, const vec3& originalEye) {
 
     for (const auto& node : scene.nodes) {
         auto h = node->intersect(ray);
-        if (h && h->t > Hittable::step && h->t < hit.t) {
+        if (h && h->t < hit.t) {
             object = node;
             hit = *h;
         }
@@ -31,18 +31,18 @@ vec4 trace(Ray ray, const Scene& scene, int depth, const vec3& originalEye) {
         return vec4{0, 0, 0, 1};
     }
 
-    vec4 color = colorOf(originalEye, *object, hit, scene);
+    vec4 color = colorOf(eye, *object, hit, scene);
 
-    float reflectivity = glm::length(object->material.specular);
-    if (reflectivity > 0 && depth > 1) {
+    float reflectivity = glm::length(vec3{object->material.specular});
+    if (reflectivity > 0) {
         vec3 incoming = glm::normalize(ray.dir);
         vec3 reflect = glm::reflect(incoming, hit.normal);
 
-        float offset = 0.001f;
+        float offset = Hittable::step;
         Ray reflectionRay{hit.point + offset*reflect, reflect};
 
-        vec4 reflectedColor = trace(reflectionRay, scene, depth - 1, originalEye);
-        color += reflectivity*reflectedColor;
+        vec4 reflectedColor = trace(reflectionRay, hit.point, scene, depth - 1);
+        color += object->material.specular * reflectedColor;
         //color = glm::mix(color, reflectedColor, reflectivity);
     }
 

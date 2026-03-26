@@ -11,8 +11,8 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
         if (tokens.size() != 4) {
             throw ParseException("Expected 'ambient <r> <g> <b>'");
         }
-        vec3 rgb = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
-        node.ambient = rgb;
+        vec4 rgba = {parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 1};
+        node.ambient = rgba;
         return true;
     }
     else if (cmd == "attenuation") {
@@ -28,18 +28,20 @@ inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scen
         if (tokens.size() != 7) {
             throw ParseException("Expected 'directional <x> <y> <z> <r> <g> <b>'");
         }
-        vec4 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 0};
-        vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(transformVec(node.transform, pos), rgb);
+        vec4 pos = {parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 0};
+        vec4 rgba = {parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]), 1};
+        vec4 tpos = transformVec(node.transform, pos);
+        scene.lights.emplace_back(tpos, rgba);
         return true;
     }
     else if (cmd == "point") {
         if (tokens.size() != 7) {
             throw ParseException("Expected 'point <x> <y> <z> <r> <g> <b>'");
         }
-        vec4 pos = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 1};
-        vec3 rgb = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        scene.lights.emplace_back(transformVec(node.transform, pos), rgb);
+        vec4 pos = {parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]), 1};
+        vec4 rgba = {parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]), 1};
+        vec4 tpos = transformVec(node.transform, pos);
+        scene.lights.emplace_back(tpos, rgba);
         return true;
     }
     return false;

@@ -43,7 +43,7 @@ public:
     }
 
     void rotate(vec3 axis, float angle) {
-        auto r = glm::rotate(mat4(1), angle, axis);
+        auto r = glm::rotate(mat4(1), glm::radians(angle), axis);
         rmultiply(r);
     }
 

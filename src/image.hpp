@@ -31,6 +31,7 @@ public:
         Iterator(size_t x, size_t y, Size size)
             : x_(x), y_(y), size_(size) {}
 
+        // TODO: return floats
         Point operator*() const {
             return {x_, y_};
         }

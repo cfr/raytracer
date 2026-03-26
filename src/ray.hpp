@@ -4,12 +4,16 @@
 #include "camera.hpp"
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
 namespace raytracer {
 
 using vec3 = glm::vec3;
+using vec4 = glm::vec4;
+using mat4 = glm::mat4;
 
 struct Ray {
     vec3 eye = {0, 0, 0};
@@ -18,12 +22,12 @@ struct Ray {
     vec3 at(float t) {
         return eye + t*dir;
     }
-};
 
-struct Hit {
-    float t;
-    vec3 point;
-    vec3 normal;
+    Ray transformed(mat4 transform) {
+        auto tEye = transform * vec4(eye, 1);
+        auto tDir = transform * vec4(dir, 0);
+        return Ray{vec3{tEye/tEye.w}, vec3{tDir}};
+    }
 };
 
 class RayCaster {

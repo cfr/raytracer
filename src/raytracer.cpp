@@ -32,12 +32,8 @@ int main(int argc, char** argv) {
         auto caster = RayCaster{scene.camera, scene.image.size()};
         for(auto px: scene.image) {
             auto ray = caster.cast(px);
-            vec4 color = trace(ray, scene, scene.depth, scene.camera.eye);
-            Image::RGB rgb = {
-                std::clamp(color.r, 0.0f, 1.0f),
-                std::clamp(color.g, 0.0f, 1.0f),
-                std::clamp(color.b, 0.0f, 1.0f)
-            };
+            vec4 color = trace(ray, scene.camera.eye, scene, scene.depth);
+            Image::RGB rgb = glm::clamp(color, 0.0f, 1.0f);
             scene.image.set(px, rgb);
         }
         write(scene.output, scene.image);

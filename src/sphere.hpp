@@ -1,9 +1,11 @@
 #pragma once
 
 #include "scene.hpp"
-#include "image.hpp"
+#include "ray.hpp"
+#include "hit.hpp"
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
@@ -20,13 +22,18 @@ struct Sphere: Hittable {
 
     Sphere(const Node& n, vec3 center, float radius) : Hittable{n}, center_{center}, radius_{radius} {}
 
+    vec3 normal(vec3 point) override {
+        auto tNormal = vec4(point - center_, 0);
+        // TODO: store inverse and transposed transforms
+        auto ntransform = glm::transpose(glm::inverse(transform));
+        return glm::normalize(vec3(ntransform*tNormal));
+    }
+
     std::optional<Hit> intersect(Ray ray) override {
 
         // TODO: extract inv transform of point and normal
         auto inv = glm::inverse(transform);
-        auto tEye = inv * vec4(ray.eye, 1);
-        auto tDir = inv * vec4(ray.dir, 0);
-        auto tRay = Ray{vec3{tEye}, vec3{tDir}};
+        auto tRay = ray.transformed(inv);
         auto rc = tRay.eye - center_;
         auto a = glm::dot(tRay.dir, tRay.dir);
         auto b = 2 * glm::dot(tRay.dir, rc);
@@ -40,6 +47,7 @@ struct Sphere: Hittable {
 
         auto t = std::min(r1, r2);
         if (t < Hittable::step) { return {}; }
+
         auto tPoint = tRay.at(t);
         auto tNormal = vec4(tPoint - center_, 0);
         auto normal = glm::normalize(vec3(glm::transpose(inv)*tNormal));

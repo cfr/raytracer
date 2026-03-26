@@ -1,8 +1,14 @@
 #pragma once
 
 #include "scene.hpp"
+#include "ray.hpp"
+#include "hit.hpp"
 
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/exponential.hpp>
+#include <glm/geometric.hpp>
 
 namespace raytracer {
 
@@ -18,6 +24,12 @@ struct Triangle: Hittable {
     vec3 nb_;
     vec3 nc_;
 
+    vec3 normal(vec3 /*point*/) override {
+        auto tNormal = vec4(na_, 0);
+        auto ntransform = glm::transpose(glm::inverse(transform));
+        return glm::normalize(vec3(ntransform*tNormal));
+    }
+
     Triangle(const Node& n, vec3 a, vec3 b, vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
@@ -30,9 +42,7 @@ struct Triangle: Hittable {
     std::optional<Hit> intersect(Ray ray) override {
 
         auto inv = glm::inverse(transform);
-        auto tEye = vec3(inv * vec4(ray.eye, 1));
-        auto tDir = glm::normalize(vec3(inv * vec4(ray.dir, 0)));
-        Ray tRay{tEye, tDir};
+        Ray tRay = ray.transformed(inv);
 
         auto edge1 = b_ - a_;
         auto edge2 = c_ - a_;
@@ -40,7 +50,7 @@ struct Triangle: Hittable {
         auto h = glm::cross(tRay.dir, edge2);
         auto a = glm::dot(edge1, h);
 
-        if (std::abs(a) < step) {
+        if (std::abs(a) < Hittable::step) {
             return {}; // parallel
         }
 
@@ -59,7 +69,7 @@ struct Triangle: Hittable {
         }
 
         auto t = f * glm::dot(edge2, q);
-        if (t < step) {
+        if (t < Hittable::step) {
             return {};  // behind
         }
 

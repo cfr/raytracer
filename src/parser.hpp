@@ -38,15 +38,16 @@ inline std::vector<std::string> tokenize(const std::string& line) {
     return vec;
 }
 
+// TODO: return scene, camera pair
 inline Scene parseScene(std::istream& input) {
 
     std::string line;
     int lineNo = 0;
 
     Scene scene;
-    Node node;
     Material material;
     TStack stack;
+    Node node;
 
     while (std::getline(input, line)) {
         lineNo++;
