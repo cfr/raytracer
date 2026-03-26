@@ -1,5 +1,6 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 
 #include <stdexcept>
@@ -60,10 +61,10 @@ inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
             throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fovy>'");
         }
         Camera c;
-        c.eye = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
-        c.center = { parseNum<float>(tokens[4]), parseNum<float>(tokens[5]), parseNum<float>(tokens[6]) };
-        c.up = { parseNum<float>(tokens[7]), parseNum<float>(tokens[8]), parseNum<float>(tokens[9]) };
-        c.fovy = parseNum<float>(tokens[10]);
+        c.eye = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
+        c.center = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
+        c.up = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
+        c.fovy = parseNum<Float>(tokens[10]);
         scene.camera = c;
         return true;
     }

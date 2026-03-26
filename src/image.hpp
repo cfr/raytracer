@@ -1,7 +1,6 @@
 #pragma once
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include "values.hpp"
 
 #include <iterator>
 #include <compare>
@@ -12,8 +11,6 @@ namespace raytracer {
 
 class Image {
 public:
-    using Point = glm::ivec2;
-    using RGB = glm::vec3;
 
     struct Size {
         size_t width = 0;
@@ -31,7 +28,6 @@ public:
         Iterator(size_t x, size_t y, Size size)
             : x_(x), y_(y), size_(size) {}
 
-        // TODO: return floats
         Point operator*() const {
             return {x_, y_};
         }
@@ -83,11 +79,11 @@ public:
 
     Size size() const { return size_; }
 
-    RGB get(Point pt) const {
+    Color get(Point pt) const {
         return data_[size_.width * pt.y + pt.x];
     }
 
-    void set(Point pt, RGB color) {
+    void set(Point pt, Color color) {
         data_[size_.width * pt.y + pt.x] = color;
     }
 
@@ -105,7 +101,7 @@ public:
 
 private:
     Size size_;
-    std::vector<RGB> data_;
+    std::vector<Color> data_;
 };
 
 } // namespace raytracer

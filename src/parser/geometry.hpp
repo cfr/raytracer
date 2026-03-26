@@ -1,5 +1,6 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "sphere.hpp"
 #include "triangle.hpp"
@@ -21,10 +22,10 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         if (tokens.size() != 4) {
             throw ParseException("Expected 'vertex <x> <y> <z>'");
         }
-        vec3 v;
-        v.x = parseNum<float>(tokens[1]);
-        v.y = parseNum<float>(tokens[2]);
-        v.z = parseNum<float>(tokens[3]);
+        Vec3 v;
+        v.x = parseNum<Float>(tokens[1]);
+        v.y = parseNum<Float>(tokens[2]);
+        v.z = parseNum<Float>(tokens[3]);
         scene.vertices.push_back(v);
         return true;
     }
@@ -46,11 +47,11 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         if (tokens.size() != 5) {
             throw ParseException("Expected 'sphere <x> <y> <z> <r>'");
         }
-        vec3 c;
-        c.x = parseNum<float>(tokens[1]);
-        c.y = parseNum<float>(tokens[2]);
-        c.z = parseNum<float>(tokens[3]);
-        float r = parseNum<float>(tokens[4]);
+        Vec3 c;
+        c.x = parseNum<Float>(tokens[1]);
+        c.y = parseNum<Float>(tokens[2]);
+        c.z = parseNum<Float>(tokens[3]);
+        Float r = parseNum<Float>(tokens[4]);
         auto sphere = std::make_shared<Sphere>(node, c, r);
         scene.nodes.push_back(sphere);
         return true;

@@ -8,8 +8,6 @@
 #include "parser/transform.hpp"
 #include "parser/lights.hpp"
 
-#include <glm/vec3.hpp>
-
 #include <fstream>
 #include <string>
 #include <string_view>

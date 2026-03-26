@@ -1,5 +1,6 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "ray.hpp"
 #include "light.hpp"
@@ -10,14 +11,14 @@
 
 namespace raytracer {
 
-vec4 trace(const Ray ray, const vec3 eye, const Scene& scene, int depth) {
+ColorA trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
 
     if (depth <= 0) {
-        return vec4{0, 0, 0, 1};
+        return ColorA{0, 0, 0, 1};
     }
 
     std::shared_ptr<Hittable> object = nullptr;
-    Hit hit { std::numeric_limits<float>::max(), {}, {} };
+    Hit hit { std::numeric_limits<Float>::max(), {}, {} };
 
     for (const auto& node : scene.nodes) {
         auto h = node->intersect(ray);
@@ -28,20 +29,20 @@ vec4 trace(const Ray ray, const vec3 eye, const Scene& scene, int depth) {
     }
 
     if (!object) {
-        return vec4{0, 0, 0, 1};
+        return ColorA{0, 0, 0, 1};
     }
 
-    vec4 color = colorOf(eye, *object, hit, scene);
+    ColorA color = colorOf(eye, *object, hit, scene);
 
-    float reflectivity = glm::length(vec3{object->material.specular});
+    Float reflectivity = glm::length(Color{object->material.specular});
     if (reflectivity > 0) {
-        vec3 incoming = glm::normalize(ray.dir);
-        vec3 reflect = glm::reflect(incoming, hit.normal);
+        Vec3 incoming = glm::normalize(ray.dir);
+        Vec3 reflect = glm::reflect(incoming, hit.normal);
 
-        float offset = Hittable::step;
+        Float offset = Hittable::step;
         Ray reflectionRay{hit.point + offset*reflect, reflect};
 
-        vec4 reflectedColor = trace(reflectionRay, hit.point, scene, depth - 1);
+        ColorA reflectedColor = trace(reflectionRay, hit.point, scene, depth - 1);
         color += object->material.specular * reflectedColor;
         //color = glm::mix(color, reflectedColor, reflectivity);
     }

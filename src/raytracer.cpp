@@ -1,3 +1,4 @@
+#include "values.hpp"
 #include "parser.hpp"
 #include "scene.hpp"
 #include "image.hpp"
@@ -30,11 +31,11 @@ int main(int argc, char** argv) {
     try {
         auto scene = parser::readScene(argv[1]);
         auto caster = RayCaster{scene.camera, scene.image.size()};
-        for(auto px: scene.image) {
-            auto ray = caster.cast(px);
-            vec4 color = trace(ray, scene.camera.eye, scene, scene.depth);
-            Image::RGB rgb = glm::clamp(color, 0.0f, 1.0f);
-            scene.image.set(px, rgb);
+        for(auto pix: scene.image) {
+            auto ray = caster.cast(pix);
+            Color color = trace(ray, scene.camera.eye, scene, scene.depth);
+            auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
+            scene.image.set(pix, clamped);
         }
         write(scene.output, scene.image);
     } catch (std::exception& e) {

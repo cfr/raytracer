@@ -1,5 +1,6 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "parser/common.hpp"
 
@@ -26,16 +27,16 @@ inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat)
         if (tokens.size() != 2) {
             throw ParseException("Expected 'shininess s'");
         }
-        mat.shininess = parseNum<float>(tokens[1]);
+        mat.shininess = parseNum<Float>(tokens[1]);
         return true;
     }
     // parse specular or diffuse or emission
     if (tokens.size() != 4) {
         throw ParseException("Expected 'material r g b'");
     }
-    float r = parseNum<float>(tokens[1]);
-    float g = parseNum<float>(tokens[2]);
-    float b = parseNum<float>(tokens[3]);
+    auto r = parseNum<Float>(tokens[1]);
+    auto g = parseNum<Float>(tokens[2]);
+    auto b = parseNum<Float>(tokens[3]);
     switch (*type) {
         case Material::Type::Specular:
             mat.specular = {r, g, b, 1};

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "tstack.hpp"
 #include "parser/common.hpp"
@@ -12,7 +13,7 @@ inline bool parseTransform(const std::vector<std::string>& tokens, TStack& stack
         if (tokens.size() != 4) {
             throw ParseException("Expected 'translate <x> <y> <z>'");
         }
-        vec3 t = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        Vec3 t = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
         stack.translate(t);
         return true;
     }
@@ -20,7 +21,7 @@ inline bool parseTransform(const std::vector<std::string>& tokens, TStack& stack
         if (tokens.size() != 4) {
             throw ParseException("Expected 'scale <x> <y> <z>'");
         }
-        vec3 t = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
+        Vec3 t = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
         stack.scale(t);
         return true;
     }
@@ -28,8 +29,8 @@ inline bool parseTransform(const std::vector<std::string>& tokens, TStack& stack
         if (tokens.size() != 5) {
             throw ParseException("Expected 'rotate <x> <y> <z> <a>'");
         }
-        vec3 axis = { parseNum<float>(tokens[1]), parseNum<float>(tokens[2]), parseNum<float>(tokens[3]) };
-        float angle = parseNum<float>(tokens[4]);
+        Vec3 axis = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
+        auto angle = parseNum<Float>(tokens[4]);
         stack.rotate(axis, angle);
         return true;
     }

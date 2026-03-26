@@ -1,36 +1,32 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "ray.hpp"
 #include "hit.hpp"
 
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
 namespace raytracer {
 
-using vec3 = glm::vec3;
-
 struct Triangle: Hittable {
 
-    vec3 a_;
-    vec3 b_;
-    vec3 c_;
+    Vec3 a_;
+    Vec3 b_;
+    Vec3 c_;
 
-    vec3 na_;
-    vec3 nb_;
-    vec3 nc_;
+    Vec3 na_;
+    Vec3 nb_;
+    Vec3 nc_;
 
-    vec3 normal(vec3 /*point*/) override {
-        auto tNormal = vec4(na_, 0);
+    Vec3 normal(Vec3 /*point*/) override {
+        auto tNormal = Vec4{na_, 0};
         auto ntransform = glm::transpose(glm::inverse(transform));
-        return glm::normalize(vec3(ntransform*tNormal));
+        return glm::normalize(Vec3{ntransform*tNormal});
     }
 
-    Triangle(const Node& n, vec3 a, vec3 b, vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
+    Triangle(const Node& n, Vec3 a, Vec3 b, Vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
         auto normal = glm::normalize(glm::cross(ab, ac));
@@ -54,17 +50,17 @@ struct Triangle: Hittable {
             return {}; // parallel
         }
 
-        auto f = 1.0f / a;
+        auto f = 1 / a;
         auto s = tRay.eye - a_;
 
         auto u = f * glm::dot(s, h);
-        if (u < 0.0f || u > 1.0f) {
+        if (u < 0 || u > 1) {
             return {};
         }
 
         auto q = glm::cross(s, edge1);
         auto v = f * glm::dot(tRay.dir, q);
-        if (v < 0.0f || u + v > 1.0f) {
+        if (v < 0 || u + v > 1) {
             return {};
         }
 
@@ -76,10 +72,10 @@ struct Triangle: Hittable {
         auto tPoint = tRay.at(t);
 
         auto point = transformVec(transform, tPoint);
-        auto tNormal = vec4(na_, 0);
-        auto normal = glm::normalize(vec3(glm::transpose(inv) * tNormal));
+        auto tNormal = Vec4{na_, 0};
+        auto normal = glm::normalize(Vec3{glm::transpose(inv) * tNormal});
 
-        float wt = glm::length(point - ray.eye);
+        Float wt = glm::length(point - ray.eye);
 
         return Hit{wt, point, normal};
     }

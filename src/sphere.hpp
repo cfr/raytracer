@@ -1,32 +1,27 @@
 #pragma once
 
+#include "values.hpp"
 #include "scene.hpp"
 #include "ray.hpp"
 #include "hit.hpp"
 
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
 namespace raytracer {
 
-using vec3 = glm::vec3;
-using vec4 = glm::vec4;
-
 struct Sphere: Hittable {
 
-    vec3 center_ = {0, 0, 0};
-    float radius_ = 1;
+    Vec3 center_ = {0, 0, 0};
+    Float radius_ = 1;
 
-    Sphere(const Node& n, vec3 center, float radius) : Hittable{n}, center_{center}, radius_{radius} {}
+    Sphere(const Node& n, Vec3 center, Float radius) : Hittable{n}, center_{center}, radius_{radius} {}
 
-    vec3 normal(vec3 point) override {
-        auto tNormal = vec4(point - center_, 0);
+    Vec3 normal(Vec3 point) override {
+        auto tNormal = Vec4{point - center_, 0};
         // TODO: store inverse and transposed transforms
         auto ntransform = glm::transpose(glm::inverse(transform));
-        return glm::normalize(vec3(ntransform*tNormal));
+        return glm::normalize(Vec3{ntransform*tNormal});
     }
 
     std::optional<Hit> intersect(Ray ray) override {
@@ -49,8 +44,8 @@ struct Sphere: Hittable {
         if (t < Hittable::step) { return {}; }
 
         auto tPoint = tRay.at(t);
-        auto tNormal = vec4(tPoint - center_, 0);
-        auto normal = glm::normalize(vec3(glm::transpose(inv)*tNormal));
+        auto tNormal = Vec4{tPoint - center_, 0};
+        auto normal = glm::normalize(Vec3{glm::transpose(inv)*tNormal});
 
         auto point = transformVec(transform, tPoint);
         float wt = glm::length(point - ray.eye);

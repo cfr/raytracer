@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/mat4x4.hpp>
+#include "values.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <stack>
@@ -8,25 +8,21 @@
 
 namespace raytracer {
 
-using vec3 = glm::vec3;
-using vec4 = glm::vec4;
-using mat4 = glm::mat4;
-
 class TStack {
-    std::stack<mat4> stack_;
+    std::stack<Transform> stack_;
 
-    void rmultiply(const mat4& m) {
-        mat4& t = stack_.top();
+    void rmultiply(const Transform& m) {
+        auto& t = stack_.top();
         t = t * m;
     }
 
 public:
 
     TStack() {
-        stack_.push(mat4{1});
+        stack_.push(Transform{1});
     }
 
-    mat4 top() {
+    Transform top() {
         return stack_.top();
     }
 
@@ -42,18 +38,18 @@ public:
         stack_.pop();
     }
 
-    void rotate(vec3 axis, float angle) {
-        auto r = glm::rotate(mat4(1), glm::radians(angle), axis);
+    void rotate(Vec3 axis, Float angle) {
+        auto r = glm::rotate(Transform(1), glm::radians(angle), axis);
         rmultiply(r);
     }
 
-    void translate(vec3 t) {
-        auto tr = glm::translate(mat4(1), t);
+    void translate(Vec3 t) {
+        auto tr = glm::translate(Transform(1), t);
         rmultiply(tr);
     }
 
-    void scale(vec3 s) {
-        auto sc = glm::scale(mat4(1), s);
+    void scale(Vec3 s) {
+        auto sc = glm::scale(Transform(1), s);
         rmultiply(sc);
     }
 };
