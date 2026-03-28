@@ -37,8 +37,7 @@ struct Triangle: Hittable {
 
     std::optional<Hit> intersect(Ray ray) override {
 
-        auto inv = glm::inverse(transform);
-        Ray tRay = ray.transformed(inv);
+        Ray tRay = ray.transformed(inverse);
 
         auto edge1 = b_ - a_;
         auto edge2 = c_ - a_;
@@ -73,7 +72,7 @@ struct Triangle: Hittable {
 
         auto point = transformVec(transform, tPoint);
         auto tNormal = Vec4{na_, 0};
-        auto normal = glm::normalize(Vec3{glm::transpose(inv) * tNormal});
+        auto normal = glm::normalize(Vec3{inverseTranspose * tNormal});
 
         Float wt = glm::length(point - ray.eye);
 

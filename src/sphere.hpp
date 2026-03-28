@@ -27,8 +27,7 @@ struct Sphere: Hittable {
     std::optional<Hit> intersect(Ray ray) override {
 
         // TODO: extract inv transform of point and normal
-        auto inv = glm::inverse(transform);
-        auto tRay = ray.transformed(inv);
+        auto tRay = ray.transformed(inverse);
         auto rc = tRay.eye - center_;
         auto a = glm::dot(tRay.dir, tRay.dir);
         auto b = 2 * glm::dot(tRay.dir, rc);
@@ -45,7 +44,7 @@ struct Sphere: Hittable {
 
         auto tPoint = tRay.at(t);
         auto tNormal = Vec4{tPoint - center_, 0};
-        auto normal = glm::normalize(Vec3{glm::transpose(inv)*tNormal});
+        auto normal = glm::normalize(Vec3{inverseTranspose*tNormal});
 
         auto point = transformVec(transform, tPoint);
         float wt = glm::length(point - ray.eye);

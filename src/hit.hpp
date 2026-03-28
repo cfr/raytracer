@@ -21,6 +21,7 @@ struct Hittable: Node {
     virtual ~Hittable() = default;
 
     virtual std::optional<Hit> intersect(Ray ray) = 0;
+    //virtual std::optional<Hit> intersectLocal(Ray ray) = 0;
     // TODO: local normal, local intersect
     virtual Vec3 normal(Vec3 point) = 0;
 };

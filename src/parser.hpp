@@ -62,6 +62,8 @@ inline Scene parseScene(std::istream& input) {
             }
             if (parseTransform(tokens, stack)) {
                 node.transform = stack.top();
+                node.inverse = glm::inverse(node.transform);
+                node.inverseTranspose = glm::transpose(node.inverse);
                 continue;
             }
             throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
