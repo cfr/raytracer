@@ -10,7 +10,7 @@
 
 namespace raytracer {
 
-struct Triangle: Hittable {
+class Triangle: public Hittable {
 
     Vec3 a_;
     Vec3 b_;
@@ -20,11 +20,7 @@ struct Triangle: Hittable {
     Vec3 nb_;
     Vec3 nc_;
 
-    Vec3 normal(Vec3 /*point*/) override {
-        auto tNormal = Vec4{na_, 0};
-        auto ntransform = glm::transpose(glm::inverse(transform));
-        return glm::normalize(Vec3{ntransform*tNormal});
-    }
+public:
 
     Triangle(const Node& n, Vec3 a, Vec3 b, Vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
@@ -35,48 +31,38 @@ struct Triangle: Hittable {
         nc_ = normal;
     }
 
-    std::optional<Hit> intersect(Ray ray) override {
+    Vec4 normal(Vec3 /*point*/) override {
+        return Vec4{na_, 0};
+    }
 
-        Ray tRay = ray.transformed(inverse);
+    Float distance(Ray ray) override {
 
         auto edge1 = b_ - a_;
         auto edge2 = c_ - a_;
 
-        auto h = glm::cross(tRay.dir, edge2);
+        auto h = glm::cross(ray.dir, edge2);
         auto a = glm::dot(edge1, h);
 
         if (std::abs(a) < Hittable::step) {
-            return {}; // parallel
+            return 0; // parallel
         }
 
         auto f = 1 / a;
-        auto s = tRay.eye - a_;
+        auto s = ray.eye - a_;
 
         auto u = f * glm::dot(s, h);
         if (u < 0 || u > 1) {
-            return {};
+            return 0;
         }
 
         auto q = glm::cross(s, edge1);
-        auto v = f * glm::dot(tRay.dir, q);
+        auto v = f * glm::dot(ray.dir, q);
         if (v < 0 || u + v > 1) {
-            return {};
+            return 0;
         }
 
         auto t = f * glm::dot(edge2, q);
-        if (t < Hittable::step) {
-            return {};  // behind
-        }
-
-        auto tPoint = tRay.at(t);
-
-        auto point = transformVec(transform, tPoint);
-        auto tNormal = Vec4{na_, 0};
-        auto normal = glm::normalize(Vec3{inverseTranspose * tNormal});
-
-        Float wt = glm::length(point - ray.eye);
-
-        return Hit{wt, point, normal};
+        return t;
     }
 };
 

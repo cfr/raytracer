@@ -20,10 +20,29 @@ struct Hittable: Node {
     Hittable(const Node& n) : Node{n} {};
     virtual ~Hittable() = default;
 
-    virtual std::optional<Hit> intersect(Ray ray) = 0;
-    //virtual std::optional<Hit> intersectLocal(Ray ray) = 0;
-    // TODO: local normal, local intersect
-    virtual Vec3 normal(Vec3 point) = 0;
+    // local normal at point
+    virtual Vec4 normal(Vec3 point) = 0;
+
+    // local distance to object, 0 if not intersection
+    virtual Float distance(Ray ray) = 0;
+
+    std::optional<Hit> intersect(Ray ray) {
+
+        // transform to local coordinates
+        auto tRay = ray.transformed(inverse);
+        auto t = distance(tRay);
+
+        if (t < step) { return {}; }
+
+        auto point = tRay.at(t);
+
+        // ray/world coordinates
+        auto wpoint = transformVec(transform, point);
+        auto wnormal = Vec3{inverseTranspose * normal(point)};
+        Float wt = glm::length(wpoint - ray.eye);
+
+        return Hit{wt, wpoint, glm::normalize(wnormal)};
+    }
 };
 
 }

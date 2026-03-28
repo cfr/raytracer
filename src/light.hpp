@@ -45,11 +45,13 @@ ColorA colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Sce
         srcDir = glm::normalize(srcDir);
         Float offset = Hittable::step; // to prevent self-intersection
         auto shadowRay = Ray{hit.point + offset*srcDir, srcDir};
-        Float distance = glm::distance(Vec3(source.position), shadowRay.eye);
+        Float distance =
+            isPoint ? glm::distance(Vec3(source.position), shadowRay.eye)
+                    : std::numeric_limits<Float>::max();
         bool shadowed = false;
         for (const auto& node: scene.nodes) {
             auto h = node->intersect(shadowRay);
-            if (h && (!isPoint || h->t < distance)) {
+            if (h && h->t < distance) {
                 shadowed = true;
                 break;
             }
