@@ -13,8 +13,8 @@ class Image {
 public:
 
     struct Size {
-        size_t width = 0;
-        size_t height = 0;
+        int width = 0;
+        int height = 0;
     };
 
     class Iterator {
@@ -25,7 +25,7 @@ public:
         using pointer = Point*;
         using reference = Point&;
 
-        Iterator(size_t x, size_t y, Size size)
+        Iterator(int x, int y, Size size)
             : x_(x), y_(y), size_(size) {}
 
         Point operator*() const {
@@ -59,14 +59,14 @@ public:
         }
 
     private:
-        size_t x_, y_;
+        int x_, y_;
         Size size_;
     };
 
     explicit Image(Size s)
-        : size_{s}, data_{s.width*s.height, {0, 0, 0}} {}
+        : size_{s}, data_{static_cast<size_t>(s.width*s.height), {0, 0, 0}} {}
 
-    Image(size_t width, size_t height)
+    Image(int width, int height)
         : Image(Size{width, height}) {}
 
     Iterator begin() const {
