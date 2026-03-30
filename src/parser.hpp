@@ -14,13 +14,12 @@
 #include <format>
 #include <algorithm>
 #include <regex>
-
-#include <print>
+#include <tuple>
 
 namespace raytracer::parser {
 
 // TODO: take string_view
-inline std::vector<std::string> tokenize(const std::string& line) {
+std::vector<std::string> tokenize(const std::string& line) {
     const auto re = std::regex{R"(\s+)"};
     auto vec = std::vector<std::string>(
         std::sregex_token_iterator{begin(line), end(line), re, -1},
@@ -36,16 +35,18 @@ inline std::vector<std::string> tokenize(const std::string& line) {
     return vec;
 }
 
-// TODO: return scene, camera pair
-inline Scene parseScene(std::istream& input) {
+std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
 
     std::string line;
     int lineNo = 0;
 
+    Settings settings;
+    Camera camera;
     Scene scene;
     Material material;
     TStack stack;
     Node node;
+    std::vector<Vec3> vertices;
 
     while (std::getline(input, line)) {
         lineNo++;
@@ -53,8 +54,9 @@ inline Scene parseScene(std::istream& input) {
         if (tokens.empty()) continue;
 
         try {
-            if (parseScene(tokens, scene)) { continue; }
-            if (parseGeometry(tokens, node, scene)) { continue; }
+            if (parseSettings(tokens, settings)) { continue; }
+            if (parseCamera(tokens, camera)) { continue; }
+            if (parseGeometry(tokens, vertices, node, scene)) { continue; }
             if (parseLights(tokens, node, scene)) { continue; }
             if (parseMaterial(tokens, material)) {
                 node.material = material;
@@ -73,10 +75,10 @@ inline Scene parseScene(std::istream& input) {
         }
     }
 
-    return scene;
+    return {scene, camera, settings};
 }
 
-inline Scene readScene(const std::string& path) {
+std::tuple<Scene, Camera, Settings> readScene(const std::string& path) {
     std::ifstream file;
     file.open(path);
     if (!file) { throw ParseException("Can't open file '" + path + "'"); }

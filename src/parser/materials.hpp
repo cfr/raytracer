@@ -10,7 +10,7 @@
 
 namespace raytracer::parser {
 
-inline std::optional<Material::Type> materialType(const std::string& token) {
+std::optional<Material::Type> materialType(const std::string& token) {
     if (token == "diffuse") { return Material::Type::Diffuse; }
     if (token == "specular") { return Material::Type::Specular; }
     if (token == "shininess") { return Material::Type::Shininess; }
@@ -18,7 +18,7 @@ inline std::optional<Material::Type> materialType(const std::string& token) {
     return {};
 }
 
-inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
+bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
     auto type = materialType(tokens[0]);
     if (!type) {
         return false;

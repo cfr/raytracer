@@ -37,7 +37,7 @@ class RayCaster {
 
 public:
 
-    RayCaster(Camera cam, Image::Size size) : eye_{cam.eye}, basis_{cam} {
+    RayCaster(Camera cam, Size size) : eye_{cam.eye}, basis_{cam} {
 
         hwidth_ = static_cast<Float>(size.width) / 2;
         hheight_ = static_cast<Float>(size.height) / 2;
@@ -52,6 +52,7 @@ public:
 
         auto x = static_cast<Float>(pixel.x) + 0.5;
         auto y = static_cast<Float>(pixel.y) + 0.5;
+
         auto alpha = thfovx_ * (x - hwidth_) / hwidth_;
         auto beta = thfovy_ * (hheight_ - y) / hheight_;
 

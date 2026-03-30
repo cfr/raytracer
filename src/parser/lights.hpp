@@ -6,7 +6,7 @@
 
 namespace raytracer::parser {
 
-inline bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scene) {
+bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scene) {
     auto cmd = tokens[0];
     if (cmd == "ambient") {
         if (tokens.size() != 4) {

@@ -33,11 +33,15 @@ struct Light {
     ColorA color = {0, 0, 0, 1};
 };
 
-struct Scene {
-    Image image {0, 0};
+struct Settings {
+    Size size;
     size_t depth = 5;
     std::string output = "out.ppm";
-    Camera camera;
+};
+
+struct Scene {
+    size_t depth = 5;
+    std::string output = "out.ppm";
     Attenuation attenuation;
     std::vector<Vec3> vertices; // TODO: store in parser
     std::vector<Light> lights;
