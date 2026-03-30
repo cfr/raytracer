@@ -31,32 +31,37 @@ T parseNum(std::string_view sv) {
     return value;
 }
 
-inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
+bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     auto cmd = tokens[0];
     if (cmd == "size") {
         if (tokens.size() != 3) {
             throw ParseException("Expected 'size <width> <height>'");
         }
-        auto width = parseNum<int>(tokens[1]);
-        auto height = parseNum<int>(tokens[2]);
-        scene.image = Image(width, height);
+        auto width = parseNum<size_t>(tokens[1]);
+        auto height = parseNum<size_t>(tokens[2]);
+        settings.size = Size{width, height};
         return true;
     }
     else if (cmd == "maxdepth") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
-        scene.depth = parseNum<int>(tokens[1]);
+        settings.depth = parseNum<int>(tokens[1]);
         return true;
     }
     else if (cmd == "output") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
         }
-        scene.output = tokens[1] + ".ppm";
+        settings.output = tokens[1] + ".ppm";
         return true;
     }
-    else if (cmd == "camera") {
+    return false;
+}
+
+bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) {
+    auto cmd = tokens[0];
+    if (cmd == "camera") {
         if (tokens.size() != 11) {
             throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fovy>'");
         }
@@ -65,7 +70,7 @@ inline bool parseScene(const std::vector<std::string>& tokens, Scene& scene) {
         c.center = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
         c.up = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
         c.fovy = parseNum<Float>(tokens[10]);
-        scene.camera = c;
+        camera = c;
         return true;
     }
     return false;

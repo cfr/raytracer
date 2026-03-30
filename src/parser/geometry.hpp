@@ -6,16 +6,19 @@
 #include "triangle.hpp"
 #include "parser/common.hpp"
 
+#include <string>
+#include <vector>
+
 namespace raytracer::parser {
 
-inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& node, Scene& scene) {
+bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, const Node& node, Scene& scene) {
     auto cmd = tokens[0];
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxverts <count>'");
         }
         int count = parseNum<int>(tokens[1]);
-        if (count) { scene.vertices.reserve(count); }
+        if (count) { vertices.reserve(count); }
         return true;
     }
     else if (cmd == "vertex") {
@@ -26,7 +29,7 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         v.x = parseNum<Float>(tokens[1]);
         v.y = parseNum<Float>(tokens[2]);
         v.z = parseNum<Float>(tokens[3]);
-        scene.vertices.push_back(v);
+        vertices.push_back(v);
         return true;
     }
     else if (cmd == "tri") {
@@ -36,9 +39,9 @@ inline bool parseGeometry(const std::vector<std::string>& tokens, const Node& no
         auto id0 = parseNum<int>(tokens[1]);
         auto id1 = parseNum<int>(tokens[2]);
         auto id2 = parseNum<int>(tokens[3]);
-        auto a = scene.vertices[id0];
-        auto b = scene.vertices[id1];
-        auto c = scene.vertices[id2];
+        auto a = vertices[id0];
+        auto b = vertices[id1];
+        auto c = vertices[id2];
         auto tri = std::make_shared<Triangle>(node, a, b, c);
         scene.nodes.push_back(tri);
         return true;

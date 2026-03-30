@@ -21,4 +21,9 @@ using ColorA = Vec4;
 
 using Point = glm::ivec2;
 
+struct Size {
+    size_t width = 0;
+    size_t height = 0;
+};
+
 }

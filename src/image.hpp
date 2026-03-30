@@ -10,72 +10,37 @@
 namespace raytracer {
 
 class Image {
+
+    Size size_;
+    std::vector<Color> data_;
+
 public:
+    using iterator = typename std::vector<Color>::iterator;
+    using const_iterator = typename std::vector<Color>::const_iterator;
 
-    struct Size {
-        int width = 0;
-        int height = 0;
-    };
+    iterator begin() { return data_.begin(); }
+    const_iterator begin() const { return data_.begin(); }
+    const_iterator cbegin() const { return data_.cbegin(); }
 
-    class Iterator {
-    public:
-        using iterator_category = std::forward_iterator_tag;
-        using value_type = Point;
-        using difference_type = std::ptrdiff_t;
-        using pointer = Point*;
-        using reference = Point&;
+    iterator end() { return data_.end(); }
+    const_iterator end() const { return data_.end(); }
+    const_iterator cend() const { return data_.cend(); }
 
-        Iterator(int x, int y, Size size)
-            : x_(x), y_(y), size_(size) {}
-
-        Point operator*() const {
-            return {x_, y_};
-        }
-
-        Iterator& operator++() {
-            ++x_;
-            if (x_ >= size_.width) {
-                x_ = 0;
-                ++y_;
-            }
-            return *this;
-        }
-
-        Iterator operator++(int) {
-            auto tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        auto operator<=>(const Iterator& other) const {
-            if (auto cmp = y_ <=> other.y_; cmp != 0) {
-                return cmp;
-            }
-            return x_ <=> other.x_;
-        }
-
-        bool operator==(const Iterator& other) const {
-            return operator<=>(other) == std::strong_ordering::equal;
-        }
-
-    private:
-        int x_, y_;
-        Size size_;
-    };
+    Point point(const_iterator it) const {
+        auto d = std::distance(begin(), it);
+        auto x = d % size_.width;
+        auto y = d / size_.width;
+        return {x, y};
+    }
+    Point point(iterator it) const {
+        return point(static_cast<const_iterator>(it));
+    }
 
     explicit Image(Size s)
-        : size_{s}, data_{static_cast<size_t>(s.width*s.height), {0, 0, 0}} {}
+        : size_{s}, data_{s.width*s.height, {0, 0, 0}} {}
 
-    Image(int width, int height)
+    Image(size_t width, size_t height)
         : Image(Size{width, height}) {}
-
-    Iterator begin() const {
-        return Iterator(0, 0, size_);
-    }
-
-    Iterator end() const {
-        return Iterator(0, size_.height, size_);
-    }
 
     Size size() const { return size_; }
 
@@ -89,19 +54,14 @@ public:
 
     void writePPM(std::ostream& out) const {
         out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
-        for(auto px: *this) {
-            auto rgb = get(px);
-            auto r = static_cast<int>(255.999 * rgb.r);
-            auto g = static_cast<int>(255.999 * rgb.g);
-            auto b = static_cast<int>(255.999 * rgb.b);
+        for(auto pix: *this) {
+            auto r = static_cast<int>(255.999 * pix.r);
+            auto g = static_cast<int>(255.999 * pix.g);
+            auto b = static_cast<int>(255.999 * pix.b);
             out << r << ' ' << g << ' ' << b << '\n';
         }
         out << std::endl;
     }
-
-private:
-    Size size_;
-    std::vector<Color> data_;
 };
 
 } // namespace raytracer
