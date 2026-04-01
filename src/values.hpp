@@ -26,4 +26,4 @@ struct Size {
     size_t height = 0;
 };
 
-}
+}  // namespace raytracer

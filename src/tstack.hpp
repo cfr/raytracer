@@ -16,13 +16,12 @@ class TStack {
         t = t * m;
     }
 
-public:
-
+ public:
     TStack() {
         stack_.push(Transform{1});
     }
 
-    Transform top() {
+    Transform top() const {
         return stack_.top();
     }
 
@@ -54,5 +53,5 @@ public:
     }
 };
 
-}
+}  // namespace raytracer
 

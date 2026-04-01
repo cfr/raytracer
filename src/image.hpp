@@ -6,15 +6,15 @@
 #include <compare>
 #include <cstdint>
 #include <ostream>
+#include <vector>
 
 namespace raytracer {
 
 class Image {
-
     Size size_;
     std::vector<Color> data_;
 
-public:
+ public:
     using iterator = typename std::vector<Color>::iterator;
     using const_iterator = typename std::vector<Color>::const_iterator;
 
@@ -54,7 +54,7 @@ public:
 
     void writePPM(std::ostream& out) const {
         out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
-        for(auto pix: *this) {
+        for (auto pix : *this) {
             auto r = static_cast<int>(255.999 * pix.r);
             auto g = static_cast<int>(255.999 * pix.g);
             auto b = static_cast<int>(255.999 * pix.b);
@@ -64,4 +64,4 @@ public:
     }
 };
 
-} // namespace raytracer
+}  // namespace raytracer

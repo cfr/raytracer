@@ -52,4 +52,4 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
     }
 }
 
-}
+}  // namespace raytracer::parser

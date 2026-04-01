@@ -11,6 +11,7 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace raytracer {
 
@@ -36,6 +37,7 @@ struct Light {
 struct Settings {
     Size size;
     size_t depth = 5;
+    size_t threads = 16;
     std::string output = "out.ppm";
 };
 
@@ -43,9 +45,9 @@ struct Scene {
     size_t depth = 5;
     std::string output = "out.ppm";
     Attenuation attenuation;
-    std::vector<Vec3> vertices; // TODO: store in parser
+    std::vector<Vec3> vertices;  // TODO: store in parser
     std::vector<Light> lights;
     std::vector<std::shared_ptr<Hittable>> nodes;
 };
 
-}
+}  // namespace raytracer

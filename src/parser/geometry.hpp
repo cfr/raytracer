@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace raytracer::parser {
 
@@ -63,4 +64,4 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
     return false;
 }
 
-}
+}  // namespace raytracer::parser

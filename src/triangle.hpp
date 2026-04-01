@@ -11,7 +11,6 @@
 namespace raytracer {
 
 class Triangle: public Hittable {
-
     Vec3 a_;
     Vec3 b_;
     Vec3 c_;
@@ -20,8 +19,7 @@ class Triangle: public Hittable {
     Vec3 nb_;
     Vec3 nc_;
 
-public:
-
+ public:
     Triangle(const Node& n, Vec3 a, Vec3 b, Vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
@@ -31,12 +29,11 @@ public:
         nc_ = normal;
     }
 
-    Vec4 normal(Vec3 /*point*/) override {
+    Vec4 normal(Vec3 /*point*/) const override {
         return Vec4{na_, 0};
     }
 
-    Float distance(Ray ray) override {
-
+    Float distance(Ray ray) const override {
         auto edge1 = b_ - a_;
         auto edge2 = c_ - a_;
 
@@ -44,7 +41,7 @@ public:
         auto a = glm::dot(edge1, h);
 
         if (std::abs(a) < Hittable::step) {
-            return 0; // parallel
+            return 0;  // parallel
         }
 
         auto f = 1 / a;
@@ -66,4 +63,4 @@ public:
     }
 };
 
-}
+}  // namespace raytracer

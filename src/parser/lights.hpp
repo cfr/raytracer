@@ -4,6 +4,9 @@
 #include "scene.hpp"
 #include "parser/common.hpp"
 
+#include <vector>
+#include <string>
+
 namespace raytracer::parser {
 
 bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scene) {
@@ -48,5 +51,4 @@ bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scen
     return false;
 }
 
-}
-
+}  //  namespace raytracer::parser
