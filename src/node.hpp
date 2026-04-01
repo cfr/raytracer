@@ -32,7 +32,7 @@ struct Node {
     Transform transform = Transform{1};
     Transform inverse = Transform{1};
     Transform inverseTranspose = Transform{1};
-    ColorA ambient; // ambient light may change
+    ColorA ambient;  // ambient light may change
 };
 
-}
+}  // namespace raytracer

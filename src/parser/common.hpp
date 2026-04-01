@@ -8,18 +8,19 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace raytracer::parser {
 
 class ParseException : public std::runtime_error {
-public:
+ public:
     using std::runtime_error::runtime_error;
 };
 
 template <typename T>
 T parseNum(std::string_view sv) {
     T value;
-    if (!sv.empty() && sv[0] == '+') { sv = sv.substr(1); } // skip leading +
+    if (!sv.empty() && sv[0] == '+') { sv = sv.substr(1); }  // skip leading +
     auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
 
     if (ec != std::errc{}) {
@@ -76,4 +77,4 @@ bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) {
     return false;
 }
 
-}
+}  // namespace raytracer::parser

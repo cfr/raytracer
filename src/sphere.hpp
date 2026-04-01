@@ -8,23 +8,22 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
+#include <algorithm>
+
 namespace raytracer {
 
 class Sphere: public Hittable {
-
     Vec3 center_ = {0, 0, 0};
     Float radius_ = 1;
 
-public:
-
+ public:
     Sphere(const Node& n, Vec3 center, Float radius) : Hittable{n}, center_{center}, radius_{radius} {}
 
-    Vec4 normal(Vec3 point) override {
+    Vec4 normal(Vec3 point) const override {
         return Vec4{point - center_, 0};
     }
 
-    Float distance(Ray ray) override {
-
+    Float distance(Ray ray) const override {
         auto rc = ray.eye - center_;
         auto a = glm::dot(ray.dir, ray.dir);
         auto b = 2 * glm::dot(ray.dir, rc);
@@ -41,4 +40,4 @@ public:
     }
 };
 
-}
+}  // namespace raytracer

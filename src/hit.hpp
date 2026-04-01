@@ -15,19 +15,18 @@ struct Hit {
 };
 
 struct Hittable: Node {
-    static constexpr Float step = 0.0001; // min distance for intersection
+    static constexpr Float step = 0.0001;  // min distance for intersection
 
-    Hittable(const Node& n) : Node{n} {};
+    explicit Hittable(const Node& n) : Node{n} {};
     virtual ~Hittable() = default;
 
     // local normal at point
-    virtual Vec4 normal(Vec3 point) = 0;
+    virtual Vec4 normal(Vec3 point) const = 0;
 
     // local distance to object, 0 if not intersection
-    virtual Float distance(Ray ray) = 0;
+    virtual Float distance(Ray ray) const = 0;
 
-    std::optional<Hit> intersect(Ray ray) {
-
+    std::optional<Hit> intersect(Ray ray) const {
         // transform to local coordinates
         auto tRay = ray.transformed(inverse);
         auto t = distance(tRay);
@@ -45,4 +44,4 @@ struct Hittable: Node {
     }
 };
 
-}
+}  // namespace raytracer

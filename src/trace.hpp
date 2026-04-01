@@ -8,11 +8,11 @@
 #include <glm/geometric.hpp>
 
 #include <limits>
+#include <memory>
 
 namespace raytracer {
 
 ColorA trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
-
     if (depth <= 0) {
         return ColorA{0, 0, 0, 1};
     }
@@ -44,11 +44,11 @@ ColorA trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
 
         ColorA reflectedColor = trace(reflectionRay, hit.point, scene, depth - 1);
         color += object->material.specular * reflectedColor;
-        //color = glm::mix(color, reflectedColor, reflectivity);
+        // color = glm::mix(color, reflectedColor, reflectivity);
     }
 
     return color;
 }
 
-} // namespace raytracer
+}  // namespace raytracer
 

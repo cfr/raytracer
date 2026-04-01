@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 #include <queue>
 #include <thread>
@@ -11,9 +12,12 @@
 #include <stop_token>
 #include <memory>
 #include <stdexcept>
+#include <utility>
+
+namespace raytracer {
 
 class ThreadPool {
-public:
+ public:
     explicit ThreadPool(size_t size) {
         size = std::max(1ul, size);
         workers_.reserve(size);
@@ -37,14 +41,10 @@ public:
     template <typename F, typename... Args>
     requires std::invocable<F, Args...>
     auto submit(F&& f, Args&&... args) {
-
         using ReturnType = std::invoke_result_t<F, Args...>;
 
         auto task = std::make_shared<std::packaged_task<ReturnType()>>(
             std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-            /*[f = std::forward<F>(f), ...args = std::forward<Args>(args)]() mutable {
-                return std::invoke(f, args...);
-            }*/
         );
 
         std::future<ReturnType> result = task->get_future();
@@ -58,7 +58,7 @@ public:
         return result;
     }
 
-private:
+ private:
     void loop(std::stop_token st) {
         while (true) {
             std::function<void()> task;
@@ -85,3 +85,5 @@ private:
     std::queue<std::function<void()>> tasks_;
     std::vector<std::jthread> workers_;
 };
+
+}  // namespace raytracer

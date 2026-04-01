@@ -5,14 +5,15 @@
 namespace raytracer {
 
 class Frame {
-
     Size size_;
-public:
-    Frame(Size size) : size_(size) {}
+
+ public:
+    explicit Frame(Size size) : size_(size) {}
 
     class Iterator {
         size_t index_, width_;
-    public:
+
+     public:
         using iterator_category = std::forward_iterator_tag;
         using value_type        = Point;
         using difference_type   = std::ptrdiff_t;
@@ -37,4 +38,4 @@ public:
     Iterator end() const { return {size_.width * size_.height, size_.width}; }
 };
 
-}
+}  // namespace raytracer

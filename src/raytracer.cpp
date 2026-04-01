@@ -2,9 +2,7 @@
 #include "parser.hpp"
 #include "scene.hpp"
 #include "image.hpp"
-#include "frame.hpp"
 #include "ray.hpp"
-#include "light.hpp"
 #include "trace.hpp"
 #include "pool.hpp"
 #include "row.hpp"
@@ -16,6 +14,8 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include <string>
+#include <utility>
 
 using namespace raytracer;
 
@@ -32,7 +32,7 @@ void write(const std::string& path, const Image& image) {
 Row traceRow(const Scene& scene, const RayCaster& caster, size_t depth, size_t y) {
     Row row(y, caster.size());
 
-    for(auto point: row) {
+    for (auto point : row) {
         auto ray = caster.cast(point);
         Color color = trace(ray, caster.eye(), scene, depth);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
@@ -48,13 +48,11 @@ int main(int argc, char** argv) {
     }
 
     try {
-        ThreadPool pool{16};
-
         auto [scene, camera, settings] = parser::readScene(argv[1]);
-
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
-        auto frame = Frame{settings.size};
+
+        ThreadPool pool{settings.threads};
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0ul, settings.size.height)) {
@@ -62,19 +60,21 @@ int main(int argc, char** argv) {
             rows.push_back(std::move(row));
         }
 
-        for(auto& r: rows) {
+        for (auto& r : rows) {
             auto row = r.get();
-            for(auto point: row) {
+            for (auto point : row) {
                 image.set(point, row.get(point));
             }
         }
 
-        /*for(auto point: frame) {
+        /* single threaded version for refrence:
+        for (auto point : Frame{settings.size}) {
             auto ray = caster.cast(point);
             Color color = trace(ray, caster.eye(), scene, settings.depth);
             auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
             image.set(point, clamped);
-        }*/
+        }
+        */
         write(settings.output, image);
     } catch (const std::exception& e) {
         std::println("{}", e.what());

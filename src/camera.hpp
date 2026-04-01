@@ -19,11 +19,11 @@ struct Basis {
     Vec3 v;
     Vec3 w;
 
-    Basis(Camera cam) {
+    explicit Basis(Camera cam) {
         w = glm::normalize(cam.eye - cam.center);
         u = glm::normalize(glm::cross(cam.up, w));
         v = glm::cross(w, u);
     }
 };
 
-}
+}  // namespace raytracer

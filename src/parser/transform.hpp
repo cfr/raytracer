@@ -5,6 +5,9 @@
 #include "tstack.hpp"
 #include "parser/common.hpp"
 
+#include <string>
+#include <vector>
+
 namespace raytracer::parser {
 
 bool parseTransform(const std::vector<std::string>& tokens, TStack& stack) {
@@ -45,5 +48,4 @@ bool parseTransform(const std::vector<std::string>& tokens, TStack& stack) {
     return false;
 }
 
-}
-
+}  // namespace raytracer::parser

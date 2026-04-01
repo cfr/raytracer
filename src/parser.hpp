@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <regex>
 #include <tuple>
+#include <vector>
 
 namespace raytracer::parser {
 
@@ -36,7 +37,6 @@ std::vector<std::string> tokenize(const std::string& line) {
 }
 
 std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
-
     std::string line;
     int lineNo = 0;
 
@@ -85,4 +85,4 @@ std::tuple<Scene, Camera, Settings> readScene(const std::string& path) {
     return parseScene(file);
 }
 
-} // raytracer::parser
+}  // namespace raytracer::parser
