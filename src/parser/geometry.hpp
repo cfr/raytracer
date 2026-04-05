@@ -13,6 +13,7 @@
 namespace raytracer::parser {
 
 bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Node& node, Scene& scene) {
+    static size_t nodeId = 1;
     auto cmd = tokens[0];
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
@@ -34,7 +35,7 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         return true;
     }
     else if (cmd == "tri") {
-        if (tokens.size() != 4) {
+        if (tokens.size() < 4) {
             throw ParseException("Expected 'tri <idx1> <idx2> <idx3>'");
         }
         auto id0 = parseNum<int>(tokens[1]);
@@ -43,6 +44,11 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         auto a = vertices[id0];
         auto b = vertices[id1];
         auto c = vertices[id2];
+        if (tokens.size() >= 5) {
+            node.id = parseNum<size_t>(tokens[4]);
+        } else {
+            node.id = nodeId++;
+        }
         auto tri = std::make_shared<Triangle>(node, a, b, c);
         scene.nodes.push_back(tri);
         return true;
@@ -57,10 +63,11 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         c.z = parseNum<Float>(tokens[3]);
         Float r = parseNum<Float>(tokens[4]);
         if (tokens.size() >= 6) {
-            node.id = tokens[5];
+            node.id = parseNum<size_t>(tokens[5]);
+        } else {
+            node.id = nodeId++;
         }
         auto sphere = std::make_shared<Sphere>(node, c, r);
-        node.id = "";
         scene.nodes.push_back(sphere);
         return true;
     }

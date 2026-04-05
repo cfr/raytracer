@@ -32,7 +32,7 @@ struct Material {
 };
 
 struct Node {
-    std::string id;
+    size_t id;
     Material material;
     Transform transform = Transform{1};
     Transform inverse = Transform{1};
