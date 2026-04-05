@@ -2,6 +2,8 @@
 
 #include "values.hpp"
 
+#include <string>
+
 namespace raytracer {
 
 inline Vec4 transformVec(Transform m, Vec4 v) {
@@ -19,15 +21,18 @@ struct Material {
         Diffuse,
         Specular,
         Shininess,
-        Emission
+        Emission,
+        Refraction
     };
     ColorA diffuse = {0, 0, 0, 1};
     ColorA specular = {0, 0, 0, 1};
     ColorA emission = {0, 0, 0, 1};
     Float shininess = 0;
+    Float refraction = 0;
 };
 
 struct Node {
+    std::string id;
     Material material;
     Transform transform = Transform{1};
     Transform inverse = Transform{1};
