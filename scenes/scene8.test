@@ -4,6 +4,8 @@ camera 0 0 1 0 0 -1 0 1 0 45
 output scene8.png
 
 maxdepth 9
+samples 8
+threads 16
 
 
 

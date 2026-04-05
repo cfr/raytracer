@@ -50,6 +50,20 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.depth = parseNum<int>(tokens[1]);
         return true;
     }
+    else if (cmd == "threads") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'threads <num>'");
+        }
+        settings.threads = parseNum<int>(tokens[1]);
+        return true;
+    }
+    else if (cmd == "samples") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'samples <num>'");
+        }
+        settings.samples = parseNum<int>(tokens[1]);
+        return true;
+    }
     else if (cmd == "output") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");

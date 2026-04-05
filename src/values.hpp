@@ -11,6 +11,7 @@ namespace raytracer {
 
 using Float = glm::float64_t;
 
+using Vec2 = glm::tvec2<Float, glm::defaultp>;
 using Vec3 = glm::tvec3<Float, glm::defaultp>;
 using Vec4 = glm::tvec4<Float, glm::defaultp>;
 

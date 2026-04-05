@@ -38,6 +38,7 @@ struct Settings {
     Size size;
     size_t depth = 5;
     size_t threads = 16;
+    size_t samples = 1;
     std::string output = "out.ppm";
 };
 

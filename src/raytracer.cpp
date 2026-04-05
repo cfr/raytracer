@@ -29,14 +29,26 @@ void write(const std::string& path, const Image& image) {
     std::println("Saved {}.", path);
 }
 
-Row traceRow(const Scene& scene, const RayCaster& caster, size_t depth, size_t y) {
+Row traceRow(const Scene& scene, RayCaster& caster, const Settings& settings, size_t y) {
     Row row(y, caster.size());
 
     for (auto point : row) {
-        auto ray = caster.cast(point);
-        Color color = trace(ray, caster.eye(), scene, depth);
-        auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
-        row.set(point, clamped);
+        if (settings.samples > 1) {
+            auto rays = caster.castMultisample(point, settings.samples);
+            Color res{0};
+            for (auto ray : rays) {
+                Color color = trace(ray, caster.eye(), scene, settings.depth);
+                auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
+                res += clamped;
+            }
+            res /= static_cast<Float>(settings.samples);
+            row.set(point, res);
+        } else {
+            auto ray = caster.cast(point);
+            Color color = trace(ray, caster.eye(), scene, settings.depth);
+            auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
+            row.set(point, clamped);
+        }
     }
     return row;
 }
@@ -56,7 +68,7 @@ int main(int argc, char** argv) {
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0ul, settings.size.height)) {
-            auto row = pool.submit(traceRow, scene, caster, settings.depth, y);
+            auto row = pool.submit(traceRow, scene, caster, settings, y);
             rows.push_back(std::move(row));
         }
 
