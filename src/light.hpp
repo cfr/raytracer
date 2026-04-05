@@ -51,6 +51,7 @@ ColorA colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Sce
                     : std::numeric_limits<Float>::max();
         bool shadowed = false;
         for (const auto& node : scene.nodes) {
+            if (node->material.refraction > 0) { continue; }
             auto h = node->intersect(shadowRay);
             if (h && h->t < distance) {
                 shadowed = true;

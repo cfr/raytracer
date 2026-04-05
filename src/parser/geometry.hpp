@@ -12,7 +12,7 @@
 
 namespace raytracer::parser {
 
-bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, const Node& node, Scene& scene) {
+bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Node& node, Scene& scene) {
     auto cmd = tokens[0];
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
@@ -48,7 +48,7 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         return true;
     }
     else if (cmd == "sphere") {
-        if (tokens.size() != 5) {
+        if (tokens.size() < 5) {
             throw ParseException("Expected 'sphere <x> <y> <z> <r>'");
         }
         Vec3 c;
@@ -56,7 +56,11 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         c.y = parseNum<Float>(tokens[2]);
         c.z = parseNum<Float>(tokens[3]);
         Float r = parseNum<Float>(tokens[4]);
+        if (tokens.size() >= 6) {
+            node.id = tokens[5];
+        }
         auto sphere = std::make_shared<Sphere>(node, c, r);
+        node.id = "";
         scene.nodes.push_back(sphere);
         return true;
     }

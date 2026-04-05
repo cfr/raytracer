@@ -54,6 +54,12 @@ int main(int argc, char** argv) {
 
         ThreadPool pool{settings.threads};
 
+        /*for(int frame = 0; frame < 121; frame++) {
+        std::shared_ptr<Sphere> gs;
+        for(auto n : scene.nodes) {
+            if (n->id == "gs") gs = std::dynamic_pointer_cast<Sphere>(n);
+        }
+        gs->fall();*/
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0ul, settings.size.height)) {
             auto row = pool.submit(traceRow, scene, caster, settings.depth, y);
@@ -75,7 +81,9 @@ int main(int argc, char** argv) {
             image.set(point, clamped);
         }
         */
+        //std::string name = "frames/" + std::to_string(frame) + ".ppm";
         write(settings.output, image);
+        //}
     } catch (const std::exception& e) {
         std::println("{}", e.what());
     }

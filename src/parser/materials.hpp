@@ -15,6 +15,7 @@ std::optional<Material::Type> materialType(const std::string& token) {
     if (token == "specular") { return Material::Type::Specular; }
     if (token == "shininess") { return Material::Type::Shininess; }
     if (token == "emission") { return Material::Type::Emission; }
+    if (token == "refraction") { return Material::Type::Refraction; }
     return {};
 }
 
@@ -28,6 +29,13 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
             throw ParseException("Expected 'shininess s'");
         }
         mat.shininess = parseNum<Float>(tokens[1]);
+        return true;
+    }
+    if (type == Material::Type::Refraction) {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'refraction r'");
+        }
+        mat.refraction = parseNum<Float>(tokens[1]);
         return true;
     }
     // parse specular or diffuse or emission
