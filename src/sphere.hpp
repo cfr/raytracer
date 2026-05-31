@@ -17,7 +17,22 @@ class Sphere: public Hittable {
     Float radius_ = 1;
 
  public:
-    Sphere(const Node& n, Vec3 center, Float radius) : Hittable{n}, center_{center}, radius_{radius} {}
+    Sphere(const Object& obj, Vec3 center, Float radius) : Hittable{obj}, center_{center}, radius_{radius} {}
+
+    Box aabb() const override {
+        Vec3 lo = center_ - Vec3{radius_};
+        Vec3 hi = center_ + Vec3{radius_};
+        Box w;
+        for (int i = 0; i < 8; ++i) {
+            Vec3 corner{ (i&1) ? hi.x : lo.x,
+                         (i&2) ? hi.y : lo.y,
+                         (i&4) ? hi.z : lo.z };
+            Vec3 p = transformVec3(transform, corner);
+            w.min = glm::min(w.min, p);
+            w.max = glm::max(w.max, p);
+        }
+        return w;
+    }
 
     Vec4 normal(Vec3 point) const override {
         return Vec4{point - center_, 0};
@@ -25,18 +40,20 @@ class Sphere: public Hittable {
 
     Float distance(Ray ray) const override {
         auto rc = ray.eye - center_;
-        auto a = glm::dot(ray.dir, ray.dir);
-        auto b = 2 * glm::dot(ray.dir, rc);
-        auto c = glm::dot(rc, rc) - radius_*radius_;
+        auto a  = glm::dot(ray.dir, ray.dir);
+        auto b  = 2 * glm::dot(ray.dir, rc);
+        auto c  = glm::dot(rc, rc) - radius_*radius_;
 
         auto det = b*b - 4*a*c;
         if (det < 0) { return 0; }
 
-        auto r1 = (-b + glm::sqrt(det)) / (2 * a);
-        auto r2 = (-b - glm::sqrt(det)) / (2 * a);
+        auto sq   = glm::sqrt(det);
+        auto near = (-b - sq) / (2 * a);
+        auto far  = (-b + sq) / (2 * a);
 
-        auto t = std::min(r1, r2);
-        return t;
+        if (near > step) { return near; }
+        if (far  > step) { return far; }
+        return 0;
     }
 };
 

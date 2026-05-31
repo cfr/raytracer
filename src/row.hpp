@@ -16,7 +16,7 @@ class alignas(std::hardware_destructive_interference_size) Row {
 
  public:
     size_t y() { return y_;}
-    Row(size_t y, Size size) : y_(y), size_(size), data_{size.width, {0, 0, 0}} {}
+    Row(size_t y, Size size) : y_(y), size_(size), data_{size.width, Color{0}} {}
 
     Frame::Iterator begin() const { return {y_ * size_.width, size_.width}; }
     Frame::Iterator end() const { return {y_ * size_.width + size_.width, size_.width}; }

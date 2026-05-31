@@ -8,6 +8,8 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
+#include <algorithm>
+
 namespace raytracer {
 
 class Triangle: public Hittable {
@@ -20,13 +22,27 @@ class Triangle: public Hittable {
     Vec3 nc_;
 
  public:
-    Triangle(const Node& n, Vec3 a, Vec3 b, Vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
+    Triangle(const Object& obj, Vec3 a, Vec3 b, Vec3 c) : Hittable{obj}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
         auto normal = glm::normalize(glm::cross(ab, ac));
         na_ = normal;
         nb_ = normal;
         nc_ = normal;
+    }
+
+    Box aabb() const override {
+        Vec3 minp = transformVec3(transform, {
+            std::min({a_.x, b_.x, c_.x}),
+            std::min({a_.y, b_.y, c_.y}),
+            std::min({a_.z, b_.z, c_.z})
+        });
+        Vec3 maxp = transformVec3(transform, {
+            std::max({a_.x, b_.x, c_.x}),
+            std::max({a_.y, b_.y, c_.y}),
+            std::max({a_.z, b_.z, c_.z})
+        });
+        return { minp, maxp };
     }
 
     Vec4 normal(Vec3 /*point*/) const override {
@@ -40,7 +56,7 @@ class Triangle: public Hittable {
         auto h = glm::cross(ray.dir, edge2);
         auto a = glm::dot(edge1, h);
 
-        if (std::abs(a) < Hittable::step) {
+        if (glm::abs(a) < Hittable::step) {
             return 0;  // parallel
         }
 

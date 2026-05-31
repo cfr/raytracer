@@ -11,10 +11,10 @@
 
 namespace raytracer {
 
-ColorA light(const Vec3 eye, const Hit& hit, const Material& material, const Light& light) {
+Color light(const Vec3 eye, const Hit& hit, const Material& material, const Light& light) {
     auto eyedir = glm::normalize(eye - hit.point);
 
-    auto color = ColorA(0, 0, 0, 1);
+    auto color = Color(0, 0, 0, 1);
     Vec3 ldir;
     if (light.position.w == 0) {
         ldir = glm::normalize(Vec3{light.position});
@@ -34,7 +34,7 @@ ColorA light(const Vec3 eye, const Hit& hit, const Material& material, const Lig
     return color;
 }
 
-ColorA colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
+Color colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
     auto color = object.ambient + object.material.emission;
 
     for (const auto& source : scene.lights) {
@@ -47,18 +47,8 @@ ColorA colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Sce
         Float offset = Hittable::step;  // to prevent self-intersection
         auto shadowRay = Ray{hit.point + offset*srcDir, srcDir};
         Float distance =
-            isPoint ? glm::distance(Vec3(source.position), shadowRay.eye)
-                    : std::numeric_limits<Float>::max();
-        bool shadowed = false;
-        for (const auto& node : scene.nodes) {
-            if (node->material.refraction > 0) { continue; }
-            auto h = node->intersect(shadowRay);
-            if (h && h->t < distance) {
-                shadowed = true;
-                break;
-            }
-        }
-        if (shadowed) { continue; }
+            isPoint ? glm::distance(Vec3(source.position), hit.point) : inf;
+        if (scene.bvh.occluded(shadowRay, distance, hit.object)) { continue; }
         Float attenuation = 1.0;
 
         if (isPoint) {

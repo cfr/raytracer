@@ -43,9 +43,11 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     Settings settings;
     Camera camera;
     Scene scene;
+    std::vector<ManagedObject> objects;
+
     Material material;
     TStack stack;
-    Node node;
+    Object obj;
     std::vector<Vec3> vertices;
 
     while (std::getline(input, line)) {
@@ -56,16 +58,16 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         try {
             if (parseSettings(tokens, settings)) { continue; }
             if (parseCamera(tokens, camera)) { continue; }
-            if (parseGeometry(tokens, vertices, node, scene)) { continue; }
-            if (parseLights(tokens, node, scene)) { continue; }
+            if (parseGeometry(tokens, vertices, obj, objects)) { continue; }
+            if (parseLights(tokens, obj, scene)) { continue; }
             if (parseMaterial(tokens, material)) {
-                node.material = material;
+                obj.material = material;
                 continue;
             }
             if (parseTransform(tokens, stack)) {
-                node.transform = stack.top();
-                node.inverse = glm::inverse(node.transform);
-                node.inverseTranspose = glm::transpose(node.inverse);
+                obj.transform = stack.top();
+                obj.inverse = glm::inverse(obj.transform);
+                obj.inverseTranspose = glm::transpose(obj.inverse);
                 continue;
             }
             throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
@@ -75,6 +77,8 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         }
     }
 
+    BoundingVolumeHierarchy<ManagedObject> bvh{objects};
+    scene.bvh = std::move(bvh);
     return {scene, camera, settings};
 }
 

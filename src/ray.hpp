@@ -10,8 +10,13 @@
 namespace raytracer {
 
 struct Ray {
-    Vec3 eye = {0, 0, 0};
-    Vec3 dir = {0, 0, -1};
+    Vec3 eye;
+    Vec3 dir;
+    Vec3 inv;
+
+    explicit Ray(const Vec3& origin, const Vec3& direction)
+        : eye{origin}, dir{direction},
+          inv{Vec3{1.0} / direction} {}
 
     Vec3 at(Float t) const {
         return eye + t*dir;
@@ -20,7 +25,7 @@ struct Ray {
     Ray transformed(Transform transform) const {
         auto tEye = transform * Vec4(eye, 1);
         auto tDir = transform * Vec4(dir, 0);
-        return Ray{Vec3{tEye/tEye.w}, Vec3{tDir}};
+        return Ray{Vec3{tEye / tEye.w}, Vec3{tDir}};
     }
 };
 
@@ -55,7 +60,7 @@ class RayCaster {
 
         auto dir = alpha * basis_.u + beta * basis_.v - basis_.w;
 
-        return {eye_, glm::normalize(dir)};
+        return Ray{eye_, glm::normalize(dir)};
     }
 
     Size size() const { return size_; }

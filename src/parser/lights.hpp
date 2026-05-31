@@ -9,14 +9,14 @@
 
 namespace raytracer::parser {
 
-bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scene) {
+bool parseLights(const std::vector<std::string>& tokens, Object& obj, Scene& scene) {
     auto cmd = tokens[0];
     if (cmd == "ambient") {
         if (tokens.size() != 4) {
             throw ParseException("Expected 'ambient <r> <g> <b>'");
         }
-        ColorA rgba = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3]), 1};
-        node.ambient = rgba;
+        Color rgba = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3]), 1};
+        obj.ambient = rgba;
         return true;
     }
     else if (cmd == "attenuation") {
@@ -33,8 +33,8 @@ bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scen
             throw ParseException("Expected 'directional <x> <y> <z> <r> <g> <b>'");
         }
         Vec4 pos = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3]), 0};
-        ColorA rgba = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6]), 1};
-        auto tpos = transformVec(node.transform, pos);
+        Color rgba = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6]), 1};
+        auto tpos = obj.transform * pos;
         scene.lights.emplace_back(tpos, rgba);
         return true;
     }
@@ -43,8 +43,8 @@ bool parseLights(const std::vector<std::string>& tokens, Node& node, Scene& scen
             throw ParseException("Expected 'point <x> <y> <z> <r> <g> <b>'");
         }
         Vec4 pos = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3]), 1};
-        ColorA rgba = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6]), 1};
-        auto tpos = transformVec(node.transform, pos);
+        Color rgba = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6]), 1};
+        auto tpos = obj.transform * pos;
         scene.lights.emplace_back(tpos, rgba);
         return true;
     }

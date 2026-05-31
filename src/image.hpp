@@ -37,7 +37,7 @@ class Image {
     }
 
     explicit Image(Size s)
-        : size_{s}, data_{s.width*s.height, {0, 0, 0}} {}
+        : size_{s}, data_{s.width*s.height, Color{0}} {}
 
     Image(size_t width, size_t height)
         : Image(Size{width, height}) {}

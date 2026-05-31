@@ -1,29 +1,37 @@
 #pragma once
 
 #include "values.hpp"
-#include "node.hpp"
+#include "object.hpp"
+#include "box.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
 namespace raytracer {
 
+struct Hittable;
+
 struct Hit {
-    Float t;
+    Float t = inf;
     Vec3 point;
     Vec3 normal;
+    const Hittable* object = nullptr;
 };
 
-struct Hittable: Node {
+using ManagedObject = std::shared_ptr<Hittable>;
+
+struct Hittable: Object {
     static constexpr Float step = 0.0001;  // min distance for intersection
 
-    explicit Hittable(const Node& n) : Node{n} {};
+    explicit Hittable(const Object& obj) : Object{obj} {};
     virtual ~Hittable() = default;
+
+    virtual Box aabb() const = 0;
 
     // local normal at point
     virtual Vec4 normal(Vec3 point) const = 0;
 
-    // local distance to object, 0 if not intersection
+    // local distance to object, 0 if no intersection
     virtual Float distance(Ray ray) const = 0;
 
     std::optional<Hit> intersect(Ray ray) const {
@@ -36,11 +44,11 @@ struct Hittable: Node {
         auto point = tRay.at(t);
 
         // ray/world coordinates
-        auto wpoint = transformVec(transform, point);
+        auto wpoint = transformVec3(transform, point);
         auto wnormal = Vec3{inverseTranspose * normal(point)};
         Float wt = glm::length(wpoint - ray.eye);
 
-        return Hit{wt, wpoint, glm::normalize(wnormal)};
+        return Hit{wt, wpoint, glm::normalize(wnormal), this};
     }
 };
 

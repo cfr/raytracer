@@ -6,16 +6,18 @@
 #include "trace.hpp"
 #include "pool.hpp"
 #include "row.hpp"
+#include "bvh.hpp"
 
-#include <print>
 #include <fstream>
-#include <stdexcept>
-#include <ranges>
+#include <functional>
 #include <future>
-#include <thread>
-#include <vector>
+#include <print>
+#include <ranges>
+#include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 using namespace raytracer;
 
@@ -56,7 +58,7 @@ int main(int argc, char** argv) {
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0ul, settings.size.height)) {
-            auto row = pool.submit(traceRow, scene, caster, settings.depth, y);
+            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.depth, y);
             rows.push_back(std::move(row));
         }
 
