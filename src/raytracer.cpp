@@ -54,7 +54,8 @@ int main(int argc, char** argv) {
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
 
-        ThreadPool pool{settings.threads};
+        size_t threads = settings.threads ? settings.threads : std::thread::hardware_concurrency();
+        ThreadPool pool{threads};
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0ul, settings.size.height)) {

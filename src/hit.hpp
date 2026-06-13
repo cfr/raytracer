@@ -7,6 +7,9 @@
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
+#include <optional>
+#include <memory>
+
 namespace raytracer {
 
 struct Hittable;

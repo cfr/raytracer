@@ -49,10 +49,10 @@ Color colorOf(const Vec3 eye, const Hittable& object, const Hit& hit, const Scen
         Float distance =
             isPoint ? glm::distance(Vec3(source.position), hit.point) : inf;
         if (scene.bvh.occluded(shadowRay, distance, hit.object)) { continue; }
+
         Float attenuation = 1.0;
 
         if (isPoint) {
-            Float distance = glm::distance(Vec3{source.position}, hit.point);
             attenuation = scene.attenuation.factor(distance);
         }
 

@@ -4,44 +4,40 @@
 
 #include <glm/glm.hpp>
 
+#include <utility>
+
 namespace raytracer {
 
-struct Box
-{
+struct Box {
     Vec3 min{inf};
     Vec3 max{-inf};
 
+    std::pair<Float, Float> slab(const Vec3& origin, const Vec3& inv) const {
+        Float tenter = -inf, texit = inf;
+        for (int i = 0; i < 3; ++i) {
+            Float t1 = (min[i] - origin[i]) * inv[i];
+            Float t2 = (max[i] - origin[i]) * inv[i];
+            tenter = glm::min(glm::max(tenter, t1), glm::max(tenter, t2));
+            texit  = glm::max(glm::min(texit,  t1), glm::min(texit,  t2));
+        }
+        return {tenter, texit};
+    }
+
     Float enter(const Vec3& origin, const Vec3& inv) const {
-        Vec3 t1 = (min - origin) * inv;
-        Vec3 t2 = (max - origin) * inv;
-        Vec3 tmin = glm::min(t1, t2);
-        return glm::max(tmin.x, glm::max(tmin.y, tmin.z));
+        return slab(origin, inv).first;
     }
 
     bool intersects(const Vec3& origin, const Vec3& inv) const {
-        Vec3 t1 = (min - origin) * inv;
-        Vec3 t2 = (max - origin) * inv;
-        Vec3 tmin = glm::min(t1, t2);
-        Vec3 tmax = glm::max(t1, t2);
-        Float tenter = glm::max(tmin.x, glm::max(tmin.y, tmin.z));
-        Float texit  = glm::min(tmax.x, glm::min(tmax.y, tmax.z));
-        return tenter <= texit && texit >= 0;
+        auto [te, tx] = slab(origin, inv);
+        return te <= tx && tx >= 0;
     }
 
-    bool intersects(const Vec3& origin, const Vec3& inv, Float tmin, Float tmax) const
-    {
-        Vec3 t1 = (min - origin) * inv;
-        Vec3 t2 = (max - origin) * inv;
-        Vec3 btmin = glm::min(t1, t2);
-        Vec3 btmax = glm::max(t1, t2);
-
-        Float enter = glm::max(btmin.x, glm::max(btmin.y, btmin.z));
-        Float exit  = glm::min(btmax.x, glm::min(btmax.y, btmax.z));
-
-        return enter <= exit && exit >= tmin && enter <= tmax;
+    bool intersects(const Vec3& origin, const Vec3& inv, Float tmin, Float tmax) const {
+        auto [te, tx] = slab(origin, inv);
+        return te <= tx && tx >= tmin && te <= tmax;
     }
 
-    inline Vec3 center() {
+    Vec3 center() const {
         return (min + max) * 0.5;
     }
 };

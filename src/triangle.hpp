@@ -32,17 +32,11 @@ class Triangle: public Hittable {
     }
 
     Box aabb() const override {
-        Vec3 minp = transformVec3(transform, {
-            std::min({a_.x, b_.x, c_.x}),
-            std::min({a_.y, b_.y, c_.y}),
-            std::min({a_.z, b_.z, c_.z})
-        });
-        Vec3 maxp = transformVec3(transform, {
-            std::max({a_.x, b_.x, c_.x}),
-            std::max({a_.y, b_.y, c_.y}),
-            std::max({a_.z, b_.z, c_.z})
-        });
-        return { minp, maxp };
+        Vec3 wa = transformVec3(transform, a_);
+        Vec3 wb = transformVec3(transform, b_);
+        Vec3 wc = transformVec3(transform, c_);
+        return { glm::min(wa, glm::min(wb, wc)),
+                 glm::max(wa, glm::max(wb, wc)) };
     }
 
     Vec4 normal(Vec3 /*point*/) const override {

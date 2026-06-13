@@ -19,7 +19,7 @@ namespace raytracer {
 class ThreadPool {
  public:
     explicit ThreadPool(size_t size) {
-        size = std::max(1ul, size);
+        size = std::max<size_t>(1, size);
         workers_.reserve(size);
 
         for (size_t i = 0; i < size; ++i) {

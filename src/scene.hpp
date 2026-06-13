@@ -38,13 +38,11 @@ struct Light {
 struct Settings {
     Size size;
     size_t depth = 5;
-    size_t threads = 1;
+    size_t threads = 0;
     std::string output = "out.ppm";
 };
 
 struct Scene {
-    size_t depth = 5;
-    std::string output = "out.ppm";
     Attenuation attenuation;
     std::vector<Light> lights;
     BoundingVolumeHierarchy<ManagedObject> bvh;

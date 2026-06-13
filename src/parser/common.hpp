@@ -47,7 +47,14 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
-        settings.depth = parseNum<int>(tokens[1]);
+        settings.depth = parseNum<size_t>(tokens[1]);
+        return true;
+    }
+    else if (cmd == "threads") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'threads <count>'");
+        }
+        settings.threads = parseNum<size_t>(tokens[1]);
         return true;
     }
     else if (cmd == "output") {

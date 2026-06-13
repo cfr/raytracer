@@ -4,12 +4,11 @@
 #include "image.hpp"
 #include "frame.hpp"
 
-#include <new>
 #include <vector>
 
 namespace raytracer {
 
-class alignas(std::hardware_destructive_interference_size) Row {
+class Row {
     size_t y_;
     Size size_;
     std::vector<Color> data_;

@@ -19,7 +19,6 @@
 
 namespace raytracer::parser {
 
-// TODO: take string_view
 std::vector<std::string> tokenize(const std::string& line) {
     const auto re = std::regex{R"(\s+)"};
     auto vec = std::vector<std::string>(

@@ -25,30 +25,27 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
 
     const Hittable* object = hit->object;
 
-    if (object->material.refraction > 0) {
-        // https://raytracing.github.io/books/RayTracingInOneWeekend.html#dielectrics/snell'slaw
-        bool front = glm::dot(ray.dir, hit->normal) < 0;
-        auto normal = front ? hit->normal : -hit->normal;
-
-        Float ri = front ? (1.0/object->material.refraction)
-                         : object->material.refraction;
-        Float cosTheta = std::fmin(glm::dot(-ray.dir, normal), 1.0);
-        Float sinTheta = std::sqrt(1.0 - cosTheta*cosTheta);
-
-        Vec3 dir;
-        if (ri*sinTheta > 1) {
-            dir = glm::reflect(ray.dir, normal);
-        } else {
-            dir = glm::refract(ray.dir, normal, ri);
-        }
-
-        auto scattered = Ray{hit->point, dir};
-
-        Color refracted = trace(scattered, hit->point, scene, depth - 1);
-        return refracted;
-    }
-
     Color color = colorOf(eye, *object, *hit, scene);
+
+    if (object->material.refraction > 0) {
+        bool front = glm::dot(ray.dir, hit->normal) < 0;
+        Vec3 normal = front ? hit->normal : -hit->normal;
+
+        Float ri = front ? 1.0/object->material.refraction
+                         : object->material.refraction;
+        Float cosT = std::fmin(glm::dot(-ray.dir, normal), 1.0);
+        Float sinT = std::sqrt(1.0 - cosT*cosT);
+
+        Float r0 = (1 - ri) / (1 + ri);
+        r0 *= r0;
+        Float fr = r0 + (1-r0) * std::pow(1 - cosT, 5);  // Schlick
+
+        Vec3 dir = (ri*sinT > 1.0 || fr > 1.0) ? glm::reflect(ray.dir, normal)
+                                               : glm::refract(ray.dir, normal, ri);
+        Float offset = Hittable::step;
+        auto scattered = Ray{hit->point + offset*dir, dir};
+        return color + trace(scattered, hit->point, scene, depth - 1);
+    }
 
     Float reflectivity = glm::length(Vec3{object->material.specular});
     if (reflectivity > 0) {
@@ -60,7 +57,6 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
 
         Color reflected = trace(reflectionRay, hit->point, scene, depth - 1);
         color += object->material.specular * reflected;
-        // color = glm::mix(color, reflectedColor, reflectivity);
     }
 
     return color;
