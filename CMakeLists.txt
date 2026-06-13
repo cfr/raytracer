@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(CSE167xRaytracer
+project(raytracer
     VERSION 1.0.0
     LANGUAGES CXX
-    DESCRIPTION "UC San DiegoX CSE167x Computer Graphics Homework 3: Raytracer"
+    DESCRIPTION "An elementary raytracer"
 )
 
 set(CMAKE_CXX_STANDARD 23)

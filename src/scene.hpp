@@ -3,9 +3,10 @@
 #include "values.hpp"
 #include "image.hpp"
 #include "camera.hpp"
-#include "node.hpp"
+#include "object.hpp"
 #include "ray.hpp"
 #include "hit.hpp"
+#include "bvh.hpp"
 
 #include <vector>
 #include <array>
@@ -31,23 +32,20 @@ struct Light {
         Point
     };
     Vec4 position = {0, 0, 0, 0};
-    ColorA color = {0, 0, 0, 1};
+    Color color = {0, 0, 0, 1};
 };
 
 struct Settings {
     Size size;
     size_t depth = 5;
-    size_t threads = 16;
+    size_t threads = 0;
     std::string output = "out.ppm";
 };
 
 struct Scene {
-    size_t depth = 5;
-    std::string output = "out.ppm";
     Attenuation attenuation;
-    std::vector<Vec3> vertices;  // TODO: store in parser
     std::vector<Light> lights;
-    std::vector<std::shared_ptr<Hittable>> nodes;
+    BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 
 }  // namespace raytracer

@@ -31,7 +31,7 @@ class Frame {
             return *this;
         }
 
-        bool operator<=>(const Iterator& other) const = default;
+        auto operator<=>(const Iterator& other) const = default;
     };
 
     Iterator begin() const { return {0, size_.width}; }

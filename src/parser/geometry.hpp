@@ -1,7 +1,7 @@
 #pragma once
 
 #include "values.hpp"
-#include "scene.hpp"
+#include "hit.hpp"
 #include "sphere.hpp"
 #include "triangle.hpp"
 #include "parser/common.hpp"
@@ -12,9 +12,9 @@
 
 namespace raytracer::parser {
 
-bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Node& node, Scene& scene) {
-    static size_t nodeId = 1;
-    auto cmd = tokens[0];
+bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Object& obj, std::vector<ManagedObject>& objects) {
+    static size_t objId = 1;
+    auto cmd = tokens.at(0);
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxverts <count>'");
@@ -38,19 +38,23 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         if (tokens.size() < 4) {
             throw ParseException("Expected 'tri <idx1> <idx2> <idx3>'");
         }
-        auto id0 = parseNum<int>(tokens[1]);
-        auto id1 = parseNum<int>(tokens[2]);
-        auto id2 = parseNum<int>(tokens[3]);
-        auto a = vertices[id0];
-        auto b = vertices[id1];
-        auto c = vertices[id2];
-        if (tokens.size() >= 5) {
-            node.id = parseNum<size_t>(tokens[4]);
-        } else {
-            node.id = nodeId++;
+        auto id0 = parseNum<size_t>(tokens[1]);
+        auto id1 = parseNum<size_t>(tokens[2]);
+        auto id2 = parseNum<size_t>(tokens[3]);
+        try {
+            auto a = vertices.at(id0);
+            auto b = vertices.at(id1);
+            auto c = vertices.at(id2);
+            if (tokens.size() >= 5) {
+                obj.id = parseNum<size_t>(tokens[4]);
+            } else {
+                obj.id = objId++;
+            }
+            auto tri = std::make_shared<Triangle>(obj, a, b, c);
+            objects.push_back(tri);
+        } catch (const std::exception& e) {
+            throw ParseException(e.what());
         }
-        auto tri = std::make_shared<Triangle>(node, a, b, c);
-        scene.nodes.push_back(tri);
         return true;
     }
     else if (cmd == "sphere") {
@@ -63,12 +67,12 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         c.z = parseNum<Float>(tokens[3]);
         Float r = parseNum<Float>(tokens[4]);
         if (tokens.size() >= 6) {
-            node.id = parseNum<size_t>(tokens[5]);
+            obj.id = parseNum<size_t>(tokens[5]);
         } else {
-            node.id = nodeId++;
+            obj.id = objId++;
         }
-        auto sphere = std::make_shared<Sphere>(node, c, r);
-        scene.nodes.push_back(sphere);
+        auto sphere = std::make_shared<Sphere>(obj, c, r);
+        objects.push_back(sphere);
         return true;
     }
     // TODO: maxvertnorms, vertexnormal, trinormal

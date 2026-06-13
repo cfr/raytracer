@@ -8,6 +8,8 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
+#include <algorithm>
+
 namespace raytracer {
 
 class Triangle: public Hittable {
@@ -20,13 +22,21 @@ class Triangle: public Hittable {
     Vec3 nc_;
 
  public:
-    Triangle(const Node& n, Vec3 a, Vec3 b, Vec3 c) : Hittable{n}, a_(a), b_(b), c_(c) {
+    Triangle(const Object& obj, Vec3 a, Vec3 b, Vec3 c) : Hittable{obj}, a_(a), b_(b), c_(c) {
         auto ab = b_ - a_;
         auto ac = c_ - a_;
         auto normal = glm::normalize(glm::cross(ab, ac));
         na_ = normal;
         nb_ = normal;
         nc_ = normal;
+    }
+
+    Box aabb() const override {
+        Vec3 wa = transformVec3(transform, a_);
+        Vec3 wb = transformVec3(transform, b_);
+        Vec3 wc = transformVec3(transform, c_);
+        return { glm::min(wa, glm::min(wb, wc)),
+                 glm::max(wa, glm::max(wb, wc)) };
     }
 
     Vec4 normal(Vec3 /*point*/) const override {
@@ -40,7 +50,7 @@ class Triangle: public Hittable {
         auto h = glm::cross(ray.dir, edge2);
         auto a = glm::dot(edge1, h);
 
-        if (std::abs(a) < Hittable::step) {
+        if (glm::abs(a) < Hittable::step) {
             return 0;  // parallel
         }
 
