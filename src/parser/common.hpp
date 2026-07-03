@@ -64,6 +64,20 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.output = tokens[1] + ".ppm";
         return true;
     }
+    else if (cmd == "integrator") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'integrator <raytracer/analyticdirect>'");
+        }
+        auto integrator = tokens[1];
+        if (integrator == "whitted") {
+            settings.integrator = Integrator::Whitted;
+        } else if (integrator == "analyticdirect") {
+            settings.integrator = Integrator::AnalyticDirect;
+        } else {
+            throw ParseException("Expected 'integrator <raytracer/analyticdirect>'");
+        }
+        return true;
+    }
     return false;
 }
 

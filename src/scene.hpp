@@ -35,16 +35,31 @@ struct Light {
     Color color = {0, 0, 0, 1};
 };
 
+struct AreaLight {
+    // TODO: calculate v0..3
+    Vec3 position = {0, 0, 0};
+    Vec3 edgeL = {0, 0, 0};
+    Vec3 edgeR = {0, 0, 0};
+    Color radiance = {0, 0, 0, 1};
+};
+
+
+enum class Integrator: int {
+    Whitted,
+    AnalyticDirect
+};
 struct Settings {
-    Size size;
+    Size size = {640, 480};
     size_t depth = 5;
     size_t threads = 0;
+    Integrator integrator = Integrator::Whitted;
     std::string output = "out.ppm";
 };
 
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
+    std::vector<AreaLight> areaLights;
     BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 

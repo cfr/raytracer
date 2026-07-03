@@ -48,6 +48,18 @@ bool parseLights(const std::vector<std::string>& tokens, Object& obj, Scene& sce
         scene.lights.emplace_back(tpos, rgba);
         return true;
     }
+    else if (cmd == "quadLight") {
+        if (tokens.size() != 13) {
+            throw ParseException("Expected 'quadLight <x> <y> <z> <elx> <ely> <elz> <erx> <ery> <erz> <r> <g> <b>'");
+        }
+        Vec3 pos = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
+        Vec3 el = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
+        Vec3 er = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
+        Color rgba = {parseNum<Float>(tokens[10]), parseNum<Float>(tokens[11]), parseNum<Float>(tokens[12]), 1};
+        auto tpos = transformVec3(obj.transform, pos);
+        scene.areaLights.emplace_back(tpos, el, er, rgba);
+        return true;
+    }
     return false;
 }
 

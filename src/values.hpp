@@ -8,11 +8,13 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_precision.hpp>
+#include <glm/gtc/constants.hpp>
 
 namespace raytracer {
 
 using Float = glm::float64_t;
 
+static constexpr Float pi = glm::pi<Float>();
 static constexpr Float inf = std::numeric_limits<Float>::infinity();
 
 using Vec3 = glm::tvec3<Float, glm::defaultp>;
