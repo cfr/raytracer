@@ -40,19 +40,28 @@ struct AreaLight {
     Vec3 v1 = {0, 0, 0};
     Vec3 v2 = {0, 0, 0};
     Vec3 v3 = {0, 0, 0};
+    Vec3 edge1 = {0, 0, 0};
+    Vec3 edge2 = {0, 0, 0};
+    Vec3 normal = {0, 0, 0};
     Color radiance = {0, 0, 0, 1};
 };
 
-
-enum class Integrator: int {
-    Whitted,
-    AnalyticDirect
+struct Integrator {
+    enum class Type: int {
+        Whitted,
+        AnalyticDirect,
+        Direct
+    };
+    Type type = Type::Whitted;
+    size_t samples = 1;
+    bool stratify = false;
 };
+
 struct Settings {
     Size size = {640, 480};
     size_t depth = 5;
     size_t threads = 0;
-    Integrator integrator = Integrator::Whitted;
+    Integrator integrator;
     std::string output = "out.ppm";
 };
 

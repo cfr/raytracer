@@ -13,42 +13,41 @@
 namespace raytracer {
 
 Color intersectQuad(const Ray ray, const AreaLight& quad) {
-    const Vec3 e1 = quad.v1 - quad.v0;
-    const Vec3 e2 = quad.v3 - quad.v0;
-    const Vec3 n = glm::cross(e1, e2);
-
-    const Float denom = dot(n, ray.dir);
+    const Float denom = dot(quad.normal, ray.dir);
     Color black{0, 0, 0, 1};
     if (glm::abs(denom) < Hittable::step) return black;
 
     // TODO: ray-plane
-    const Float t = dot(quad.v0 - ray.eye, n) / denom;
+    const Float t = dot(quad.v0 - ray.eye, quad.normal) / denom;
     if (t <= Hittable::step) return black;
 
     const Vec3 p = ray.at(t);
 
-    const Float d0 = glm::dot(glm::cross(quad.v1 - quad.v0, p - quad.v0), n);
-    const Float d1 = glm::dot(glm::cross(quad.v2 - quad.v1, p - quad.v1), n);
-    const Float d2 = glm::dot(glm::cross(quad.v3 - quad.v2, p - quad.v2), n);
-    const Float d3 = glm::dot(glm::cross(quad.v0 - quad.v3, p - quad.v3), n);
+    const Float d0 = glm::dot(glm::cross(quad.v1 - quad.v0, p - quad.v0), quad.normal);
+    const Float d1 = glm::dot(glm::cross(quad.v2 - quad.v1, p - quad.v1), quad.normal);
+    const Float d2 = glm::dot(glm::cross(quad.v3 - quad.v2, p - quad.v2), quad.normal);
+    const Float d3 = glm::dot(glm::cross(quad.v0 - quad.v3, p - quad.v3), quad.normal);
 
-    // any
-    const bool inside = (d0 >= 0.0 && d1 >= 0.0 && d2 >= 0.0 && d3 >= 0.0) ||
-                        (d0 <= 0.0 && d1 <= 0.0 && d2 <= 0.0 && d3 <= 0.0);
+    const auto d = Vec4{d0, d1, d2, d3};
+    const auto zero = Vec4{0.0};
+    const bool inside = glm::all(glm::greaterThanEqual(d, zero))
+                     || glm::all(glm::lessThanEqual(d, zero));
 
     return inside ? quad.radiance : Color(0.0f);
 }
 
-Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, Integrator integrator) {
+Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const Integrator& integrator) {
     Color color{0, 0, 0, 1};
     if (depth <= 0) {
         return color;
     }
 
+    // TODO: implement hit and light parametrized by integrator
+    // maybe put areaLights in bvh
     auto hit = scene.bvh.intersect(ray);
 
     if (!hit) {
-        if (integrator == Integrator::AnalyticDirect) {
+        if (integrator.type != Integrator::Type::Whitted) {
             for (const auto& quad: scene.areaLights) {
                 color += intersectQuad(ray, quad);
             }
@@ -58,12 +57,14 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, Integr
 
     const Hittable* object = hit->object;
 
-    switch (integrator) {
-    case Integrator::Whitted:
+    switch (integrator.type) {
+    case Integrator::Type::Whitted:
         color = whitted(eye, *object, *hit, scene);
         break;
-    case Integrator::AnalyticDirect:
+    case Integrator::Type::AnalyticDirect:
         return analytic(*object, *hit, scene);
+    case Integrator::Type::Direct:
+        return direct(eye, *object, *hit, scene, integrator);
     }
 
     if (object->material.refraction > 0) {

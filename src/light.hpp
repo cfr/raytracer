@@ -61,6 +61,12 @@ Color whitted(const Vec3 eye, const Hittable& object, const Hit& hit, const Scen
     return color;
 }
 
+Color direct(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, const Integrator& integrator) {
+    auto color = Color{Vec3(0.0), 1.0};
+
+    return color;
+}
+
 Float quadIrradiance(const AreaLight& quad, const Vec3 r, const Vec3 normal) {
     Vec3 u0 = glm::normalize(quad.v0 - r);
     Vec3 u1 = glm::normalize(quad.v1 - r);
