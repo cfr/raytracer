@@ -66,10 +66,10 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     }
     else if (cmd == "integrator") {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'integrator <raytracer/analyticdirect>'");
+            throw ParseException("Expected 'integrator <whitted/raytracer/analyticdirect>'");
         }
         auto integrator = tokens[1];
-        if (integrator == "whitted") {
+        if (integrator == "whitted" || integrator == "raytracer") {
             settings.integrator = Integrator::Whitted;
         } else if (integrator == "analyticdirect") {
             settings.integrator = Integrator::AnalyticDirect;

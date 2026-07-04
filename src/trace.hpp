@@ -13,26 +13,24 @@
 namespace raytracer {
 
 Color intersectQuad(const Ray ray, const AreaLight& quad) {
+    const Vec3 e1 = quad.v1 - quad.v0;
+    const Vec3 e2 = quad.v3 - quad.v0;
+    const Vec3 n = glm::cross(e1, e2);
 
-    const Vec3 n = glm::cross(quad.edgeL, quad.edgeR);
-
-    const float denom = dot(n, ray.dir);
-    if (glm::abs(denom) < Hittable::step) return Color{0.0};
+    const Float denom = dot(n, ray.dir);
+    Color black{0, 0, 0, 1};
+    if (glm::abs(denom) < Hittable::step) return black;
 
     // TODO: ray-plane
-    const float t = dot(quad.position - ray.eye, n) / denom;
-    if (t <= Hittable::step) return Color{0.0};
+    const Float t = dot(quad.v0 - ray.eye, n) / denom;
+    if (t <= Hittable::step) return black;
 
     const Vec3 p = ray.at(t);
-    Vec3 v0 = quad.position;
-    Vec3 v1 = quad.position + quad.edgeL;
-    Vec3 v2 = quad.position + quad.edgeL + quad.edgeR;
-    Vec3 v3 = quad.position + quad.edgeR;
 
-    const float d0 = glm::dot(glm::cross(v1 - v0, p - v0), n);
-    const float d1 = glm::dot(glm::cross(v2 - v1, p - v1), n);
-    const float d2 = glm::dot(glm::cross(v3 - v2, p - v2), n);
-    const float d3 = glm::dot(glm::cross(v0 - v3, p - v3), n);
+    const Float d0 = glm::dot(glm::cross(quad.v1 - quad.v0, p - quad.v0), n);
+    const Float d1 = glm::dot(glm::cross(quad.v2 - quad.v1, p - quad.v1), n);
+    const Float d2 = glm::dot(glm::cross(quad.v3 - quad.v2, p - quad.v2), n);
+    const Float d3 = glm::dot(glm::cross(quad.v0 - quad.v3, p - quad.v3), n);
 
     // any
     const bool inside = (d0 >= 0.0 && d1 >= 0.0 && d2 >= 0.0 && d3 >= 0.0) ||
@@ -63,8 +61,9 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, Integr
     switch (integrator) {
     case Integrator::Whitted:
         color = whitted(eye, *object, *hit, scene);
+        break;
     case Integrator::AnalyticDirect:
-        return analytic(eye, *object, *hit, scene);
+        return analytic(*object, *hit, scene);
     }
 
     if (object->material.refraction > 0) {

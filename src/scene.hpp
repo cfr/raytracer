@@ -36,10 +36,10 @@ struct Light {
 };
 
 struct AreaLight {
-    // TODO: calculate v0..3
-    Vec3 position = {0, 0, 0};
-    Vec3 edgeL = {0, 0, 0};
-    Vec3 edgeR = {0, 0, 0};
+    Vec3 v0 = {0, 0, 0};
+    Vec3 v1 = {0, 0, 0};
+    Vec3 v2 = {0, 0, 0};
+    Vec3 v3 = {0, 0, 0};
     Color radiance = {0, 0, 0, 1};
 };
 

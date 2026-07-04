@@ -62,14 +62,10 @@ Color whitted(const Vec3 eye, const Hittable& object, const Hit& hit, const Scen
 }
 
 Float quadIrradiance(const AreaLight& quad, const Vec3 r, const Vec3 normal) {
-    Vec3 v0 = quad.position;
-    Vec3 v1 = quad.position + quad.edgeL;
-    Vec3 v2 = quad.position + quad.edgeL + quad.edgeR;
-    Vec3 v3 = quad.position + quad.edgeR;
-    Vec3 u0 = glm::normalize(v0 - r);
-    Vec3 u1 = glm::normalize(v1 - r);
-    Vec3 u2 = glm::normalize(v2 - r);
-    Vec3 u3 = glm::normalize(v3 - r);
+    Vec3 u0 = glm::normalize(quad.v0 - r);
+    Vec3 u1 = glm::normalize(quad.v1 - r);
+    Vec3 u2 = glm::normalize(quad.v2 - r);
+    Vec3 u3 = glm::normalize(quad.v3 - r);
     Vec3 phi = Vec3{0.0};
     phi += glm::acos(glm::dot(u0, u1)) * glm::normalize(glm::cross(u0, u1));
     phi += glm::acos(glm::dot(u1, u2)) * glm::normalize(glm::cross(u1, u2));
@@ -78,7 +74,7 @@ Float quadIrradiance(const AreaLight& quad, const Vec3 r, const Vec3 normal) {
     return 0.5 * glm::dot(phi, normal);
 }
 
-Color analytic(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
+Color analytic(const Hittable& object, const Hit& hit, const Scene& scene) {
     auto color = Color{Vec3(0.0), 1.0};
 
     for (const auto& source : scene.areaLights) {
