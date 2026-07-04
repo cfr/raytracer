@@ -2,6 +2,7 @@
 
 #include "values.hpp"
 #include "scene.hpp"
+#include "quad.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/exponential.hpp>
@@ -11,7 +12,7 @@
 
 namespace raytracer {
 
-Color light(const Vec3 eye, const Hit& hit, const Material& material, const Light& light) {
+Color light(Vec3 eye, const Hit& hit, const Material& material, const Light& light) {
     auto eyedir = glm::normalize(eye - hit.point);
 
     auto color = Color(0, 0, 0, 1);
@@ -34,7 +35,7 @@ Color light(const Vec3 eye, const Hit& hit, const Material& material, const Ligh
     return color;
 }
 
-Color whitted(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
+Color whitted(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
     auto color = object.ambient + object.material.emission;
 
     for (const auto& source : scene.lights) {
@@ -61,30 +62,17 @@ Color whitted(const Vec3 eye, const Hittable& object, const Hit& hit, const Scen
     return color;
 }
 
-Color direct(const Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, const Integrator& integrator) {
+Color direct(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, const Integrator& integrator) {
     auto color = Color{Vec3(0.0), 1.0};
 
     return color;
-}
-
-Float quadIrradiance(const AreaLight& quad, const Vec3 r, const Vec3 normal) {
-    Vec3 u0 = glm::normalize(quad.v0 - r);
-    Vec3 u1 = glm::normalize(quad.v1 - r);
-    Vec3 u2 = glm::normalize(quad.v2 - r);
-    Vec3 u3 = glm::normalize(quad.v3 - r);
-    Vec3 phi = Vec3{0.0};
-    phi += glm::acos(glm::dot(u0, u1)) * glm::normalize(glm::cross(u0, u1));
-    phi += glm::acos(glm::dot(u1, u2)) * glm::normalize(glm::cross(u1, u2));
-    phi += glm::acos(glm::dot(u2, u3)) * glm::normalize(glm::cross(u2, u3));
-    phi += glm::acos(glm::dot(u3, u0)) * glm::normalize(glm::cross(u3, u0));
-    return 0.5 * glm::dot(phi, normal);
 }
 
 Color analytic(const Hittable& object, const Hit& hit, const Scene& scene) {
     auto color = Color{Vec3(0.0), 1.0};
 
     for (const auto& source : scene.areaLights) {
-        color += object.material.diffuse / pi * source.radiance * quadIrradiance(source, hit.point, hit.normal);
+        color += object.material.diffuse / pi * source.radiance * source.irradiance(hit.point, hit.normal);
     }
     return color;
 }

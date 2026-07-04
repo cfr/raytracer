@@ -12,30 +12,6 @@
 
 namespace raytracer {
 
-Color intersectQuad(const Ray ray, const AreaLight& quad) {
-    const Float denom = dot(quad.normal, ray.dir);
-    Color black{0, 0, 0, 1};
-    if (glm::abs(denom) < Hittable::step) return black;
-
-    // TODO: ray-plane
-    const Float t = dot(quad.v0 - ray.eye, quad.normal) / denom;
-    if (t <= Hittable::step) return black;
-
-    const Vec3 p = ray.at(t);
-
-    const Float d0 = glm::dot(glm::cross(quad.v1 - quad.v0, p - quad.v0), quad.normal);
-    const Float d1 = glm::dot(glm::cross(quad.v2 - quad.v1, p - quad.v1), quad.normal);
-    const Float d2 = glm::dot(glm::cross(quad.v3 - quad.v2, p - quad.v2), quad.normal);
-    const Float d3 = glm::dot(glm::cross(quad.v0 - quad.v3, p - quad.v3), quad.normal);
-
-    const auto d = Vec4{d0, d1, d2, d3};
-    const auto zero = Vec4{0.0};
-    const bool inside = glm::all(glm::greaterThanEqual(d, zero))
-                     || glm::all(glm::lessThanEqual(d, zero));
-
-    return inside ? quad.radiance : Color(0.0f);
-}
-
 Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const Integrator& integrator) {
     Color color{0, 0, 0, 1};
     if (depth <= 0) {
@@ -43,13 +19,17 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const 
     }
 
     // TODO: implement hit and light parametrized by integrator
-    // maybe put areaLights in bvh
+    // put areaLights in bvh?
     auto hit = scene.bvh.intersect(ray);
 
     if (!hit) {
         if (integrator.type != Integrator::Type::Whitted) {
+            Float nearest = inf;
             for (const auto& quad: scene.areaLights) {
-                color += intersectQuad(ray, quad);
+                auto t = quad.intersect(ray);
+                if (t < nearest) {
+                    color = quad.radiance;
+                }
             }
         }
         return color;

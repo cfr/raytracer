@@ -7,6 +7,7 @@
 #include "ray.hpp"
 #include "hit.hpp"
 #include "bvh.hpp"
+#include "quad.hpp"
 
 #include <vector>
 #include <array>
@@ -35,17 +36,6 @@ struct Light {
     Color color = {0, 0, 0, 1};
 };
 
-struct AreaLight {
-    Vec3 v0 = {0, 0, 0};
-    Vec3 v1 = {0, 0, 0};
-    Vec3 v2 = {0, 0, 0};
-    Vec3 v3 = {0, 0, 0};
-    Vec3 edge1 = {0, 0, 0};
-    Vec3 edge2 = {0, 0, 0};
-    Vec3 normal = {0, 0, 0};
-    Color radiance = {0, 0, 0, 1};
-};
-
 struct Integrator {
     enum class Type: int {
         Whitted,
@@ -68,7 +58,7 @@ struct Settings {
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
-    std::vector<AreaLight> areaLights;
+    std::vector<QuadLight> areaLights;
     BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 
