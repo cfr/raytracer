@@ -8,6 +8,7 @@
 #include "hit.hpp"
 #include "bvh.hpp"
 #include "quad.hpp"
+#include "rand.hpp"
 
 #include <vector>
 #include <array>
@@ -45,6 +46,7 @@ struct Integrator {
     Type type = Type::Whitted;
     size_t samples = 1;
     bool stratify = false;
+    std::shared_ptr<Gen> gen = nullptr;
 };
 
 struct Settings {

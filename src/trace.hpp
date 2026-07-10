@@ -13,27 +13,29 @@
 namespace raytracer {
 
 Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const Integrator& integrator) {
-    Color color{0, 0, 0, 1};
+    auto color = colors::black;
     if (depth <= 0) {
         return color;
     }
 
-    // TODO: implement hit and light parametrized by integrator
-    // put areaLights in bvh?
     auto hit = scene.bvh.intersect(ray);
+    Float tGeom = hit ? hit->t : inf;
 
-    if (!hit) {
-        if (integrator.type != Integrator::Type::Whitted) {
-            Float nearest = inf;
-            for (const auto& quad: scene.areaLights) {
-                auto t = quad.intersect(ray);
-                if (t < nearest) {
-                    color = quad.radiance;
-                }
+    if (integrator.type != Integrator::Type::Whitted) {
+        Float tLight = inf;
+        const QuadLight* seen = nullptr;
+        for (const auto& quad : scene.areaLights) {
+            Float t = quad.intersect(ray);
+            if (t > Hittable::step && t < tLight) {
+                tLight = t;
+                seen = &quad;
             }
         }
-        return color;
+        if (seen && tLight < tGeom) {
+            return seen->radiance;
+        }
     }
+    if (!hit) { return colors::black; }
 
     const Hittable* object = hit->object;
 
@@ -44,7 +46,7 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const 
     case Integrator::Type::AnalyticDirect:
         return analytic(*object, *hit, scene);
     case Integrator::Type::Direct:
-        return direct(eye, *object, *hit, scene, integrator);
+        return direct(eye, *object, *hit, scene, *integrator.gen, integrator.samples, integrator.stratify);
     }
 
     if (object->material.refraction > 0) {

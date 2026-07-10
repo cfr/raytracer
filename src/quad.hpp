@@ -15,6 +15,7 @@ struct QuadLight {
     Vec3 edge1 = {0, 0, 0};
     Vec3 edge2 = {0, 0, 0};
     Vec3 normal = {0, 0, 0};
+    Float area = 0;
     Color radiance = {0, 0, 0, 1};
 
     Float irradiance(const Vec3 r, const Vec3 rnormal) const {
@@ -50,6 +51,10 @@ struct QuadLight {
                          || glm::all(glm::lessThanEqual(d, zero));
 
         return inside ? t : inf;
+    }
+
+    Vec3 sample(Vec2 u) const {
+        return v0 + u.x * edge1 + u.y * edge2;
     }
 };
 

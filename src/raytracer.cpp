@@ -12,6 +12,7 @@
 #include <functional>
 #include <future>
 #include <print>
+#include <random>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -56,10 +57,13 @@ int main(int argc, char** argv) {
 
         size_t threads = settings.threads ? settings.threads : std::thread::hardware_concurrency();
         ThreadPool pool{threads};
+        std::random_device r;
 
         std::vector<std::future<Row>> rows;
-        for (auto y : std::views::iota(0ul, settings.size.height)) {
-            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.depth, settings.integrator, y);
+        for (auto y : std::views::iota(0uz, settings.size.height)) {
+            auto integrator = settings.integrator;
+            integrator.gen = std::make_shared<Gen>(r);
+            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.depth, integrator, y);
             rows.push_back(std::move(row));
         }
 

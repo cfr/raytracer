@@ -3,6 +3,7 @@
 #include "values.hpp"
 #include "scene.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <charconv>
 #include <format>
@@ -84,7 +85,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightsamples <count>'");
         }
-        settings.integrator.samples = parseNum<size_t>(tokens[1]);
+        settings.integrator.samples = std::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
     else if (cmd == "lightstratify") {
