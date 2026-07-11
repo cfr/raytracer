@@ -7,6 +7,8 @@
 #include "ray.hpp"
 #include "hit.hpp"
 #include "bvh.hpp"
+#include "quad.hpp"
+#include "rand.hpp"
 
 #include <vector>
 #include <array>
@@ -35,16 +37,30 @@ struct Light {
     Color color = {0, 0, 0, 1};
 };
 
+struct Integrator {
+    enum class Type: int {
+        Whitted,
+        AnalyticDirect,
+        Direct
+    };
+    Type type = Type::Whitted;
+    size_t samples = 1;
+    bool stratify = false;
+    std::shared_ptr<Gen> gen = nullptr;
+};
+
 struct Settings {
-    Size size;
+    Size size = {640, 480};
     size_t depth = 5;
     size_t threads = 0;
+    Integrator integrator;
     std::string output = "out.ppm";
 };
 
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
+    std::vector<QuadLight> areaLights;
     BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 

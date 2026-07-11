@@ -55,9 +55,10 @@ class Image {
     void writePPM(std::ostream& out) const {
         out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
         for (auto pix : *this) {
-            auto r = static_cast<int>(255.999 * pix.r);
-            auto g = static_cast<int>(255.999 * pix.g);
-            auto b = static_cast<int>(255.999 * pix.b);
+            static constexpr Float scale = 255.0; // 255.999
+            auto r = static_cast<int>(scale * pix.r);
+            auto g = static_cast<int>(scale * pix.g);
+            auto b = static_cast<int>(scale * pix.b);
             out << r << ' ' << g << ' ' << b << '\n';
         }
         out << std::endl;

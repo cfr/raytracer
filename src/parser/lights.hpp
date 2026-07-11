@@ -48,6 +48,25 @@ bool parseLights(const std::vector<std::string>& tokens, Object& obj, Scene& sce
         scene.lights.emplace_back(tpos, rgba);
         return true;
     }
+    else if (cmd == "quadLight") {
+        if (tokens.size() != 13) {
+            throw ParseException("Expected 'quadLight <x> <y> <z> <elx> <ely> <elz> <erx> <ery> <erz> <r> <g> <b>'");
+        }
+        Vec3 position = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
+        Vec3 edge1 = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
+        Vec3 edge2 = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
+        Color rad = {parseNum<Float>(tokens[10]), parseNum<Float>(tokens[11]), parseNum<Float>(tokens[12]), 1};
+        auto v0 = transformVec3(obj.transform, position);
+        auto v1 = transformVec3(obj.transform, position + edge1);
+        auto v2 = transformVec3(obj.transform, position + edge1 + edge2);
+        auto v3 = transformVec3(obj.transform, position + edge2);
+        auto e1 = v1 - v0;
+        auto e2 = v3 - v0;
+        auto n = glm::cross(e2, e1);
+        Float area = glm::length(n);
+        scene.areaLights.emplace_back(v0, v1, v2, v3, e1, e2, n/area, area, rad);
+        return true;
+    }
     return false;
 }
 

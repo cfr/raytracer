@@ -12,20 +12,42 @@
 
 namespace raytracer {
 
-Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
+Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const Integrator& integrator) {
+    auto color = colors::black;
     if (depth <= 0) {
-        return Color{0, 0, 0, 1};
+        return color;
     }
 
     auto hit = scene.bvh.intersect(ray);
+    Float tGeom = hit ? hit->t : inf;
 
-    if (!hit) {
-        return Color{0, 0, 0, 1};
+    if (integrator.type != Integrator::Type::Whitted) {
+        Float tLight = inf;
+        const QuadLight* seen = nullptr;
+        for (const auto& quad : scene.areaLights) {
+            Float t = quad.intersect(ray);
+            if (t > Hittable::step && t < tLight) {
+                tLight = t;
+                seen = &quad;
+            }
+        }
+        if (seen && tLight < tGeom) {
+            return seen->radiance;
+        }
     }
+    if (!hit) { return colors::black; }
 
     const Hittable* object = hit->object;
 
-    Color color = colorOf(eye, *object, *hit, scene);
+    switch (integrator.type) {
+    case Integrator::Type::Whitted:
+        color = whitted(eye, *object, *hit, scene);
+        break;
+    case Integrator::Type::AnalyticDirect:
+        return analytic(*object, *hit, scene);
+    case Integrator::Type::Direct:
+        return direct(eye, *object, *hit, scene, *integrator.gen, integrator.samples, integrator.stratify);
+    }
 
     if (object->material.refraction > 0) {
         bool front = glm::dot(ray.dir, hit->normal) < 0;
@@ -44,7 +66,7 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
                                                : glm::refract(ray.dir, normal, ri);
         Float offset = Hittable::step;
         auto scattered = Ray{hit->point + offset*dir, dir};
-        return color + trace(scattered, hit->point, scene, depth - 1);
+        return color + trace(scattered, hit->point, scene, depth - 1, integrator);
     }
 
     Float reflectivity = glm::length(Vec3{object->material.specular});
@@ -55,7 +77,7 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth) {
         Float offset = Hittable::step;
         Ray reflectionRay{hit->point + offset*reflect, reflect};
 
-        Color reflected = trace(reflectionRay, hit->point, scene, depth - 1);
+        Color reflected = trace(reflectionRay, hit->point, scene, depth - 1, integrator);
         color += object->material.specular * reflected;
     }
 

@@ -32,7 +32,6 @@ class TStack {
     void pop() {
         if (stack_.size() <= 1) {
             throw std::length_error("Can't pop transformation stack last item");
-            return;
         }
         stack_.pop();
     }

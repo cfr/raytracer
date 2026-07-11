@@ -8,13 +8,16 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_precision.hpp>
+#include <glm/gtc/constants.hpp>
 
 namespace raytracer {
 
 using Float = glm::float64_t;
 
+static constexpr Float pi = glm::pi<Float>();
 static constexpr Float inf = std::numeric_limits<Float>::infinity();
 
+using Vec2 = glm::tvec2<Float, glm::defaultp>;
 using Vec3 = glm::tvec3<Float, glm::defaultp>;
 using Vec4 = glm::tvec4<Float, glm::defaultp>;
 
@@ -22,6 +25,11 @@ using Transform = glm::tmat4x4<Float, glm::defaultp>;
 
 using Color = Vec4;
 using Color3 = Vec3;
+
+namespace colors {
+    constexpr Color3 black3 = Vec3{0.0};
+    constexpr Color black = Vec4{black3, 1.0};
+}
 
 using Point = glm::ivec2;
 

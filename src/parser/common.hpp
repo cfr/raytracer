@@ -3,6 +3,7 @@
 #include "values.hpp"
 #include "scene.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <charconv>
 #include <format>
@@ -62,6 +63,40 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             throw ParseException("Expected 'output <filename>'");
         }
         settings.output = tokens[1] + ".ppm";
+        return true;
+    }
+    else if (cmd == "integrator") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect>'");
+        }
+        auto integrator = tokens[1];
+        if (integrator == "whitted" || integrator == "raytracer") {
+            settings.integrator.type = Integrator::Type::Whitted;
+        } else if (integrator == "direct") {
+            settings.integrator.type = Integrator::Type::Direct;
+        } else if (integrator == "analyticdirect") {
+            settings.integrator.type = Integrator::Type::AnalyticDirect;
+        } else {
+            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect>'");
+        }
+        return true;
+    }
+    else if (cmd == "lightsamples") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'lightsamples <count>'");
+        }
+        settings.integrator.samples = std::max(1uz, parseNum<size_t>(tokens[1]));
+        return true;
+    }
+    else if (cmd == "lightstratify") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'lightstratify <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'lightstratify <on/off>'");
+        }
+        settings.integrator.stratify = onoff == "on";
         return true;
     }
     return false;
