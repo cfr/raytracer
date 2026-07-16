@@ -8,7 +8,7 @@
 #include "hit.hpp"
 #include "bvh.hpp"
 #include "quad.hpp"
-#include "rand.hpp"
+#include "integrator.hpp"
 
 #include <vector>
 #include <array>
@@ -34,19 +34,7 @@ struct Light {
         Point
     };
     Vec4 position = {0, 0, 0, 0};
-    Color color = {0, 0, 0, 1};
-};
-
-struct Integrator {
-    enum class Type: int {
-        Whitted,
-        AnalyticDirect,
-        Direct
-    };
-    Type type = Type::Whitted;
-    size_t samples = 1;
-    bool stratify = false;
-    std::shared_ptr<Gen> gen = nullptr;
+    Color color = colors::black;
 };
 
 struct Settings {
@@ -60,7 +48,7 @@ struct Settings {
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
-    std::vector<QuadLight> areaLights;
+    std::vector<std::shared_ptr<Quad>> areaLights;
     BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 

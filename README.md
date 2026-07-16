@@ -1,6 +1,6 @@
 # Raytracer
 
-A basic raytracer originally developed for UC San Diego CSE167/CSE168 Computer Graphics courses. Features include Blinn-Phong shading, shadows, and reflections, bounding volume hierarchy and path tracing.
+A basic raytracer originally developed for UC San Diego CSE167/CSE168 Computer Graphics courses. Features include Blinn-Phong shading, shadows, reflections, bounding volume hierarchy and path tracing.
 
 # Build
 

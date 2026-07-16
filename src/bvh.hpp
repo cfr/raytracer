@@ -48,7 +48,7 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
     std::vector<Node> nodes;
     NodeId root = nullNode;
 
-public:
+ public:
     BoundingVolumeHierarchy() {}
 
     explicit BoundingVolumeHierarchy(std::vector<Obj> objs)
@@ -142,7 +142,7 @@ public:
         return false;
     }
 
-private:
+ private:
     NodeId build(ObjId start, ObjId end) {
         if (start >= end) return nullNode;
 

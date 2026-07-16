@@ -4,11 +4,12 @@
 #define GLM_FORCE_PRECISION_HIGH_FLOAT
 #define GLM_FORCE_PRECISION_HIGHP_DOUBLE
 
-#include <limits>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/constants.hpp>
+
+#include <limits>
+#include <random>
 
 namespace raytracer {
 
@@ -23,15 +24,15 @@ using Vec4 = glm::tvec4<Float, glm::defaultp>;
 
 using Transform = glm::tmat4x4<Float, glm::defaultp>;
 
-using Color = Vec4;
-using Color3 = Vec3;
+using Color = Vec3;
 
 namespace colors {
-    constexpr Color3 black3 = Vec3{0.0};
-    constexpr Color black = Vec4{black3, 1.0};
+constexpr Color black = Color{0.0};
 }
 
 using Point = glm::ivec2;
+
+using Seed = std::random_device::result_type;
 
 struct Size {
     size_t width = 0;

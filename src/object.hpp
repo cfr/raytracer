@@ -14,20 +14,20 @@ struct Material {
         Emission,
         Refraction
     };
-    Color diffuse = {0, 0, 0, 1};
-    Color specular = {0, 0, 0, 1};
-    Color emission = {0, 0, 0, 1};
+    Color diffuse = colors::black;
+    Color specular = colors::black;
+    Color emission = colors::black;
     Float shininess = 0;
     Float refraction = 0;
 };
 
 struct Object {
-    size_t id;
+    size_t id = 0;
     Material material;
     Transform transform = Transform{1};
     Transform inverse = Transform{1};
     Transform inverseTranspose = Transform{1};
-    Color ambient = {0, 0, 0, 1};  // per object
+    Color ambient = colors::black;  // per object
 };
 
 }  // namespace raytracer

@@ -12,8 +12,7 @@
 
 namespace raytracer::parser {
 
-bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Object& obj, std::vector<ManagedObject>& objects) {
-    static size_t objId = 1;
+bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Object& obj, std::vector<ManagedObject>& objects, size_t& objId) {
     auto cmd = tokens.at(0);
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {

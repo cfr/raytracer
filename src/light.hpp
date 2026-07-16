@@ -1,5 +1,6 @@
 #pragma once
 
+#include "integrator.hpp"
 #include "values.hpp"
 #include "scene.hpp"
 #include "quad.hpp"
@@ -72,50 +73,43 @@ Color phongBRDF(Vec3 wi, Vec3 wo, Vec3 n, const Material& material) {
 
 constexpr Float step2 = Hittable::step * Hittable::step;
 
-Color direct(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, Gen& gen, size_t samples, bool stratify) {
-    Color color = colors::black;
+Color direct(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
+    Color color = object.material.emission;
     Vec3 wo = glm::normalize(eye - hit.point);
-
-    size_t nx = stratify ? size_t(std::sqrt(Float(samples))) : 1;
-    while (nx > 1 && samples % nx != 0) { --nx; }
-    size_t ny = stratify ? samples / nx : 1;
+    auto samples = sampler.samples();
 
     for (const auto& quad : scene.areaLights) {
+        if (quad.get() == &object) { continue; }
         // skip co-planar light
-        if (glm::dot(quad.normal, hit.point - quad.v0) < Hittable::step) { continue; }
+        if (glm::dot(quad->planeNormal, hit.point - quad->v0) < Hittable::step) { continue; }
         Color qcol = colors::black;
+        Vec3 origin = hit.point + Hittable::step*hit.normal;
         for (size_t i = 0; i < samples; i++) {
-            Vec2 u;
-            if (stratify) {
-                size_t sx = i % nx;
-                size_t sy = i / nx;
-                u = {(sx + gen()) / nx, (sy + gen()) / ny};
-            } else {
-                u = {gen(), gen()};
-            }
-            Vec3 xl = quad.sample(u);
+            Vec3 xl = quad->sample(sampler.gen(i));
             Vec3 d = xl - hit.point;
             Float d2 = glm::dot(d, d);
             Float cosI = glm::dot(hit.normal, d);
-            if (cosI <= 0 || d2 < step2) continue;
             // single-sided light, no abs
-            Float cosL = glm::dot(quad.normal, -d);
+            Float cosL = glm::dot(quad->planeNormal, -d);
+            if (cosI <= 0 || cosL <= 0 || d2 < step2) continue;
             Float r = std::sqrt(d2);
             Vec3 wi = d / r;
-            Ray shadow{hit.point + Hittable::step*hit.normal, wi};
-            if (scene.bvh.occluded(shadow, r - Hittable::step)) continue;
+            Vec3 sd = xl - origin;
+            Float rl = glm::length(sd);
+            Ray shadow{origin, sd / rl};
+            if (scene.bvh.occluded(shadow, rl - Hittable::step, hit.object)) continue;
             qcol += phongBRDF(wi, wo, hit.normal, object.material) * (cosI * cosL / (d2 * d2));
         }
-        color += qcol * quad.radiance * (quad.area / samples);
+        color += qcol * quad->radiance * (quad->area / samples);
     }
     return color;
 }
 
 Color analytic(const Hittable& object, const Hit& hit, const Scene& scene) {
-    auto color = colors::black;
+    auto color = object.material.emission;
 
     for (const auto& source : scene.areaLights) {
-        color += object.material.diffuse / pi * source.radiance * source.irradiance(hit.point, hit.normal);
+        color += object.material.diffuse / pi * source->radiance * source->irradiance(hit.point, hit.normal);
     }
     return color;
 }
