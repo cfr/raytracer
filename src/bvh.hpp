@@ -10,10 +10,10 @@
 #include <glm/geometric.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <limits>
-#include <numeric>
 #include <optional>
-#include <stack>
 #include <utility>
 #include <vector>
 
@@ -23,6 +23,7 @@ template<typename T>
 concept SceneObject = requires(T obj, const Ray& ray) {
     { obj->aabb() } -> std::convertible_to<Box>;
     { obj->intersect(ray) } -> std::convertible_to<std::optional<Hit>>;
+    { obj->tworld(ray) } -> std::convertible_to<Float>;
 };
 
 template <SceneObject Obj> class BoundingVolumeHierarchy {
@@ -42,7 +43,13 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         bool leaf() const { return left == nullNode && right == nullNode; }
     };
 
+    struct Prim {
+        Obj obj;
+        Box box;
+    };
+
     static constexpr ObjId LeafSize = 4;
+    static constexpr size_t StackSize = 64;
 
     std::vector<Obj> objects;
     std::vector<Node> nodes;
@@ -51,50 +58,62 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
  public:
     BoundingVolumeHierarchy() {}
 
-    explicit BoundingVolumeHierarchy(std::vector<Obj> objs)
-        : objects(std::move(objs))
-    {
-        if (objects.empty()) {
+    explicit BoundingVolumeHierarchy(std::vector<Obj> objs) {
+        if (objs.empty()) {
             return;
         }
-        nodes.reserve(objects.size() * 2);
-        root = build(0, objects.size());
+        std::vector<Prim> prims;
+        prims.reserve(objs.size());
+        for (auto& obj : objs) {
+            Box box = obj->aabb();
+            prims.push_back(Prim{std::move(obj), box});
+        }
+        nodes.reserve(prims.size() * 2);
+        root = build(prims, 0, prims.size());
+
+        objects.reserve(prims.size());
+        for (auto& prim : prims) {
+            objects.push_back(std::move(prim.obj));
+        }
     }
 
     std::optional<Hit> intersect(const Ray& ray) const {
-        if (root == nullNode || !nodes[root].box.intersects(ray.eye, ray.inv)) {
+        if (root == nullNode || childEnter(root, ray, inf) == inf) {
             return {};
         }
 
         std::optional<Hit> closest;
-        std::stack<NodeId> stk;
-        stk.push(root);
+        Float closestT = inf;
 
-        while (!stk.empty()) {
-            NodeId id = stk.top(); stk.pop();
+        struct Entry { NodeId id; Float enter; };
+        std::array<Entry, StackSize> stk;
+        size_t top = 0;
+        stk[top++] = {root, 0};
+
+        while (top > 0) {
+            auto [id, enter] = stk[--top];
+            if (enter >= closestT) continue;
             const Node& n = nodes[id];
-
-            if (!n.box.intersects(ray.eye, ray.inv)) continue;
 
             if (n.leaf()) {
                 for (ObjId i = n.start; i < n.start + n.count; ++i) {
-                    const auto& obj = objects[i];
-                    if (auto hit = obj->intersect(ray)) {
-                        if (!closest || hit->t < closest->t) {
+                    if (auto hit = objects[i]->intersect(ray)) {
+                        if (hit->t < closestT) {
+                            closestT = hit->t;
                             closest = std::move(hit);
                         }
                     }
                 }
             } else {
-                Float tL = n.left  != nullNode ? nodes[n.left].box.enter(ray.eye, ray.inv) : inf;
-                Float tR = n.right != nullNode ? nodes[n.right].box.enter(ray.eye, ray.inv) : inf;
-                if (tL < tR) {
-                    if (n.right != nullNode) stk.push(n.right);
-                    if (n.left  != nullNode) stk.push(n.left);
-                } else {
-                    if (n.left  != nullNode) stk.push(n.left);
-                    if (n.right != nullNode) stk.push(n.right);
+                Float tL = childEnter(n.left, ray, closestT);
+                Float tR = childEnter(n.right, ray, closestT);
+                NodeId near = n.left, far = n.right;
+                if (tR < tL) {
+                    std::swap(tL, tR);
+                    std::swap(near, far);
                 }
+                if (tR < inf) { assert(top < StackSize); stk[top++] = {far, tR}; }
+                if (tL < inf) { assert(top < StackSize); stk[top++] = {near, tL}; }
             }
         }
         return closest;
@@ -103,52 +122,54 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
     [[nodiscard]] bool occluded(const Ray& ray, Float tmax = inf,
                                 const Hittable* ignore = nullptr) const
     {
-        if (root == nullNode) { return false; }
-        if (!nodes[root].box.intersects(ray.eye, ray.inv, 0, tmax)) {
+        if (root == nullNode || childEnter(root, ray, tmax) == inf) {
             return false;
         }
 
-        std::stack<NodeId> stk;
-        stk.push(root);
+        std::array<NodeId, StackSize> stk;
+        size_t top = 0;
+        stk[top++] = root;
 
-        while (!stk.empty()) {
-            NodeId id = stk.top(); stk.pop();
-            const Node& n = nodes[id];
-
-            if (!n.box.intersects(ray.eye, ray.inv, 0, tmax)) continue;
+        while (top > 0) {
+            const Node& n = nodes[stk[--top]];
 
             if (n.leaf()) {
                 for (ObjId i = n.start; i < n.start + n.count; ++i) {
                     const auto& obj = objects[i];
                     if (ignore && obj.get() == ignore) continue;
-                    auto hit = obj->intersect(ray);
-                    if (hit && hit->t > 0 && hit->t <= tmax) {
+                    Float t = obj->tworld(ray);
+                    if (t > 0 && t <= tmax) {
                         return true;
                     }
                 }
             } else {
-                Float tL = n.left  != nullNode ? nodes[n.left].box.enter(ray.eye, ray.inv) : inf;
-                Float tR = n.right != nullNode ? nodes[n.right].box.enter(ray.eye, ray.inv) : inf;
-
-                if (tL < tR) {
-                    if (n.right != nullNode && tR < tmax) stk.push(n.right);
-                    if (n.left  != nullNode && tL < tmax) stk.push(n.left);
-                } else {
-                    if (n.left  != nullNode && tL < tmax) stk.push(n.left);
-                    if (n.right != nullNode && tR < tmax) stk.push(n.right);
+                Float tL = childEnter(n.left, ray, tmax);
+                Float tR = childEnter(n.right, ray, tmax);
+                NodeId near = n.left, far = n.right;
+                if (tR < tL) {
+                    std::swap(tL, tR);
+                    std::swap(near, far);
                 }
+                if (tR < inf) { assert(top < StackSize); stk[top++] = far; }
+                if (tL < inf) { assert(top < StackSize); stk[top++] = near; }
             }
         }
         return false;
     }
 
  private:
-    NodeId build(ObjId start, ObjId end) {
+    Float childEnter(NodeId id, const Ray& ray, Float tmax) const {
+        if (id == nullNode) return inf;
+        auto [te, tx] = nodes[id].box.slab(ray.origin, ray.inv);
+        return (te <= tx && tx >= 0 && te <= tmax) ? te : inf;
+    }
+
+    NodeId build(std::vector<Prim>& prims, ObjId start, ObjId end) {
         if (start >= end) return nullNode;
 
-        Box bounds = objects[start]->aabb();
+        Box bounds = prims[start].box;
         for (ObjId i = start + 1; i < end; ++i) {
-            bounds = merge(bounds, objects[i]->aabb());
+            bounds = merge(bounds, prims[i].box);
         }
 
         NodeId id = static_cast<NodeId>(nodes.size());
@@ -157,7 +178,6 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         if (end - start <= LeafSize) {
             nodes[id].start = start;
             nodes[id].count = end - start;
-            nodes[id].left = nodes[id].right = nullNode;
             return id;
         }
 
@@ -166,18 +186,17 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
                  : (extent.y >= extent.z) ? 1 : 2;
 
         ObjId mid = start + (end - start) / 2;
-        std::nth_element(objects.begin() + start,
-                        objects.begin() + mid,
-                        objects.begin() + end,
-            [axis](const auto& a, const auto& b) {
-                Box ba = a->aabb(), bb = b->aabb();
-                Float ca = ba.min[axis] + ba.max[axis];  // 2x
-                Float cb = bb.min[axis] + bb.max[axis];
+        std::nth_element(prims.begin() + start,
+                        prims.begin() + mid,
+                        prims.begin() + end,
+            [axis](const Prim& a, const Prim& b) {
+                Float ca = a.box.min[axis] + a.box.max[axis];  // 2x centroid
+                Float cb = b.box.min[axis] + b.box.max[axis];
                 return ca < cb;
             });
 
-        nodes[id].left  = build(start, mid);
-        nodes[id].right = build(mid, end);
+        nodes[id].left  = build(prims, start, mid);
+        nodes[id].right = build(prims, mid, end);
         return id;
     }
 };

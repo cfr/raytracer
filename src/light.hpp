@@ -13,16 +13,7 @@
 
 namespace raytracer {
 
-Color phong(Vec3 eye, const Hit& hit, const Material& material, const Light& light) {
-    auto eyedir = glm::normalize(eye - hit.point);
-
-    Vec3 ldir;
-    if (light.position.w == 0) {
-        ldir = glm::normalize(Vec3{light.position});
-    } else {
-        auto lpos = Vec3{light.position / light.position.w};
-        ldir = glm::normalize(lpos - hit.point);
-    }
+Color phong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
     auto halfvec = glm::normalize(ldir + eyedir);
 
     Float nDotL = glm::dot(hit.normal, ldir);
@@ -33,18 +24,18 @@ Color phong(Vec3 eye, const Hit& hit, const Material& material, const Light& lig
     return lambert + specular;
 }
 
-Color whitted(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene) {
+Color whitted(Vec3 eyedir, const Hittable& object, const Hit& hit, const Scene& scene) {
     auto color = object.ambient + object.material.emission;
 
     for (const auto& source : scene.lights) {
         bool isPoint = source.position.w > 0;  // not directional light
-        auto srcDir = Vec3(source.position);
+        auto ldir = Vec3(source.position);
         if (isPoint) {
-            srcDir = Vec3(source.position) - hit.point;
+            ldir = Vec3(source.position) - hit.point;
         }
-        srcDir = glm::normalize(srcDir);
+        ldir = glm::normalize(ldir);
         Float offset = Hittable::step;  // to prevent self-intersection
-        auto shadowRay = Ray{hit.point + offset*srcDir, srcDir};
+        auto shadowRay = Ray{hit.point + offset*ldir, ldir};
         Float distance =
             isPoint ? glm::distance(Vec3(source.position), hit.point) : inf;
         if (scene.bvh.occluded(shadowRay, distance, hit.object)) { continue; }
@@ -55,7 +46,7 @@ Color whitted(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& sce
             attenuation = scene.attenuation.factor(distance);
         }
 
-        color += attenuation * phong(eye, hit, object.material, source);
+        color += attenuation * phong(eyedir, ldir, hit, object.material, source);
     }
     return color;
 }
@@ -73,9 +64,8 @@ Color phongBRDF(Vec3 wi, Vec3 wo, Vec3 n, const Material& material) {
 
 constexpr Float step2 = Hittable::step * Hittable::step;
 
-Color direct(Vec3 eye, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
+Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
     Color color = object.material.emission;
-    Vec3 wo = glm::normalize(eye - hit.point);
     auto samples = sampler.samples();
 
     for (const auto& quad : scene.areaLights) {

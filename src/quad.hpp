@@ -38,11 +38,11 @@ struct Quad : Hittable {
         return Vec4{planeNormal, 0};
     }
 
-    Float distance(Ray ray) const override {
+    Float tlocal(Ray ray) const override {
         const Float denom = glm::dot(planeNormal, ray.dir);
         if (glm::abs(denom) < step) return 0;
 
-        const Float t = glm::dot(v0 - ray.eye, planeNormal) / denom;
+        const Float t = glm::dot(v0 - ray.origin, planeNormal) / denom;
         if (t <= 0) return 0;
 
         const Vec3 p = ray.at(t);

@@ -35,8 +35,8 @@ class Sphere: public Hittable {
         return Vec4{point - center_, 0};
     }
 
-    Float distance(Ray ray) const override {
-        auto rc = ray.eye - center_;
+    Float tlocal(Ray ray) const override {
+        auto rc = ray.origin - center_;
         auto a  = glm::dot(ray.dir, ray.dir);
         auto b  = 2 * glm::dot(ray.dir, rc);
         auto c  = glm::dot(rc, rc) - radius_*radius_;

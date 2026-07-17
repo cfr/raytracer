@@ -10,22 +10,28 @@
 namespace raytracer {
 
 struct Ray {
-    Vec3 eye;
+    struct SkipInv {};
+
+    Vec3 origin;
     Vec3 dir;
     Vec3 inv;
 
     explicit Ray(const Vec3& origin, const Vec3& direction)
-        : eye{origin}, dir{direction},
+        : origin{origin}, dir{direction},
           inv{Vec3{1.0} / direction} {}
 
+    // local-space rays, skip inv calculation
+    Ray(const Vec3& origin, const Vec3& direction, SkipInv)
+        : origin{origin}, dir{direction}, inv{0} {}
+
     Vec3 at(Float t) const {
-        return eye + t*dir;
+        return origin + t*dir;
     }
 
     Ray transformed(Transform transform) const {
-        auto tEye = transform * Vec4(eye, 1);
+        auto tOrigin = transform * Vec4(origin, 1);
         auto tDir = transform * Vec4(dir, 0);
-        return Ray{Vec3{tEye / tEye.w}, Vec3{tDir}};
+        return Ray{Vec3{tOrigin / tOrigin.w}, Vec3{tDir}, SkipInv{}};
     }
 };
 
@@ -64,8 +70,6 @@ class RayCaster {
     }
 
     Size size() const { return size_; }
-
-    Vec3 eye() const { return eye_; }
 };
 
 }  // namespace raytracer
