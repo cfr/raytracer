@@ -47,13 +47,13 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
     auto b = parseNum<Float>(tokens[3]);
     switch (*type) {
         case Material::Type::Specular:
-            mat.specular = {r, g, b, 1};
+            mat.specular = {r, g, b};
             return true;
         case Material::Type::Diffuse:
-            mat.diffuse = {r, g, b, 1};
+            mat.diffuse = {r, g, b};
             return true;
         case Material::Type::Emission:
-            mat.emission = {r, g, b, 1};
+            mat.emission = {r, g, b};
             return true;
         default:
             throw ParseException("Expected material type");

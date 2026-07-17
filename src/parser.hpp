@@ -16,6 +16,7 @@
 #include <regex>
 #include <tuple>
 #include <vector>
+#include <utility>
 
 namespace raytracer::parser {
 
@@ -48,6 +49,7 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     TStack stack;
     Object obj;
     std::vector<Vec3> vertices;
+    size_t objId = 1;
 
     while (std::getline(input, line)) {
         lineNo++;
@@ -57,8 +59,8 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         try {
             if (parseSettings(tokens, settings)) { continue; }
             if (parseCamera(tokens, camera)) { continue; }
-            if (parseGeometry(tokens, vertices, obj, objects)) { continue; }
-            if (parseLights(tokens, obj, scene)) { continue; }
+            if (parseGeometry(tokens, vertices, obj, objects, objId)) { continue; }
+            if (parseLights(tokens, obj, scene, objId)) { continue; }
             if (parseMaterial(tokens, material)) {
                 obj.material = material;
                 continue;
@@ -74,6 +76,11 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
             // Add line number
             throw ParseException(std::format("{}: {}", lineNo, e.what()));
         }
+    }
+
+    // area lights are also geometry
+    for (const auto& light : scene.areaLights) {
+        objects.push_back(light);
     }
 
     BoundingVolumeHierarchy<ManagedObject> bvh{objects};

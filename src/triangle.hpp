@@ -1,14 +1,11 @@
 #pragma once
 
 #include "values.hpp"
-#include "scene.hpp"
 #include "ray.hpp"
 #include "hit.hpp"
 
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
-
-#include <algorithm>
 
 namespace raytracer {
 

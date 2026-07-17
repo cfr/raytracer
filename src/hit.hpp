@@ -3,6 +3,7 @@
 #include "values.hpp"
 #include "object.hpp"
 #include "box.hpp"
+#include "ray.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
@@ -42,14 +43,16 @@ struct Hittable: Object {
         auto tRay = ray.transformed(inverse);
         auto t = distance(tRay);
 
-        if (t < step) { return {}; }
+        if (t <= 0) { return {}; }
 
         auto point = tRay.at(t);
 
         // ray/world coordinates
         auto wpoint = transformVec3(transform, point);
-        auto wnormal = Vec3{inverseTranspose * normal(point)};
         Float wt = glm::length(wpoint - ray.eye);
+        if (wt < step) { return {}; }
+
+        auto wnormal = Vec3{inverseTranspose * normal(point)};
 
         return Hit{wt, wpoint, glm::normalize(wnormal), this};
     }
