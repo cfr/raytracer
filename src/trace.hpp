@@ -13,7 +13,7 @@
 
 namespace raytracer {
 
-Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
+Color trace(const Ray ray, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
     auto color = colors::black;
     if (depth <= 0) {
         return color;
@@ -26,12 +26,12 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const 
 
     switch (integrator.type) {
     case Integrator::Type::Whitted:
-        color = whitted(eye, *object, *hit, scene);
+        color = whitted(-ray.dir, *object, *hit, scene);
         break;
     case Integrator::Type::AnalyticDirect:
         return analytic(*object, *hit, scene);
     case Integrator::Type::Direct:
-        return direct(eye, *object, *hit, scene, sampler);
+        return direct(-ray.dir, *object, *hit, scene, sampler);
     }
 
     Float fr = 0.0;
@@ -55,19 +55,19 @@ Color trace(const Ray ray, const Vec3 eye, const Scene& scene, int depth, const 
             Float offset = Hittable::step;
             Vec3 tdir = glm::refract(ray.dir, normal, ri);
             Ray refractRay{hit->point + offset*tdir, tdir};
-            color += (1.0 - fr) * trace(refractRay, hit->point, scene, depth - 1, integrator, sampler);
+            color += (1.0 - fr) * trace(refractRay, scene, depth - 1, integrator, sampler);
         }
     }
 
-    Float reflectivity = glm::length(object->material.specular);
-    if (reflectivity > 0 || object->material.refraction > 0) {
+    bool reflective = glm::any(glm::greaterThan(object->material.specular, Color{0.0}));
+    if (reflective || object->material.refraction > 0) {
         Vec3 incoming = glm::normalize(ray.dir);
         Vec3 reflect = glm::reflect(incoming, normal);
 
         Float offset = Hittable::step;
         Ray reflectionRay{hit->point + offset*reflect, reflect};
 
-        Color reflected = trace(reflectionRay, hit->point, scene, depth - 1, integrator, sampler);
+        Color reflected = trace(reflectionRay, scene, depth - 1, integrator, sampler);
         if (object->material.refraction > 0) {
             color += fr * reflected;
         } else {

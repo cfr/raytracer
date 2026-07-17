@@ -21,7 +21,7 @@
 namespace raytracer::parser {
 
 std::vector<std::string> tokenize(const std::string& line) {
-    const auto re = std::regex{R"(\s+)"};
+    static const auto re = std::regex{R"(\s+)"};
     auto vec = std::vector<std::string>(
         std::sregex_token_iterator{begin(line), end(line), re, -1},
         std::sregex_token_iterator{}
@@ -73,7 +73,7 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
             }
             throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
         } catch (const ParseException& e) {
-            // Add line number
+            // add line number
             throw ParseException(std::format("{}: {}", lineNo, e.what()));
         }
     }

@@ -39,7 +39,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, size_t depth, Integrat
 
     for (auto point : row) {
         auto ray = caster.cast(point);
-        Color color = trace(ray, caster.eye(), scene, depth, integrator, sampler);
+        Color color = trace(ray, scene, depth, integrator, sampler);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
     }
@@ -75,10 +75,10 @@ int main(int argc, char** argv) {
             }
         }
 
-        /* single threaded version for refrence:
+        /* single threaded version for reference:
         for (auto point : Frame{settings.size}) {
             auto ray = caster.cast(point);
-            Color color = trace(ray, caster.eye(), scene, settings.depth);
+            Color color = trace(ray, scene, settings.depth, settings.integrator, sampler);
             auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
             image.set(point, clamped);
         }
