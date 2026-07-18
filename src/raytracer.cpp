@@ -39,7 +39,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, size_t depth, Integrat
 
     for (auto point : row) {
         auto ray = caster.cast(point);
-        Color color = trace(ray, scene, depth, integrator, sampler);
+        Color color = trace(ray, scene, static_cast<int>(depth), integrator, sampler);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
     }
@@ -61,19 +61,25 @@ int main(int argc, char** argv) {
         ThreadPool pool{threads};
         std::random_device rd;
 
+        size_t d = 64;
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
             auto seed = rd();
             auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.depth, settings.integrator, seed, y);
             rows.push_back(std::move(row));
+            if (y%d) std::print("-");
         }
+        std::print("\n");
 
+        size_t y = 0;
         for (auto& r : rows) {
             auto row = r.get();
             for (auto point : row) {
                 image.set(point, row.get(point));
             }
+            if (y++%d) std::print("+");
         }
+        std::print("\n");
 
         /* single threaded version for reference:
         for (auto point : Frame{settings.size}) {

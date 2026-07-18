@@ -75,7 +75,7 @@ Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene
         Color qcol = colors::black;
         Vec3 origin = hit.point + Hittable::step*hit.normal;
         for (size_t i = 0; i < samples; i++) {
-            Vec3 xl = quad->sample(sampler.gen(i));
+            Vec3 xl = quad->sample(sampler.unit2(i));
             Vec3 d = xl - hit.point;
             Float d2 = glm::dot(d, d);
             Float cosI = glm::dot(hit.normal, d);

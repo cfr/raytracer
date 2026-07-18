@@ -13,26 +13,16 @@
 
 namespace raytracer {
 
-Color trace(const Ray ray, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
-    auto color = colors::black;
+Color traceWhitted(const Ray& ray, const Scene& scene, int depth) {
     if (depth <= 0) {
-        return color;
+        return colors::black;
     }
 
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
 
     const Hittable* object = hit->object;
-
-    switch (integrator.type) {
-    case Integrator::Type::Whitted:
-        color = whitted(-ray.dir, *object, *hit, scene);
-        break;
-    case Integrator::Type::AnalyticDirect:
-        return analytic(*object, *hit, scene);
-    case Integrator::Type::Direct:
-        return direct(-ray.dir, *object, *hit, scene, sampler);
-    }
+    auto color = whitted(-ray.dir, *object, *hit, scene);
 
     Float fr = 0.0;
     Vec3 normal = hit->normal;
@@ -55,7 +45,7 @@ Color trace(const Ray ray, const Scene& scene, int depth, const Integrator& inte
             Float offset = Hittable::step;
             Vec3 tdir = glm::refract(ray.dir, normal, ri);
             Ray refractRay{hit->point + offset*tdir, tdir};
-            color += (1.0 - fr) * trace(refractRay, scene, depth - 1, integrator, sampler);
+            color += (1.0 - fr) * traceWhitted(refractRay, scene, depth - 1);
         }
     }
 
@@ -67,7 +57,7 @@ Color trace(const Ray ray, const Scene& scene, int depth, const Integrator& inte
         Float offset = Hittable::step;
         Ray reflectionRay{hit->point + offset*reflect, reflect};
 
-        Color reflected = trace(reflectionRay, scene, depth - 1, integrator, sampler);
+        Color reflected = traceWhitted(reflectionRay, scene, depth - 1);
         if (object->material.refraction > 0) {
             color += fr * reflected;
         } else {
@@ -76,6 +66,54 @@ Color trace(const Ray ray, const Scene& scene, int depth, const Integrator& inte
     }
 
     return color;
+}
+
+Color traceAnalytic(const Ray& ray, const Scene& scene) {
+    auto hit = scene.bvh.intersect(ray);
+    if (!hit) { return colors::black; }
+    return analytic(*hit->object, *hit, scene);
+}
+
+Color traceDirect(const Ray& ray, const Scene& scene, Sampler& sampler) {
+    auto hit = scene.bvh.intersect(ray);
+    if (!hit) { return colors::black; }
+    return direct(-ray.dir, *hit->object, *hit, scene, sampler);
+}
+
+Color tracePath(const Ray& ray, const Scene& scene, Sampler& sampler, int depth) {
+    auto hit = scene.bvh.intersect(ray);
+    if (!hit) { return colors::black; }
+
+    Color color = hit->object->material.emission;
+    if (depth <= 0) { return color; }
+
+    const auto& mat = hit->object->material;
+    auto w = sampler.hemisphere(hit->normal, 0);
+    auto f = phongBRDF(w, -ray.dir, hit->normal, mat);
+    auto bounce = Ray{hit->point + Hittable::step * w, w};
+    return color + pi * f * tracePath(bounce, scene, sampler, depth - 1);
+}
+
+Color trace(const Ray& ray, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
+    switch (integrator.type) {
+    case Integrator::Type::Whitted:
+        return traceWhitted(ray, scene, depth);
+    case Integrator::Type::AnalyticDirect:
+        return traceAnalytic(ray, scene);
+    case Integrator::Type::Direct:
+        return traceDirect(ray, scene, sampler);
+    case Integrator::Type::PathTracer:
+        {
+        auto color = colors::black;
+        for (size_t s = 0; s < integrator.samplesPerPixel; s++) {
+            color += tracePath(ray, scene, sampler, depth);
+        }
+        return color/static_cast<Float>(integrator.samplesPerPixel);
+        }
+    default:
+        return colors::black;
+    }
+
 }
 
 }  // namespace raytracer
