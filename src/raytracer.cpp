@@ -61,34 +61,22 @@ int main(int argc, char** argv) {
         ThreadPool pool{threads};
         std::random_device rd;
 
-        size_t d = 64;
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
             auto seed = rd();
             auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.integrator, settings.depth, seed, y);
             rows.push_back(std::move(row));
-            if (y%d) std::print("-");
         }
-        std::print("\n");
 
-        size_t y = 0;
-        for (auto& r : rows) {
+        for (size_t y = 0; auto& r : rows) {
             auto row = r.get();
             for (auto point : row) {
                 image.set(point, row.get(point));
             }
-            if (y++%d) std::print("+");
+            std::print("\r{}%", ++y * 100 / settings.size.height);
+            std::fflush(stdout);
         }
         std::print("\n");
-
-        /* single threaded version for reference:
-        for (auto point : Frame{settings.size}) {
-            auto ray = caster.cast(point);
-            Color color = trace(ray, scene, settings.depth, settings.integrator, sampler);
-            auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
-            image.set(point, clamped);
-        }
-        */
         write(settings.output, image);
     } catch (const std::exception& e) {
         std::println("{}", e.what());
