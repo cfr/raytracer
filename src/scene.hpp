@@ -39,7 +39,7 @@ struct Light {
 
 struct Settings {
     Size size = {640, 480};
-    size_t depth = 5;
+    int depth = 5;
     size_t threads = 0;
     Integrator integrator;
     std::string output = "out.ppm";

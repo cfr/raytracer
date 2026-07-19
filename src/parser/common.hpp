@@ -48,7 +48,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
-        settings.depth = parseNum<size_t>(tokens[1]);
+        settings.depth = parseNum<int>(tokens[1]);
         return true;
     }
     else if (cmd == "threads") {
@@ -67,7 +67,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     }
     else if (cmd == "integrator") {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect>'");
+            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
         }
         auto integrator = tokens[1];
         if (integrator == "whitted" || integrator == "raytracer") {
@@ -76,8 +76,10 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             settings.integrator.type = Integrator::Type::Direct;
         } else if (integrator == "analyticdirect") {
             settings.integrator.type = Integrator::Type::AnalyticDirect;
+        } else if (integrator == "pathtracer") {
+            settings.integrator.type = Integrator::Type::PathTracer;
         } else {
-            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect>'");
+            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
         }
         return true;
     }
@@ -85,7 +87,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightsamples <count>'");
         }
-        settings.integrator.samples = std::max(1uz, parseNum<size_t>(tokens[1]));
+        settings.integrator.lightSamples = std::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
     else if (cmd == "lightstratify") {
@@ -97,6 +99,35 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
         settings.integrator.stratify = onoff == "on";
+        return true;
+    }
+    else if (cmd == "nexteventestimation") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'nexteventestimation <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'nexteventestimation <on/off>'");
+        }
+        settings.integrator.nextEvent = onoff == "on";
+        return true;
+    }
+    else if (cmd == "russianroulette") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'russianroulette <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'russianroulette <on/off>'");
+        }
+        settings.integrator.russianRoulette = onoff == "on";
+        return true;
+    }
+    else if (cmd == "spp") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'spp <count>'");
+        }
+        settings.integrator.samplesPerPixel = std::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
     return false;

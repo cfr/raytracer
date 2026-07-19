@@ -31,20 +31,29 @@ else()
     message(STATUS "Using system-provided GLM.")
 endif()
 
-include_directories(src)
-
 add_executable(raytracer
-    src/parser.hpp
     src/raytracer.cpp
 )
 
-
+target_include_directories(raytracer PRIVATE src)
 target_link_libraries(raytracer PRIVATE glm::glm)
 target_compile_features(raytracer PRIVATE cxx_std_23)
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(ARCH_NATIVE -march=native)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    set(ARCH_NATIVE -mcpu=native)
+endif()
 
 target_compile_options(raytracer PRIVATE
     -Wall -Wextra
     $<$<CONFIG:Debug>:-g>
-    $<$<CONFIG:Release>:-O3>
+    $<$<CONFIG:Release>:${ARCH_NATIVE} -funroll-loops>
 )
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+    set_property(TARGET raytracer PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 

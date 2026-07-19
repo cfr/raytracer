@@ -33,13 +33,13 @@ void write(const std::string& path, const Image& image) {
     std::println("Saved {}.", path);
 }
 
-Row traceRow(const Scene& scene, const RayCaster& caster, size_t depth, Integrator integrator, Seed seed, size_t y) {
+Row traceRow(const Scene& scene, const RayCaster& caster, Integrator integrator, int depth, Seed seed, size_t y) {
     Row row(y, caster.size());
     auto sampler = integrator.sampler(seed);
 
     for (auto point : row) {
         auto ray = caster.cast(point);
-        Color color = trace(ray, scene, depth, integrator, sampler);
+        Color color = trace(ray, scene, integrator, sampler, depth);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
     }
@@ -64,25 +64,19 @@ int main(int argc, char** argv) {
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
             auto seed = rd();
-            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.depth, settings.integrator, seed, y);
+            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.integrator, settings.depth, seed, y);
             rows.push_back(std::move(row));
         }
 
-        for (auto& r : rows) {
+        for (size_t y = 0; auto& r : rows) {
             auto row = r.get();
             for (auto point : row) {
                 image.set(point, row.get(point));
             }
+            std::print("\r{}%", ++y * 100 / settings.size.height);
+            std::fflush(stdout);
         }
-
-        /* single threaded version for reference:
-        for (auto point : Frame{settings.size}) {
-            auto ray = caster.cast(point);
-            Color color = trace(ray, scene, settings.depth, settings.integrator, sampler);
-            auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
-            image.set(point, clamped);
-        }
-        */
+        std::print("\n");
         write(settings.output, image);
     } catch (const std::exception& e) {
         std::println("{}", e.what());
