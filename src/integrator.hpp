@@ -30,6 +30,10 @@ class Sampler {
         return samples_;
     }
 
+    Float unit() {
+        return gen_();
+    }
+
     Vec2 unit2(size_t index) {
         if (stratify_) {
             size_t sx = index % xsamples_;
@@ -69,6 +73,7 @@ struct Integrator {
     size_t samplesPerPixel = 1;
     bool stratify = false;
     bool nextEvent = false;
+    bool russianRoulette = false;
 
     Sampler sampler(Seed seed) {
         return Sampler(lightSamples, stratify, seed);

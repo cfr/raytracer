@@ -80,24 +80,36 @@ Color traceDirect(const Ray& ray, const Scene& scene, Sampler& sampler) {
     return hit->object->material.emission + direct(-ray.dir, *hit->object, *hit, scene, sampler);
 }
 
-Color tracePath(const Ray& ray, const Scene& scene, Sampler& sampler, int depth, bool primary, bool nee) {
+Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator, Sampler& sampler, int depth, bool primary, Color throughput) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
 
-    Color le = (nee && !primary) ? colors::black : hit->object->material.emission;
-    if (depth <= 0) { return le; }
+    Color le = (integrator.nextEvent && !primary) ? colors::black : hit->object->material.emission;
+    if (depth == 0) { return le; } // depth < 0 -- infinite bounces
 
-    Color ldirect = nee ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
+    Color ldirect = integrator.nextEvent ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
 
-    const auto& mat = hit->object->material;
     auto w = sampler.hemisphere(hit->normal, 0);
-    auto f = phongBRDF(w, -ray.dir, hit->normal, mat);
+    auto f = phongBRDF(w, -ray.dir, hit->normal, hit->object->material);
     auto bounce = Ray{hit->point + Hittable::step * w, w};
-    //return le + ldirect + pi * f * tracePath(bounce, scene, sampler, depth - 1, false, nee);
-    return le + ldirect + 2.0*pi * f * glm::dot(hit->normal, w) * tracePath(bounce, scene, sampler, depth - 1, false, nee);
+    //return le + ldirect + pi * f * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
+    auto lweight = 2.0*pi * f * glm::dot(hit->normal, w);
+    if (!integrator.russianRoulette) {
+        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
+    }
+    throughput *= lweight;
+    Float q = 1.0 - glm::min(glm::max(glm::max(throughput.x, throughput.y), throughput.z), 1.0);
+    if (q >= 1.0 || sampler.unit() < q) {
+        return le + ldirect;
+    } else {
+        Float boost = 1.0 / (1.0 - q);
+        lweight *= boost;
+        throughput *= boost;
+        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
+    }
 }
 
-Color trace(const Ray& ray, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
+Color trace(const Ray& ray, const Scene& scene, const Integrator& integrator, Sampler& sampler, int depth) {
     switch (integrator.type) {
     case Integrator::Type::Whitted:
         return traceWhitted(ray, scene, depth);
@@ -108,8 +120,9 @@ Color trace(const Ray& ray, const Scene& scene, int depth, const Integrator& int
     case Integrator::Type::PathTracer:
         {
         auto color = colors::black;
+        // TODO: move to traceRow, add antialiasing
         for (size_t s = 0; s < integrator.samplesPerPixel; s++) {
-            color += tracePath(ray, scene, sampler, depth, true, integrator.nextEvent);
+            color += tracePath(ray, scene, integrator, sampler, depth, true, colors::white);
         }
         return color/static_cast<Float>(integrator.samplesPerPixel);
         }

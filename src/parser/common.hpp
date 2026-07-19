@@ -48,7 +48,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
-        settings.depth = parseNum<size_t>(tokens[1]);
+        settings.depth = parseNum<int>(tokens[1]);
         return true;
     }
     else if (cmd == "threads") {
@@ -110,6 +110,17 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             throw ParseException("Expected 'nexteventestimation <on/off>'");
         }
         settings.integrator.nextEvent = onoff == "on";
+        return true;
+    }
+    else if (cmd == "russianroulette") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'russianroulette <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'russianroulette <on/off>'");
+        }
+        settings.integrator.russianRoulette = onoff == "on";
         return true;
     }
     else if (cmd == "spp") {

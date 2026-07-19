@@ -28,6 +28,7 @@ using Color = Vec3;
 
 namespace colors {
 constexpr Color black = Color{0.0};
+constexpr Color white = Color{1.0};
 }
 
 using Point = glm::ivec2;

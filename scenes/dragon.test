@@ -11,7 +11,7 @@ output dragon.png
 quadLight  -5 10 -25  0 5 5  10 0 0  10 10 12
 quadLight  -5 20 15  0 -5 5  10 0 0  18 18 16
 
-maxdepth 5
+maxdepth -1
 
 maxverts 50005
 
