@@ -101,6 +101,17 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.integrator.stratify = onoff == "on";
         return true;
     }
+    else if (cmd == "nexteventestimation") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'nexteventestimation <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'nexteventestimation <on/off>'");
+        }
+        settings.integrator.nextEvent = onoff == "on";
+        return true;
+    }
     else if (cmd == "spp") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'spp <count>'");

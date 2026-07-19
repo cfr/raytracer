@@ -44,8 +44,10 @@ class Sampler {
     Vec3 hemisphere(Vec3 normal, size_t /*index*/) {
         Vec2 u2 = {gen_(), gen_()}; //unit2(index);
         Float phi = 2.0 * pi * u2.x;
-        Float cosT = glm::sqrt(u2.y);
-        Float sinT = glm::sqrt(glm::max(0.0, 1.0 - u2.y));
+        //Float cosT = glm::sqrt(u2.y);
+        //Float sinT = glm::sqrt(glm::max(0.0, 1.0 - u2.y));
+        Float cosT = u2.y;
+        Float sinT = glm::sqrt(glm::max(0.0, 1.0 - cosT*cosT));
         Vec3 s = {glm::cos(phi)*sinT, glm::sin(phi)*sinT, cosT};
         Vec3 w = normal;
         Vec3 a = (glm::abs(normal.x) > 0.9) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
@@ -66,6 +68,7 @@ struct Integrator {
     size_t lightSamples = 1;
     size_t samplesPerPixel = 1;
     bool stratify = false;
+    bool nextEvent = false;
 
     Sampler sampler(Seed seed) {
         return Sampler(lightSamples, stratify, seed);

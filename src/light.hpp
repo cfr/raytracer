@@ -65,7 +65,7 @@ Color phongBRDF(Vec3 wi, Vec3 wo, Vec3 n, const Material& material) {
 constexpr Float step2 = Hittable::step * Hittable::step;
 
 Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
-    Color color = object.material.emission;
+    Color color = colors::black;
     auto samples = sampler.samples();
 
     for (const auto& quad : scene.areaLights) {

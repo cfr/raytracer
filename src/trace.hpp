@@ -77,21 +77,24 @@ Color traceAnalytic(const Ray& ray, const Scene& scene) {
 Color traceDirect(const Ray& ray, const Scene& scene, Sampler& sampler) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
-    return direct(-ray.dir, *hit->object, *hit, scene, sampler);
+    return hit->object->material.emission + direct(-ray.dir, *hit->object, *hit, scene, sampler);
 }
 
-Color tracePath(const Ray& ray, const Scene& scene, Sampler& sampler, int depth) {
+Color tracePath(const Ray& ray, const Scene& scene, Sampler& sampler, int depth, bool primary, bool nee) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
 
-    Color color = hit->object->material.emission;
-    if (depth <= 0) { return color; }
+    Color le = (nee && !primary) ? colors::black : hit->object->material.emission;
+    if (depth <= 0) { return le; }
+
+    Color ldirect = nee ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
 
     const auto& mat = hit->object->material;
     auto w = sampler.hemisphere(hit->normal, 0);
     auto f = phongBRDF(w, -ray.dir, hit->normal, mat);
     auto bounce = Ray{hit->point + Hittable::step * w, w};
-    return color + pi * f * tracePath(bounce, scene, sampler, depth - 1);
+    //return le + ldirect + pi * f * tracePath(bounce, scene, sampler, depth - 1, false, nee);
+    return le + ldirect + 2.0*pi * f * glm::dot(hit->normal, w) * tracePath(bounce, scene, sampler, depth - 1, false, nee);
 }
 
 Color trace(const Ray& ray, const Scene& scene, int depth, const Integrator& integrator, Sampler& sampler) {
@@ -106,7 +109,7 @@ Color trace(const Ray& ray, const Scene& scene, int depth, const Integrator& int
         {
         auto color = colors::black;
         for (size_t s = 0; s < integrator.samplesPerPixel; s++) {
-            color += tracePath(ray, scene, sampler, depth);
+            color += tracePath(ray, scene, sampler, depth, true, integrator.nextEvent);
         }
         return color/static_cast<Float>(integrator.samplesPerPixel);
         }
