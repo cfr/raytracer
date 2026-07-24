@@ -36,10 +36,12 @@ class Stratify2D {
 
 class Sampler {
     Gen gen_;
-    Stratify2D stratify_;
+    Stratify2D stratify2d_;
+    bool stratify_;
 
  public:
-    explicit Sampler(Seed seed, Stratify2D stratify) : gen_(seed), stratify_(stratify) {}
+    explicit Sampler(Seed seed, Stratify2D stratify2d, bool stratify)
+        : gen_(seed), stratify2d_(stratify2d), stratify_(stratify) {}
 
     Float unit() {
         return gen_();
@@ -49,22 +51,20 @@ class Sampler {
         return {gen_(), gen_()};
     }
 
+    Vec3 unit3() {
+        return {gen_(), gen_(), gen_()};
+    }
+
     Vec2 unit2stratified(size_t index) {
-        return stratify_.unit2(unit2(), index);
+        return stratify2d_.unit2(unit2(), index);
+    }
+
+    Vec2 unit2(size_t index) {
+        return stratify_ ? unit2stratified(index) : unit2();
     }
 
     size_t samples() {
-        return stratify_.samples();
-    }
-
-    Vec3 hemisphere(Vec3 normal) { // cosine
-        Vec2 u2 = {gen_(), gen_()};
-        Float phi = 2.0 * pi * u2.x;
-        Float cosT = glm::sqrt(u2.y);
-        Float sinT = glm::sqrt(glm::max(0.0, 1.0 - u2.y));
-        Vec3 s = {glm::cos(phi)*sinT, glm::sin(phi)*sinT, cosT};
-        auto b = Basis(normal);
-        return b.toWorld(s);
+        return stratify2d_.samples();
     }
 };
 

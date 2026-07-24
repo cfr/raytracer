@@ -89,10 +89,16 @@ Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator
 
     Color ldirect = integrator.nextEvent ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
 
-    auto w = sampler.hemisphere(hit->normal);
-    auto f = phongBRDF(w, -ray.dir, hit->normal, hit->object->material);
-    auto bounce = Ray{hit->point + Hittable::step * w, w};
-    auto lweight = pi * f;
+    auto b = Basis(hit->normal);
+    auto sample = integrator.sample(hit->object->material, b.toLocal(-ray.dir), sampler.unit2());
+    if (!sample) {
+        return le + ldirect;
+    }
+    auto wi = b.toWorld(sample->wi);
+    // ignore uni/cos f for now
+    auto f = phongBRDF(wi, -ray.dir, hit->normal, hit->object->material);
+    auto bounce = Ray{hit->point + Hittable::step * wi, wi};
+    auto lweight = f * importance::cosTheta(sample->wi) / sample->pdf;
     if (!integrator.russianRoulette) {
         return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
     }

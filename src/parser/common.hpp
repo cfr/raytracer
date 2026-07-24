@@ -137,6 +137,22 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.integrator.samplesPerPixel = std::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
+    else if (cmd == "importancesampling") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
+        }
+        auto importance = tokens[1];
+        if (importance == "hemisphere") {
+            settings.integrator.importanceSampling = ImportanceSampling::Type::Uniform;
+        } else if (importance == "cosine") {
+            settings.integrator.importanceSampling = ImportanceSampling::Type::Cosine;
+        } else if (importance == "brdf") {
+            settings.integrator.importanceSampling = ImportanceSampling::Type::BRDF;
+        } else {
+            throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
+        }
+        return true;
+    }
     return false;
 }
 
