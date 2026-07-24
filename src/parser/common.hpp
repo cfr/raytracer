@@ -58,6 +58,13 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.threads = parseNum<size_t>(tokens[1]);
         return true;
     }
+    else if (cmd == "gamma") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'gamma <value>'");
+        }
+        settings.gamma = glm::max(0.1, parseNum<Float>(tokens[1]));
+        return true;
+    }
     else if (cmd == "output") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
