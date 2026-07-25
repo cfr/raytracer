@@ -143,11 +143,11 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         }
         auto importance = tokens[1];
         if (importance == "hemisphere") {
-            settings.integrator.importanceSampling = ImportanceSampling::Type::Uniform;
+            settings.integrator.importanceSampling = Importance::Type::Uniform;
         } else if (importance == "cosine") {
-            settings.integrator.importanceSampling = ImportanceSampling::Type::Cosine;
+            settings.integrator.importanceSampling = Importance::Type::Cosine;
         } else if (importance == "brdf") {
-            settings.integrator.importanceSampling = ImportanceSampling::Type::BRDF;
+            settings.integrator.importanceSampling = Importance::Type::BRDF;
         } else {
             throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
         }

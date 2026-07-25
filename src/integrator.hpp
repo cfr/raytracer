@@ -3,6 +3,7 @@
 #include "values.hpp"
 #include "sampler.hpp"
 #include "importance.hpp"
+#include "brdf.hpp"
 #include "object.hpp"
 
 #include <glm/geometric.hpp>
@@ -25,20 +26,20 @@ struct Integrator {
     bool stratify = false; // light
     bool nextEvent = false;
     bool russianRoulette = false;
-    ImportanceSampling::Type importanceSampling = ImportanceSampling::Type::Cosine;
+    Importance::Type importanceSampling = Importance::Type::Cosine;
 
     Sampler sampler(Seed seed) {
         return Sampler(seed, Stratify2D(lightSamples), stratify);
     }
 
-    std::optional<Sample> sample(const Material& m, Vec3 wo, Vec2 u2) const {
+    std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) const {
         switch (importanceSampling) {
-            case ImportanceSampling::Type::Uniform:
-                return importance::Uniform(m.diffuse).sample(wo, 0, u2);
-            case ImportanceSampling::Type::Cosine:
-                return importance::Cosine(m.diffuse).sample(wo, 0, u2);
-            case ImportanceSampling::Type::BRDF:
-                return importance::BRDF().sample(wo, 0, u2);
+        case Importance::Type::Uniform:
+            return importance::Uniform(m).sample(wo, uc, u2);
+        case Importance::Type::Cosine:
+            return importance::Cosine(m).sample(wo, uc, u2);
+        case Importance::Type::BRDF:
+            return importance::BRDF(m).sample(wo, uc, u2);
         }
     }
 };

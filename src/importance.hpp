@@ -1,6 +1,7 @@
 #pragma once
 
 #include "values.hpp"
+#include "brdf.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
@@ -9,21 +10,14 @@
 
 namespace raytracer {
 
-struct Sample {
-    Vec3  wi;
-    Color f;
-    Float pdf;
-    bool  specular = false;
-};
-
-class ImportanceSampling {
+class Importance {
  public:
     enum class Type: int {
         Uniform,
         Cosine,
-        BRDF
+        BRDF // phong or ggx depending on material
     };
-    virtual ~ImportanceSampling() = default;
+    virtual ~Importance() = default;
     virtual std::optional<Sample> sample(Vec3 wo, Float uc, Vec2 u2) const = 0;
     virtual Float pdf(Vec3 wo, Vec3 wi) const = 0;
     virtual Color eval(Vec3 wo, Vec3 wi) const = 0;
@@ -32,19 +26,15 @@ class ImportanceSampling {
 namespace importance {
 
 inline Float cosTheta(Vec3 w) {
-    return w.z;
+    return w.z;  // local
 }
 
-inline bool sameHemisphere(Vec3 a, Vec3 b) {
-    return a.z * b.z > 0;
-}
-
-class Uniform final : public ImportanceSampling {
-    static constexpr Float p = 1 / (2 * pi);
-    Color albedo_;
+class Uniform final : public Importance {
+    static constexpr Float inv2pi = 1 / (2 * pi);
+    const Material& m_;
 
  public:
-    explicit Uniform(Color albedo) : albedo_(albedo) {}
+    explicit Uniform(const Material& m) : m_(m) {}
 
     std::optional<Sample> sample(Vec3 wo, Float /*uc*/, Vec2 u2) const override {
         if (wo.z == 0) return {};
@@ -57,19 +47,18 @@ class Uniform final : public ImportanceSampling {
     }
 
     Float pdf(Vec3 wo, Vec3 wi) const override {
-        return sameHemisphere(wo, wi) ? p : 0;
+        return sameHemisphere(wo, wi) ? inv2pi : 0;
     }
 
     Color eval(Vec3 wo, Vec3 wi) const override {
-        return sameHemisphere(wo, wi) ? albedo_ / pi : colors::black;
+        return brdf::eval(m_, wo, wi);
     }
 };
 
-class Cosine final : public ImportanceSampling {
-    Color albedo_;
-
+class Cosine final : public Importance {
+    const Material& m_;
  public:
-    explicit Cosine(Color albedo) : albedo_(albedo) {}
+    explicit Cosine(const Material& m) : m_(m) {}
 
     std::optional<Sample> sample(Vec3 wo, Float /*uc*/, Vec2 u2) const override {
         if (wo.z == 0) return {};
@@ -86,23 +75,25 @@ class Cosine final : public ImportanceSampling {
     }
 
     Color eval(Vec3 wo, Vec3 wi) const override {
-        return sameHemisphere(wo, wi) ? albedo_ / pi : colors::black;
+        return brdf::eval(m_, wo, wi);
     }
 };
 
-class BRDF final : public ImportanceSampling {
-    // TBD
+class BRDF final : public Importance {
+    const Material& m_;
  public:
-    std::optional<Sample> sample(Vec3 wo, Float uc, Vec2 u2) const override {
-        return {};
+    explicit BRDF(const Material& m) : m_(m) {}
+
+    Color eval(Vec3 wo, Vec3 wi) const override {
+        return brdf::eval(m_, wo, wi);
     }
 
     Float pdf(Vec3 wo, Vec3 wi) const override {
-        return 0;
+        return brdf::pdf(m_, wo, wi);
     }
 
-    Color eval(Vec3 wo, Vec3 wi) const override {
-        return colors::black;
+    std::optional<Sample> sample(Vec3 wo, Float uc, Vec2 u2) const override {
+        return brdf::sample(m_, wo, uc, u2);
     }
 };
 

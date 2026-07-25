@@ -1,7 +1,7 @@
 #pragma once
 
 #define GLM_FORCE_PRECISION_HIGHP_INT
-#define GLM_FORCE_PRECISION_HIGH_FLOAT
+#define GLM_FORCE_PRECISION_HIGHP_FLOAT
 #define GLM_FORCE_PRECISION_HIGHP_DOUBLE
 
 #include <glm/glm.hpp>
@@ -44,6 +44,10 @@ inline Vec3 transformVec3(Transform m, Vec3 v) {
     auto v4 = Vec4(v, 1);
     auto tv = m * v4;
     return {tv / tv.w};
+}
+
+inline bool sameHemisphere(Vec3 a, Vec3 b) {
+    return a.z * b.z > 0;
 }
 
 }  // namespace raytracer
