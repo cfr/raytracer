@@ -28,7 +28,7 @@ struct Integrator {
     bool russianRoulette = false;
     Importance::Type importanceSampling = Importance::Type::Cosine;
 
-    Sampler sampler(Seed seed) {
+    Sampler sampler(Seed seed) const {
         return Sampler(seed, Stratify2D(lightSamples), stratify);
     }
 
@@ -41,6 +41,7 @@ struct Integrator {
         case Importance::Type::BRDF:
             return importance::BRDF(m).sample(wo, uc, u2);
         }
+        return {};
     }
 };
 

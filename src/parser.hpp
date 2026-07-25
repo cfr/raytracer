@@ -78,13 +78,13 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         }
     }
 
-    for (auto& object : objects) {
-        object->material.precomputeT();
-    }
-
     // area lights are also geometry
     for (const auto& light : scene.areaLights) {
         objects.push_back(light);
+    }
+
+    for (auto& object : objects) {
+        object->material.precomputeT();
     }
 
     BoundingVolumeHierarchy<ManagedObject> bvh{objects};

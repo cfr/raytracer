@@ -4,6 +4,7 @@
 #include "values.hpp"
 #include "scene.hpp"
 #include "quad.hpp"
+#include "brdf.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/exponential.hpp>
@@ -13,13 +14,11 @@
 
 namespace raytracer {
 
-Color phong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
-    auto halfvec = glm::normalize(ldir + eyedir);
-
+Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
     Float nDotL = glm::dot(hit.normal, ldir);
     auto lambert = material.diffuse * light.color * std::max<Float>(nDotL, 0);
 
-    Float nDotH = glm::dot(hit.normal, halfvec);
+    Float nDotH = glm::dot(hit.normal, halfvec(ldir, eyedir));
     auto specular = material.specular * light.color * glm::pow(std::max<Float>(nDotH, 0), material.shininess);
     return lambert + specular;
 }
@@ -46,20 +45,9 @@ Color whitted(Vec3 eyedir, const Hittable& object, const Hit& hit, const Scene& 
             attenuation = scene.attenuation.factor(distance);
         }
 
-        color += attenuation * phong(eyedir, ldir, hit, object.material, source);
+        color += attenuation * blinnPhong(eyedir, ldir, hit, object.material, source);
     }
     return color;
-}
-
-Color phongBRDF(Vec3 wi, Vec3 wo, Vec3 n, const Material& material) {
-    Color diff = material.diffuse / pi;
-
-    Vec3 r = glm::reflect(-wi, n);
-    Float rDotV = std::max<Float>(glm::dot(r, wo), 0);
-    Float s = material.shininess;
-    Color spec = material.specular * ((s + 2) / (2 * pi)) * std::pow(rDotV, s);
-
-    return diff + spec;
 }
 
 constexpr Float step2 = Hittable::step * Hittable::step;
@@ -67,6 +55,7 @@ constexpr Float step2 = Hittable::step * Hittable::step;
 Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
     Color color = colors::black;
     auto samples = sampler.samples();
+    Basis b{hit.normal};
 
     for (const auto& quad : scene.areaLights) {
         if (quad.get() == &object) { continue; }
@@ -88,7 +77,8 @@ Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene
             Float rl = glm::length(sd);
             Ray shadow{origin, sd / rl};
             if (scene.bvh.occluded(shadow, rl - Hittable::step, hit.object)) continue;
-            qcol += phongBRDF(wi, wo, hit.normal, object.material) * (cosI * cosL / (d2 * d2));
+            Vec3 woL = b.toLocal(wo);
+            qcol += brdf::eval(object.material, woL, b.toLocal(wi)) * (cosI * cosL / (d2 * d2));
         }
         color += qcol * quad->radiance * (quad->area / samples);
     }

@@ -7,6 +7,7 @@
 #include <glm/trigonometric.hpp>
 
 #include <optional>
+#include <cassert>
 
 namespace raytracer {
 
@@ -25,10 +26,6 @@ class Importance {
 
 namespace importance {
 
-inline Float cosTheta(Vec3 w) {
-    return w.z;  // local
-}
-
 class Uniform final : public Importance {
     static constexpr Float inv2pi = 1 / (2 * pi);
     const Material& m_;
@@ -38,12 +35,14 @@ class Uniform final : public Importance {
 
     std::optional<Sample> sample(Vec3 wo, Float /*uc*/, Vec2 u2) const override {
         if (wo.z == 0) return {};
+        assert(wo.z > 0);
         Float phi = 2 * pi * u2.x;
         Float cosT = u2.y;
         Float sinT = glm::sqrt(glm::max(Float(0), 1 - cosT * cosT));
         Vec3 wi{glm::cos(phi) * sinT, glm::sin(phi) * sinT, cosT};
-        if (wo.z < 0) wi.z = -wi.z;
-        return Sample{wi, eval(wo, wi), pdf(wo, wi)};
+        Float p = pdf(wo, wi);
+        if (p <= 0) return {};
+        return Sample{wi, eval(wo, wi), p};
     }
 
     Float pdf(Vec3 wo, Vec3 wi) const override {
@@ -62,12 +61,14 @@ class Cosine final : public Importance {
 
     std::optional<Sample> sample(Vec3 wo, Float /*uc*/, Vec2 u2) const override {
         if (wo.z == 0) return {};
+        assert(wo.z > 0);
         Float phi = 2 * pi * u2.x;
         Float cosT = glm::sqrt(u2.y);
         Float sinT = glm::sqrt(glm::max(Float(0), 1 - u2.y));
         Vec3 wi = {glm::cos(phi)*sinT, glm::sin(phi)*sinT, cosT};
-        if (wo.z < 0) wi.z = -wi.z;
-        return Sample{wi, eval(wo, wi), pdf(wo, wi)};
+        Float p = pdf(wo, wi);
+        if (p <= 0) return {};
+        return Sample{wi, eval(wo, wi), p};
     }
 
     Float pdf(Vec3 wo, Vec3 wi) const override {

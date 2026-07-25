@@ -1,9 +1,6 @@
 #pragma once
 
 #include "values.hpp"
-#include "brdf.hpp"
-
-#include <string>
 
 namespace raytracer {
 
@@ -14,7 +11,7 @@ enum class Type : int { Phong, GGX };
 }
 
 struct Material {
-    brdf::Type brdfType;
+    brdf::Type brdfType = brdf::Type::Phong;
     Color diffuse = colors::white;   // kd
     Color specular = colors::black;  // ks
     Color emission = colors::black;
@@ -28,8 +25,8 @@ struct Material {
         auto& d = diffuse;
         auto ks = (s.x + s.y + s.z) / 3.0f;
         auto kd = (d.x + d.y + d.z) / 3.0f;
-        if (ks == 0) {
-            t = 0;
+        if (ks == 0 && kd == 0) {
+            t = 1.0;
         } else {
             t = ks / (ks + kd);
         }
