@@ -14,7 +14,7 @@ class Row {
     std::vector<Color> data_;
 
  public:
-    size_t y() { return y_;}
+    size_t y() const { return y_;}
     Row(size_t y, Size size) : y_(y), size_(size), data_{size.width, Color{0}} {}
 
     Frame::Iterator begin() const { return {y_ * size_.width, size_.width}; }
@@ -24,7 +24,7 @@ class Row {
         data_[pt.x] = color;
     }
 
-    Color get(Point pt) {
+    Color get(Point pt) const {
         return data_[pt.x];
     }
 };

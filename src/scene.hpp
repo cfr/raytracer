@@ -41,6 +41,7 @@ struct Settings {
     Size size = {640, 480};
     int depth = 5;
     size_t threads = 0;
+    Float gamma = 1.0;
     Integrator integrator;
     std::string output = "out.ppm";
 };

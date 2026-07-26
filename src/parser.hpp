@@ -83,6 +83,10 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         objects.push_back(light);
     }
 
+    for (auto& object : objects) {
+        object->material.precomputeT();
+    }
+
     BoundingVolumeHierarchy<ManagedObject> bvh{objects};
     scene.bvh = std::move(bvh);
     return {scene, camera, settings};

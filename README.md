@@ -1,6 +1,6 @@
 # Raytracer
 
-A basic raytracer originally developed for UC San Diego CSE167/CSE168 Computer Graphics courses. Features include Blinn-Phong shading, shadows, reflections, bounding volume hierarchy and path tracing.
+A CPU ray/path tracer with Whitted, direct-lighting, and path-tracing integrators, originally developed for UC San Diego's CSE167/CSE168 computer graphics courses. Features include Phong and GGX shading, a bounding volume hierarchy, next event estimation, Russian roulette, and BRDF importance sampling.
 
 # Build
 
@@ -13,8 +13,10 @@ Requires C++23 compiler (e.g., Clang 17+) and [GLM](https://github.com/g-truc/gl
 
 # Scenes
 
-![dragon](dragon.png)
+![cornell](cornell.jpg)
 
-![cornell](cornell.png)
+![ggx](ggx.jpg)
 
-![scene4-specular](scene4-specular.png)
+![dragon](dragon.jpg)
+
+![scene4-specular](scene4-specular.jpg)

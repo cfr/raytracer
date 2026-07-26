@@ -77,6 +77,9 @@ Color traceAnalytic(const Ray& ray, const Scene& scene) {
 Color traceDirect(const Ray& ray, const Scene& scene, Sampler& sampler) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
+    if (glm::dot(ray.dir, hit->normal) > 0) {
+        hit->normal = -hit->normal;
+    }
     return hit->object->material.emission + direct(-ray.dir, *hit->object, *hit, scene, sampler);
 }
 
@@ -87,16 +90,23 @@ Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator
     Color le = (integrator.nextEvent && !primary) ? colors::black : hit->object->material.emission;
     if (depth == 0) { return le; } // depth < 0 -- infinite bounces
 
+    if (glm::dot(ray.dir, hit->normal) > 0) {
+        hit->normal = -hit->normal;
+    }
     Color ldirect = integrator.nextEvent ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
 
-    auto w = sampler.hemisphere(hit->normal, 0);
-    auto f = phongBRDF(w, -ray.dir, hit->normal, hit->object->material);
-    auto bounce = Ray{hit->point + Hittable::step * w, w};
-    //return le + ldirect + pi * f * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
-    auto lweight = 2.0*pi * f * glm::dot(hit->normal, w);
+    auto b = Basis(hit->normal);
+    auto sample = integrator.sample(hit->object->material, b.toLocal(-ray.dir), sampler.unit(), sampler.unit2());
+    if (!sample) {
+        return le + ldirect;
+    }
+    auto wi = b.toWorld(sample->wi);
+    auto bounce = Ray{hit->point + Hittable::step * wi, wi};
+    auto lweight = sample->f * cosTheta(sample->wi) / sample->pdf;
     if (!integrator.russianRoulette) {
         return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
     }
+
     throughput *= lweight;
     Float q = 1.0 - glm::min(glm::max(glm::max(throughput.x, throughput.y), throughput.z), 1.0);
     if (q >= 1.0 || sampler.unit() < q) {
@@ -126,10 +136,8 @@ Color trace(const Ray& ray, const Scene& scene, const Integrator& integrator, Sa
         }
         return color/static_cast<Float>(integrator.samplesPerPixel);
         }
-    default:
-        return colors::black;
     }
-
+    return colors::black;
 }
 
 }  // namespace raytracer

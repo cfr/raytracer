@@ -1,15 +1,15 @@
 #pragma once
 
 #define GLM_FORCE_PRECISION_HIGHP_INT
-#define GLM_FORCE_PRECISION_HIGH_FLOAT
+#define GLM_FORCE_PRECISION_HIGHP_FLOAT
 #define GLM_FORCE_PRECISION_HIGHP_DOUBLE
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include <cstdint>
 #include <limits>
-#include <random>
 
 namespace raytracer {
 
@@ -33,7 +33,7 @@ constexpr Color white = Color{1.0};
 
 using Point = glm::ivec2;
 
-using Seed = std::random_device::result_type;
+using Seed = std::uint64_t;
 
 struct Size {
     size_t width = 0;
@@ -44,6 +44,22 @@ inline Vec3 transformVec3(Transform m, Vec3 v) {
     auto v4 = Vec4(v, 1);
     auto tv = m * v4;
     return {tv / tv.w};
+}
+
+inline bool sameHemisphere(Vec3 a, Vec3 b) {
+    return a.z * b.z > 0;
+}
+
+inline Vec3 halfvec(Vec3 a, Vec3 b) {
+    return glm::normalize(a+b);
+}
+
+inline Color gamma(Color c, Float g) {
+    return glm::pow(glm::max(c, colors::black), Color{1 / g});
+}
+
+inline Float cosTheta(Vec3 w) {
+    return w.z;  // local
 }
 
 }  // namespace raytracer

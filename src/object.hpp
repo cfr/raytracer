@@ -2,23 +2,35 @@
 
 #include "values.hpp"
 
-#include <string>
-
 namespace raytracer {
 
+namespace brdf {
+
+enum class Type : int { Phong, GGX };
+
+}
+
 struct Material {
-    enum class Type: int {
-        Diffuse,
-        Specular,
-        Shininess,
-        Emission,
-        Refraction
-    };
-    Color diffuse = colors::black;
-    Color specular = colors::black;
+    brdf::Type brdfType = brdf::Type::Phong;
+    Color diffuse = colors::white;   // kd
+    Color specular = colors::black;  // ks
     Color emission = colors::black;
+    Float t = 0;                     // t = avg(ks) / (avg(ks) + avg(kd))
     Float shininess = 0;
     Float refraction = 0;
+    Float roughness = 0;
+
+    void precomputeT() {
+        auto& s = specular;
+        auto& d = diffuse;
+        auto ks = (s.x + s.y + s.z) / 3.0f;
+        auto kd = (d.x + d.y + d.z) / 3.0f;
+        if (ks == 0 && kd == 0) {
+            t = 1.0;
+        } else {
+            t = ks / (ks + kd);
+        }
+    }
 };
 
 struct Object {

@@ -10,53 +10,81 @@
 
 namespace raytracer::parser {
 
-std::optional<Material::Type> materialType(const std::string& token) {
-    if (token == "diffuse") { return Material::Type::Diffuse; }
-    if (token == "specular") { return Material::Type::Specular; }
-    if (token == "shininess") { return Material::Type::Shininess; }
-    if (token == "emission") { return Material::Type::Emission; }
-    if (token == "refraction") { return Material::Type::Refraction; }
+enum class MaterialType: int {
+    Diffuse,
+    Specular,
+    Shininess,
+    Emission,
+    Refraction,
+    Roughness
+};
+
+std::optional<MaterialType> materialType(const std::string& token) {
+    if (token == "diffuse") { return MaterialType::Diffuse; }
+    if (token == "specular") { return MaterialType::Specular; }
+    if (token == "shininess") { return MaterialType::Shininess; }
+    if (token == "emission") { return MaterialType::Emission; }
+    if (token == "refraction") { return MaterialType::Refraction; }
+    if (token == "roughness") { return MaterialType::Roughness; }
     return {};
 }
 
 bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
+    if (tokens[0] == "brdf") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'brdf <phong/ggx>'");
+        }
+        auto b = tokens[1];
+        if (b != "phong" && b != "ggx") {
+            throw ParseException("Expected 'brdf <phong/ggx>'");
+        }
+        mat.brdfType = b == "ggx" ? brdf::Type::GGX : brdf::Type::Phong;
+        return true;
+    }
     auto type = materialType(tokens[0]);
     if (!type) {
         return false;
     }
-    if (type == Material::Type::Shininess) {
+    if (type == MaterialType::Shininess) {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'shininess s'");
+            throw ParseException("Expected 'shininess <s>'");
         }
         mat.shininess = parseNum<Float>(tokens[1]);
         return true;
     }
-    if (type == Material::Type::Refraction) {
+    if (type == MaterialType::Refraction) {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'refraction r'");
+            throw ParseException("Expected 'refraction <r>'");
         }
         mat.refraction = parseNum<Float>(tokens[1]);
         return true;
     }
+    if (type == MaterialType::Roughness) {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'roughness <r>'");
+        }
+        mat.roughness = parseNum<Float>(tokens[1]);
+        return true;
+    }
     // parse specular or diffuse or emission
     if (tokens.size() != 4) {
-        throw ParseException("Expected 'material r g b'");
+        throw ParseException("Expected '<emission/diffuse/specular> <r> <g> <b>'");
     }
     auto r = parseNum<Float>(tokens[1]);
     auto g = parseNum<Float>(tokens[2]);
     auto b = parseNum<Float>(tokens[3]);
     switch (*type) {
-        case Material::Type::Specular:
-            mat.specular = {r, g, b};
-            return true;
-        case Material::Type::Diffuse:
-            mat.diffuse = {r, g, b};
-            return true;
-        case Material::Type::Emission:
-            mat.emission = {r, g, b};
-            return true;
-        default:
-            throw ParseException("Expected material type");
+    case MaterialType::Specular:
+        mat.specular = {r, g, b};
+        return true;
+    case MaterialType::Diffuse:
+        mat.diffuse = {r, g, b};
+        return true;
+    case MaterialType::Emission:
+        mat.emission = {r, g, b};
+        return true;
+    default:
+        throw ParseException("Expected material type");
     }
 }
 

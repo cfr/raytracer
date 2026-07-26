@@ -9,6 +9,7 @@
 #include "row.hpp"
 #include "bvh.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -33,17 +34,24 @@ void write(const std::string& path, const Image& image) {
     std::println("Saved {}.", path);
 }
 
-Row traceRow(const Scene& scene, const RayCaster& caster, Integrator integrator, int depth, Seed seed, size_t y) {
+Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settings, Seed seed, size_t y) {
     Row row(y, caster.size());
-    auto sampler = integrator.sampler(seed);
+    auto sampler = settings.integrator.sampler(seed);
 
     for (auto point : row) {
         auto ray = caster.cast(point);
-        Color color = trace(ray, scene, integrator, sampler, depth);
+        Color color = trace(ray, scene, settings.integrator, sampler, settings.depth);
+        color = gamma(color, settings.gamma);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
     }
     return row;
+}
+
+inline Seed seed64(std::random_device& rd) {
+    std::uint64_t hi = rd();
+    std::uint64_t lo = rd();
+    return (hi << 32) | lo;
 }
 
 int main(int argc, char** argv) {
@@ -63,13 +71,13 @@ int main(int argc, char** argv) {
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
-            auto seed = rd();
-            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), settings.integrator, settings.depth, seed, y);
+            auto seed = seed64(rd);
+            auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), std::cref(settings), seed, y);
             rows.push_back(std::move(row));
         }
 
         for (size_t y = 0; auto& r : rows) {
-            auto row = r.get();
+            const auto row = r.get();
             for (auto point : row) {
                 image.set(point, row.get(point));
             }

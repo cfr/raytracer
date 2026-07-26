@@ -13,6 +13,7 @@ struct Box {
     Vec3 max{-inf};
 
     std::pair<Float, Float> slab(const Vec3& origin, const Vec3& inv) const {
+        // Thiago Ize, 2013, "Robust BVH Ray Traversal"
         Float tenter = -inf, texit = inf;
         for (int i = 0; i < 3; ++i) {
             Float t1 = (min[i] - origin[i]) * inv[i];

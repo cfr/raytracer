@@ -58,6 +58,13 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.threads = parseNum<size_t>(tokens[1]);
         return true;
     }
+    else if (cmd == "gamma") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'gamma <value>'");
+        }
+        settings.gamma = glm::max(0.1, parseNum<Float>(tokens[1]));
+        return true;
+    }
     else if (cmd == "output") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
@@ -128,6 +135,22 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             throw ParseException("Expected 'spp <count>'");
         }
         settings.integrator.samplesPerPixel = std::max(1uz, parseNum<size_t>(tokens[1]));
+        return true;
+    }
+    else if (cmd == "importancesampling") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
+        }
+        auto importance = tokens[1];
+        if (importance == "hemisphere") {
+            settings.integrator.importanceSampling = Importance::Type::Uniform;
+        } else if (importance == "cosine") {
+            settings.integrator.importanceSampling = Importance::Type::Cosine;
+        } else if (importance == "brdf") {
+            settings.integrator.importanceSampling = Importance::Type::BRDF;
+        } else {
+            throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
+        }
         return true;
     }
     return false;
