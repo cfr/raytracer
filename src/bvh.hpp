@@ -3,7 +3,7 @@
 #include "values.hpp"
 #include "box.hpp"
 #include "ray.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/exponential.hpp>

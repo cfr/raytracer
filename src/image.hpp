@@ -4,6 +4,7 @@
 
 #include <iterator>
 #include <compare>
+#include <cmath>
 #include <cstdint>
 #include <ostream>
 #include <vector>
@@ -55,10 +56,10 @@ class Image {
     void writePPM(std::ostream& out) const {
         out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
         for (auto pix : *this) {
-            static constexpr Float scale = 255.0;  // 255.999
-            auto r = static_cast<int>(scale * pix.r);
-            auto g = static_cast<int>(scale * pix.g);
-            auto b = static_cast<int>(scale * pix.b);
+            static constexpr Float scale = 255.0;
+            auto r = std::lround(scale * pix.r);
+            auto g = std::lround(scale * pix.g);
+            auto b = std::lround(scale * pix.b);
             out << r << ' ' << g << ' ' << b << '\n';
         }
         out << std::endl;

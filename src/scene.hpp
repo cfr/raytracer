@@ -5,7 +5,7 @@
 #include "camera.hpp"
 #include "object.hpp"
 #include "ray.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 #include "bvh.hpp"
 #include "quad.hpp"
 #include "integrator.hpp"

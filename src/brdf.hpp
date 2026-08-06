@@ -20,6 +20,8 @@ struct Sample {
 
 namespace brdf {
 
+// wo/wi are local space
+
 namespace phong {
 
 inline Vec3 mirror(Vec3 w) {
@@ -68,7 +70,6 @@ std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
         Float cosT = glm::sqrt(u2.y);
         Float sinT = glm::sqrt(glm::max(Float(0), 1 - u2.y));
         wi = {glm::cos(phi) * sinT, glm::sin(phi) * sinT, cosT};
-        if (wo.z < 0) wi.z = -wi.z;
     }
     if (!sameHemisphere(wo, wi)) return {};
     Float p = pdf(m, wo, wi);

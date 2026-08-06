@@ -40,14 +40,21 @@ struct Size {
     size_t height = 0;
 };
 
+struct Hittable;
+
+struct Hit {
+    Vec3 wo;
+    Vec3 point;
+    Vec3 normal;
+    Float t = inf;
+    const Hittable* object = nullptr;
+    bool front = true;
+};
+
 inline Vec3 transformVec3(Transform m, Vec3 v) {
     auto v4 = Vec4(v, 1);
     auto tv = m * v4;
     return {tv / tv.w};
-}
-
-inline bool sameHemisphere(Vec3 a, Vec3 b) {
-    return a.z * b.z > 0;
 }
 
 inline Vec3 halfvec(Vec3 a, Vec3 b) {
@@ -58,8 +65,22 @@ inline Color gamma(Color c, Float g) {
     return glm::pow(glm::max(c, colors::black), Color{1 / g});
 }
 
+inline bool sameHemisphere(const Hit& h, Vec3 b) {
+    return glm::dot(h.normal, h.wo) * glm::dot(h.normal, b) > 0;
+}
+
+inline Float cosTheta(const Hit& h, Vec3 w) {
+    return glm::dot(h.normal, w);
+}
+
+// local space
+
+inline bool sameHemisphere(Vec3 a, Vec3 b) {
+    return a.z * b.z > 0;
+}
+
 inline Float cosTheta(Vec3 w) {
-    return w.z;  // local
+    return w.z;
 }
 
 }  // namespace raytracer

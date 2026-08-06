@@ -2,7 +2,7 @@
 
 #include "values.hpp"
 #include "ray.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
@@ -46,9 +46,7 @@ class Triangle: public Hittable {
         auto h = glm::cross(ray.dir, edge2_);
         auto a = glm::dot(edge1_, h);
 
-        if (glm::abs(a) < Hittable::step) {
-            return 0;  // parallel
-        }
+        if (a == 0) { return 0; }
 
         auto f = 1 / a;
         auto s = ray.origin - a_;

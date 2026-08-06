@@ -1,7 +1,7 @@
 #pragma once
 
 #include "values.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 #include "sphere.hpp"
 #include "triangle.hpp"
 #include "parser/common.hpp"

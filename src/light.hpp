@@ -14,6 +14,15 @@
 
 namespace raytracer {
 
+inline Ray offset(const Hit& h, Vec3 wi) {
+    Vec3 n = glm::dot(h.normal, wi) < 0 ? -h.normal : h.normal;
+    return Ray{h.point + n * Hittable::eps(h.point), wi};
+}
+
+inline Color emitted(const Hit& h) {
+    return h.front ? h.object->material.emission : colors::black;
+}
+
 Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
     Float nDotL = glm::dot(hit.normal, ldir);
     auto lambert = material.diffuse * light.color * std::max<Float>(nDotL, 0);
@@ -23,8 +32,8 @@ Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& materia
     return lambert + specular;
 }
 
-Color whitted(Vec3 eyedir, const Hittable& object, const Hit& hit, const Scene& scene) {
-    auto color = object.ambient + object.material.emission;
+Color whitted(const Hit& hit, const Scene& scene) {
+    auto color = hit.object->ambient + emitted(hit);
 
     for (const auto& source : scene.lights) {
         bool isPoint = source.position.w > 0;  // not directional light
@@ -33,8 +42,7 @@ Color whitted(Vec3 eyedir, const Hittable& object, const Hit& hit, const Scene& 
             ldir = Vec3(source.position) - hit.point;
         }
         ldir = glm::normalize(ldir);
-        Float offset = Hittable::step;  // to prevent self-intersection
-        auto shadowRay = Ray{hit.point + offset*ldir, ldir};
+        auto shadowRay = offset(hit, ldir);
         Float distance =
             isPoint ? glm::distance(Vec3(source.position), hit.point) : inf;
         if (scene.bvh.occluded(shadowRay, distance, hit.object)) { continue; }
@@ -45,51 +53,60 @@ Color whitted(Vec3 eyedir, const Hittable& object, const Hit& hit, const Scene& 
             attenuation = scene.attenuation.factor(distance);
         }
 
-        color += attenuation * blinnPhong(eyedir, ldir, hit, object.material, source);
+        color += attenuation * blinnPhong(hit.wo, ldir, hit, hit.object->material, source);
     }
     return color;
 }
 
-constexpr Float step2 = Hittable::step * Hittable::step;
-
-Color direct(Vec3 wo, const Hittable& object, const Hit& hit, const Scene& scene, Sampler& sampler) {
+Color direct(const Hit& hit, const Scene& scene, const Integrator& integrator, Sampler& sampler, bool mis) {
     Color color = colors::black;
-    auto samples = sampler.samples();
+    auto samples = mis ? 1 : sampler.samples();
     Basis b{hit.normal};
 
+    Float e = Hittable::eps(hit.point);
+    Vec3 origin = hit.point + e * hit.normal;
+    Float minDist2 = e * e;
+
     for (const auto& quad : scene.areaLights) {
-        if (quad.get() == &object) { continue; }
-        // skip co-planar light
-        if (glm::dot(quad->planeNormal, hit.point - quad->v0) < Hittable::step) { continue; }
+        if (quad.get() == hit.object) { continue; }
+
+        // single-sided light, no abs
+        const Float cosL = glm::dot(quad->planeNormal, hit.point - quad->v0);
+        if (cosL < e) { continue; }  // behind or co-planar
+
         Color qcol = colors::black;
-        Vec3 origin = hit.point + Hittable::step*hit.normal;
         for (size_t i = 0; i < samples; i++) {
-            Vec3 xl = quad->sample(sampler.unit2(i));
+            Vec3 xl = quad->sample(samples == 1 ? sampler.unit2() : sampler.unit2(i));
             Vec3 d = xl - hit.point;
             Float d2 = glm::dot(d, d);
             Float cosI = glm::dot(hit.normal, d);
-            // single-sided light, no abs
-            Float cosL = glm::dot(quad->planeNormal, -d);
-            if (cosI <= 0 || cosL <= 0 || d2 < step2) continue;
+            if (cosI <= 0 || d2 < minDist2) { continue; }
             Float r = std::sqrt(d2);
             Vec3 wi = d / r;
             Vec3 sd = xl - origin;
             Float rl = glm::length(sd);
             Ray shadow{origin, sd / rl};
-            if (scene.bvh.occluded(shadow, rl - Hittable::step, hit.object)) continue;
-            Vec3 woL = b.toLocal(wo);
-            qcol += brdf::eval(object.material, woL, b.toLocal(wi)) * (cosI * cosL / (d2 * d2));
+            if (scene.bvh.occluded(shadow, rl - e, hit.object)) { continue; }
+            auto f = brdf::eval(hit.object->material, b.toLocal(hit.wo), b.toLocal(wi));
+            Float w = 1;
+            if (mis) {
+                Float cosLn = cosL / r;
+                Float pl = d2 / (quad->area * cosLn);
+                Float pb = integrator.pdf(hit, wi);
+                w = importance::misWeight(pl, pb);
+            }
+            qcol += w * f * (cosI * cosL / (d2 * d2));
         }
         color += qcol * quad->radiance * (quad->area / samples);
     }
     return color;
 }
 
-Color analytic(const Hittable& object, const Hit& hit, const Scene& scene) {
-    auto color = object.material.emission;
+Color analytic(const Hit& hit, const Scene& scene) {
+    auto color = emitted(hit);
 
     for (const auto& source : scene.areaLights) {
-        color += object.material.diffuse / pi * source->radiance * source->irradiance(hit.point, hit.normal);
+        color += hit.object->material.diffuse / pi * source->radiance * source->irradiance(hit.point, hit.normal);
     }
     return color;
 }
