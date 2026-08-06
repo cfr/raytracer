@@ -10,6 +10,7 @@
 #include <glm/trigonometric.hpp>
 
 #include <optional>
+#include <utility>
 
 namespace raytracer {
 
@@ -20,28 +21,36 @@ struct Integrator {
         Direct,
         PathTracer
     };
+    enum class NEE: int { Off, On, MIS };
     Type type = Type::Whitted;
     size_t lightSamples = 1;
     size_t samplesPerPixel = 1;
     bool stratify = false; // light
-    bool nextEvent = false;
+    NEE nextEvent = NEE::Off;
     bool russianRoulette = false;
-    Importance::Type importanceSampling = Importance::Type::Cosine;
+    importance::Type importanceSampling = importance::Type::Cosine;
 
     Sampler sampler(Seed seed) const {
         return Sampler(seed, Stratify2D(lightSamples), stratify);
     }
 
-    std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) const {
+    template <class F> auto dispatch(F&& f) const {
         switch (importanceSampling) {
-        case Importance::Type::Uniform:
-            return importance::Uniform(m).sample(wo, uc, u2);
-        case Importance::Type::Cosine:
-            return importance::Cosine(m).sample(wo, uc, u2);
-        case Importance::Type::BRDF:
-            return importance::BRDF(m).sample(wo, uc, u2);
+        case importance::Type::Uniform:
+            return f(importance::Uniform{});
+        case importance::Type::Cosine:
+            return f(importance::Cosine{});
+        case importance::Type::BRDF:
+            return f(importance::BRDF{});
         }
-        return {};
+        std::unreachable();
+    }
+
+    Float pdf(const Hit& hit, Vec3 wi) const {
+        return dispatch([&](auto s) { return s.pdf(hit, wi); });
+    }
+    std::optional<Sample> sample(const Hit& hit, Float uc, Vec2 u2) const {
+        return dispatch([&](auto s) { return s.sample(hit, uc, u2); });
     }
 };
 

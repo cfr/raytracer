@@ -22,18 +22,14 @@ Color traceWhitted(const Ray& ray, const Scene& scene, int depth) {
     if (!hit) { return colors::black; }
 
     const Hittable* object = hit->object;
-    auto color = whitted(-ray.dir, *object, *hit, scene);
+    auto color = whitted(*hit, scene);
 
     Float fr = 0.0;
-    Vec3 normal = hit->normal;
 
-    if (object->material.refraction > 0) {
-        bool front = glm::dot(ray.dir, hit->normal) < 0;
-        normal = front ? hit->normal : -hit->normal;
-
-        Float ri = front ? 1.0/object->material.refraction
-                         : object->material.refraction;
-        Float cosI = std::fmin(glm::dot(-ray.dir, normal), 1.0);
+    if (object->material.refractive()) {
+        Float ri = hit->front ? 1.0/object->material.refraction
+                              : object->material.refraction;
+        Float cosI = std::fmin(glm::dot(hit->wo, hit->normal), 1.0);
         Float sinT = ri * std::sqrt(1.0 - cosI*cosI);
         bool tir = sinT > 1.0;
 
@@ -42,23 +38,20 @@ Color traceWhitted(const Ray& ray, const Scene& scene, int depth) {
         fr = tir ? 1.0 : r0 + (1 - r0) * std::pow(1 - cosI, 5);
 
         if (!tir) {
-            Float offset = Hittable::step;
-            Vec3 tdir = glm::refract(ray.dir, normal, ri);
-            Ray refractRay{hit->point + offset*tdir, tdir};
+            Vec3 tdir = glm::refract(ray.dir, hit->normal, ri);
+            Ray refractRay = offset(*hit, tdir);
             color += (1.0 - fr) * traceWhitted(refractRay, scene, depth - 1);
         }
     }
 
-    bool reflective = glm::any(glm::greaterThan(object->material.specular, Color{0.0}));
-    if (reflective || object->material.refraction > 0) {
+    if (object->material.reflective() || object->material.refractive()) {
         Vec3 incoming = glm::normalize(ray.dir);
-        Vec3 reflect = glm::reflect(incoming, normal);
+        Vec3 reflect = glm::reflect(incoming, hit->normal);
 
-        Float offset = Hittable::step;
-        Ray reflectionRay{hit->point + offset*reflect, reflect};
+        Ray reflectionRay = offset(*hit, reflect);
 
         Color reflected = traceWhitted(reflectionRay, scene, depth - 1);
-        if (object->material.refraction > 0) {
+        if (object->material.refractive()) {
             color += fr * reflected;
         } else {
             color += object->material.specular * reflected;
@@ -71,40 +64,46 @@ Color traceWhitted(const Ray& ray, const Scene& scene, int depth) {
 Color traceAnalytic(const Ray& ray, const Scene& scene) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
-    return analytic(*hit->object, *hit, scene);
+    return analytic(*hit, scene);
 }
 
-Color traceDirect(const Ray& ray, const Scene& scene, Sampler& sampler) {
+Color traceDirect(const Ray& ray, const Scene& scene, const Integrator& integrator, Sampler& sampler) {
     auto hit = scene.bvh.intersect(ray);
     if (!hit) { return colors::black; }
-    if (glm::dot(ray.dir, hit->normal) > 0) {
-        hit->normal = -hit->normal;
-    }
-    return hit->object->material.emission + direct(-ray.dir, *hit->object, *hit, scene, sampler);
+    return emitted(*hit) + direct(*hit, scene, integrator, sampler, false);
 }
 
-Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator, Sampler& sampler, int depth, bool primary, Color throughput) {
+Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator, Sampler& sampler, int depth, bool primary, Color throughput, Float pdfPrev) {
     auto hit = scene.bvh.intersect(ray);
-    if (!hit) { return colors::black; }
+    if (!hit) return colors::black;
 
-    Color le = (integrator.nextEvent && !primary) ? colors::black : hit->object->material.emission;
-    if (depth == 0) { return le; } // depth < 0 -- infinite bounces
+    bool nee = integrator.nextEvent != Integrator::NEE::Off;
+    bool mis = integrator.nextEvent == Integrator::NEE::MIS;
 
-    if (glm::dot(ray.dir, hit->normal) > 0) {
-        hit->normal = -hit->normal;
+    Color le = colors::black;
+    // NOTE: single-sided light
+    if (hit->object->material.emissive() && hit->front) {
+        if (primary || !nee) {
+            le = hit->object->material.emission;
+        } else if (mis) {
+            // direct() samples all lights, no need in 1/n
+            Float pl = importance::pdfLight(*hit);
+            Float w = importance::misWeight(pdfPrev, pl);
+            le = w * hit->object->material.emission;
+        }
     }
-    Color ldirect = integrator.nextEvent ? direct(-ray.dir, *hit->object, *hit, scene, sampler) : colors::black;
+    if (depth == 0) return le;
 
-    auto b = Basis(hit->normal);
-    auto sample = integrator.sample(hit->object->material, b.toLocal(-ray.dir), sampler.unit(), sampler.unit2());
-    if (!sample) {
-        return le + ldirect;
-    }
-    auto wi = b.toWorld(sample->wi);
-    auto bounce = Ray{hit->point + Hittable::step * wi, wi};
-    auto lweight = sample->f * cosTheta(sample->wi) / sample->pdf;
+    Color ldirect = nee ? direct(*hit, scene, integrator, sampler, mis) : colors::black;
+
+    auto sample = integrator.sample(*hit, sampler.unit(), sampler.unit2());
+    if (!sample) return le + ldirect;
+
+    Color lweight = sample->f * cosTheta(*hit, sample->wi) / sample->pdf;
+    Ray bounce = offset(*hit, sample->wi);
+
     if (!integrator.russianRoulette) {
-        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
+        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput, sample->pdf);
     }
 
     throughput *= lweight;
@@ -115,7 +114,7 @@ Color tracePath(const Ray& ray, const Scene& scene, const Integrator& integrator
         Float boost = 1.0 / (1.0 - q);
         lweight *= boost;
         throughput *= boost;
-        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput);
+        return le + ldirect + lweight * tracePath(bounce, scene, integrator, sampler, depth - 1, false, throughput, sample->pdf);
     }
 }
 
@@ -126,13 +125,13 @@ Color trace(const Ray& ray, const Scene& scene, const Integrator& integrator, Sa
     case Integrator::Type::AnalyticDirect:
         return traceAnalytic(ray, scene);
     case Integrator::Type::Direct:
-        return traceDirect(ray, scene, sampler);
+        return traceDirect(ray, scene, integrator, sampler);
     case Integrator::Type::PathTracer:
         {
         auto color = colors::black;
         // TODO: move to traceRow, add antialiasing
         for (size_t s = 0; s < integrator.samplesPerPixel; s++) {
-            color += tracePath(ray, scene, integrator, sampler, depth, true, colors::white);
+            color += tracePath(ray, scene, integrator, sampler, depth, true, colors::white, 0);
         }
         return color/static_cast<Float>(integrator.samplesPerPixel);
         }

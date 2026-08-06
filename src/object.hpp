@@ -2,6 +2,8 @@
 
 #include "values.hpp"
 
+#include <glm/glm.hpp>
+
 namespace raytracer {
 
 namespace brdf {
@@ -12,7 +14,7 @@ enum class Type : int { Phong, GGX };
 
 struct Material {
     brdf::Type brdfType = brdf::Type::Phong;
-    Color diffuse = colors::white;   // kd
+    Color diffuse = colors::black;   // kd
     Color specular = colors::black;  // ks
     Color emission = colors::black;
     Float t = 0;                     // t = avg(ks) / (avg(ks) + avg(kd))
@@ -30,6 +32,18 @@ struct Material {
         } else {
             t = ks / (ks + kd);
         }
+    }
+
+    bool emissive() const {
+        return glm::any(glm::greaterThan(emission, Color{0.0}));
+    }
+
+    bool reflective() const {
+        return glm::any(glm::greaterThan(specular, Color{0.0}));
+    }
+
+    bool refractive() const {
+        return refraction > 0;
     }
 };
 

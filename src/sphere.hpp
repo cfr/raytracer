@@ -2,7 +2,7 @@
 
 #include "values.hpp"
 #include "ray.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>

@@ -110,13 +110,18 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     }
     else if (cmd == "nexteventestimation") {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'nexteventestimation <on/off>'");
+            throw ParseException("Expected 'nexteventestimation <on/off/mis>'");
         }
-        auto onoff = tokens[1];
-        if (onoff != "on" && onoff != "off") {
-            throw ParseException("Expected 'nexteventestimation <on/off>'");
+        auto nee = tokens[1];
+        if (nee == "off") {
+            settings.integrator.nextEvent = Integrator::NEE::Off;
+        } else if (nee == "on") {
+            settings.integrator.nextEvent = Integrator::NEE::On;
+        } else if (nee == "mis") {
+            settings.integrator.nextEvent = Integrator::NEE::MIS;
+        } else {
+            throw ParseException("Expected 'nexteventestimation <on/off/mis>'");
         }
-        settings.integrator.nextEvent = onoff == "on";
         return true;
     }
     else if (cmd == "russianroulette") {
@@ -143,11 +148,11 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         }
         auto importance = tokens[1];
         if (importance == "hemisphere") {
-            settings.integrator.importanceSampling = Importance::Type::Uniform;
+            settings.integrator.importanceSampling = importance::Type::Uniform;
         } else if (importance == "cosine") {
-            settings.integrator.importanceSampling = Importance::Type::Cosine;
+            settings.integrator.importanceSampling = importance::Type::Cosine;
         } else if (importance == "brdf") {
-            settings.integrator.importanceSampling = Importance::Type::BRDF;
+            settings.integrator.importanceSampling = importance::Type::BRDF;
         } else {
             throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
         }

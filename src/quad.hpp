@@ -2,7 +2,7 @@
 
 #include "values.hpp"
 #include "ray.hpp"
-#include "hit.hpp"
+#include "hittable.hpp"
 
 #include <glm/glm.hpp>
 
@@ -34,13 +34,15 @@ struct Quad : Hittable {
         return {lo, hi};
     }
 
+    Float pdfArea() const override { return 1 / area; }
+
     Vec4 normal(Vec3 /*point*/) const override {
         return Vec4{planeNormal, 0};
     }
 
     Float tlocal(Ray ray) const override {
         const Float denom = glm::dot(planeNormal, ray.dir);
-        if (glm::abs(denom) < step) return 0;
+        if (denom == 0) return 0;
 
         const Float t = glm::dot(v0 - ray.origin, planeNormal) / denom;
         if (t <= 0) return 0;
