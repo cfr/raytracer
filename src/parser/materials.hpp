@@ -15,6 +15,7 @@ enum class MaterialType: int {
     Specular,
     Shininess,
     Emission,
+    Ambient,
     Refraction,
     Roughness
 };
@@ -24,6 +25,7 @@ std::optional<MaterialType> materialType(const std::string& token) {
     if (token == "specular") { return MaterialType::Specular; }
     if (token == "shininess") { return MaterialType::Shininess; }
     if (token == "emission") { return MaterialType::Emission; }
+    if (token == "ambient") { return MaterialType::Ambient; }
     if (token == "refraction") { return MaterialType::Refraction; }
     if (token == "roughness") { return MaterialType::Roughness; }
     return {};
@@ -66,9 +68,9 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
         mat.roughness = parseNum<Float>(tokens[1]);
         return true;
     }
-    // parse specular or diffuse or emission
+    // parse specular or diffuse or emission or ambient
     if (tokens.size() != 4) {
-        throw ParseException("Expected '<emission/diffuse/specular> <r> <g> <b>'");
+        throw ParseException("Expected '<emission/diffuse/specular/ambient> <r> <g> <b>'");
     }
     auto r = parseNum<Float>(tokens[1]);
     auto g = parseNum<Float>(tokens[2]);
@@ -82,6 +84,9 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
         return true;
     case MaterialType::Emission:
         mat.emission = {r, g, b};
+        return true;
+    case MaterialType::Ambient:
+        mat.ambient = {r, g, b};
         return true;
     default:
         throw ParseException("Expected material type");

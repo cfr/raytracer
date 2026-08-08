@@ -22,8 +22,8 @@ class Triangle: public Hittable {
     Vec3 nc_;
 
  public:
-    Triangle(const Object& obj, Vec3 a, Vec3 b, Vec3 c)
-        : Hittable{obj}, a_(a), b_(b), c_(c), edge1_(b - a), edge2_(c - a) {
+    Triangle(std::shared_ptr<const Material> m, Vec3 a, Vec3 b, Vec3 c)
+        : Hittable{std::move(m)}, a_(a), b_(b), c_(c), edge1_(b - a), edge2_(c - a) {
         auto normal = glm::normalize(glm::cross(edge1_, edge2_));
         na_ = normal;
         nb_ = normal;
@@ -31,11 +31,8 @@ class Triangle: public Hittable {
     }
 
     Box aabb() const override {
-        Vec3 wa = transformVec3(transform, a_);
-        Vec3 wb = transformVec3(transform, b_);
-        Vec3 wc = transformVec3(transform, c_);
-        return { glm::min(wa, glm::min(wb, wc)),
-                 glm::max(wa, glm::max(wb, wc)) };
+        return { glm::min(a_, glm::min(b_, c_)),
+                 glm::max(a_, glm::max(b_, c_)) };
     }
 
     Vec4 normal(Vec3 /*point*/) const override {

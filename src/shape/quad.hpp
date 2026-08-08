@@ -19,8 +19,8 @@ struct Quad : Hittable {
     Float area = 0;
     Color radiance = colors::black;
 
-    Quad(const Object& obj, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3, Color radiance)
-        : Hittable{obj}, v0(v0), v1(v1), v2(v2), v3(v3), radiance(radiance) {
+    Quad(std::shared_ptr<const Material> m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3, Color radiance)
+        : Hittable{std::move(m)}, v0(v0), v1(v1), v2(v2), v3(v3), radiance(radiance) {
         edge1 = v1 - v0;
         edge2 = v3 - v0;
         Vec3 n = glm::cross(edge2, edge1);
@@ -55,7 +55,7 @@ struct Quad : Hittable {
         const Float d3 = glm::dot(glm::cross(v0 - v3, p - v3), planeNormal);
 
         const auto d = Vec4{d0, d1, d2, d3};
-        const auto zero = Vec4{0.0};
+        const auto zero = Vec4{0};
         const bool inside = glm::all(glm::greaterThanEqual(d, zero))
                          || glm::all(glm::lessThanEqual(d, zero));
 
@@ -71,10 +71,10 @@ struct Quad : Hittable {
             Float theta = glm::acos(glm::clamp(glm::dot(a, b), Float(-1), Float(1)));
             Vec3 c = glm::cross(a, b);
             Float len = glm::length(c);
-            return len > 0 ? theta * (c / len) : Vec3{0.0};
+            return len > 0 ? theta * (c / len) : Vec3{0};
         };
         Vec3 phi = edge(u0, u1) + edge(u1, u2) + edge(u2, u3) + edge(u3, u0);
-        return 0.5 * glm::dot(phi, rnormal);
+        return Float(0.5) * glm::dot(phi, rnormal);
     }
 
     Vec3 sample(Vec2 u) const {

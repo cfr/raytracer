@@ -1,7 +1,7 @@
 #pragma once
 
 #include "values.hpp"
-#include "object.hpp"
+#include "material.hpp"
 #include "camera.hpp"
 
 #include <glm/geometric.hpp>
@@ -25,7 +25,7 @@ namespace brdf {
 namespace phong {
 
 inline Vec3 mirror(Vec3 w) {
-    // local space, n={0,0,1}
+    // n = {0, 0, 1}
     return {-w.x, -w.y, w.z};
 }
 
@@ -83,11 +83,11 @@ std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
 namespace ggx {
 
 inline Float lobeT(const Material& m) {
-    return glm::max(0.25, m.t);
+    return glm::max(Float(0.25), m.t);
 }
 
 inline Float alpha(const Material& m) {
-    return glm::max(1e-3, m.roughness);
+    return glm::max(Float(1e-3), m.roughness);
 }
 
 inline Float d(Float alpha, Vec3 h) {

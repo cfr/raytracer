@@ -2,6 +2,9 @@
 
 #include "values.hpp"
 
+#include <iterator>
+#include <vector>
+
 namespace raytracer {
 
 class Frame {
@@ -14,10 +17,9 @@ class Frame {
         size_t index_, width_;
 
      public:
-        using iterator_category = std::forward_iterator_tag;
+        using iterator_category = std::input_iterator_tag;
         using value_type        = Point;
         using difference_type   = std::ptrdiff_t;
-        using pointer           = const Point*;
         using reference         = Point;
 
         Iterator(size_t idx, size_t w) : index_(idx), width_(w) {}
@@ -36,6 +38,28 @@ class Frame {
 
     Iterator begin() const { return {0, size_.width}; }
     Iterator end() const { return {size_.width * size_.height, size_.width}; }
+};
+
+
+class Row {
+    size_t y_;
+    Size size_;
+    std::vector<Color> data_;
+
+ public:
+    size_t y() const { return y_;}
+    Row(size_t y, Size size) : y_(y), size_(size), data_{size.width, Color{0}} {}
+
+    Frame::Iterator begin() const { return {y_ * size_.width, size_.width}; }
+    Frame::Iterator end() const { return {y_ * size_.width + size_.width, size_.width}; }
+
+    void set(Point pt, Color color) {
+        data_[pt.x] = color;
+    }
+
+    Color get(Point pt) const {
+        return data_[pt.x];
+    }
 };
 
 }  // namespace raytracer

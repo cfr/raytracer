@@ -6,8 +6,8 @@
 #include "ray.hpp"
 #include "trace.hpp"
 #include "pool.hpp"
-#include "row.hpp"
 #include "bvh.hpp"
+#include "frame.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -37,10 +37,10 @@ void write(const std::string& path, const Image& image) {
 Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settings, Seed seed, size_t y) {
     Row row(y, caster.size());
     auto sampler = settings.integrator.sampler(seed);
+    auto pixels = settings.integrator.pixels();
 
     for (auto point : row) {
-        auto ray = caster.cast(point);
-        Color color = trace(ray, scene, settings.integrator, sampler, settings.depth);
+        Color color = tracePixel(caster, point, scene, settings.integrator, sampler, pixels, settings.depth);
         color = gamma(color, settings.gamma);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
@@ -48,20 +48,17 @@ Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settin
     return row;
 }
 
-inline Seed seed64(std::random_device& rd) {
-    std::uint64_t hi = rd();
-    std::uint64_t lo = rd();
-    return (hi << 32) | lo;
-}
-
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::println("usage: raytracer scene.test");
+        std::println("usage: raytracer [--seed N] [--jitter] scene.test");
         return 0;
     }
 
     try {
-        auto [scene, camera, settings] = parser::readScene(argv[1]);
+        auto args = parser::parseArgs(argc, argv);
+        auto [scene, camera, settings] = parser::readScene(args.path);
+        settings.integrator.jitter = settings.integrator.jitter || args.jitter;
+        if (args.seed) { settings.seed = args.seed; }
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
 
@@ -71,7 +68,7 @@ int main(int argc, char** argv) {
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
-            auto seed = seed64(rd);
+            auto seed = settings.seed ? splitmix(*settings.seed + y) : seed64(rd);
             auto row = pool.submit(traceRow, std::cref(scene), std::cref(caster), std::cref(settings), seed, y);
             rows.push_back(std::move(row));
         }

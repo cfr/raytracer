@@ -15,6 +15,19 @@
 
 namespace raytracer {
 
+template <typename device> Seed seed64(device& rd) {
+    std::uint64_t hi = rd();
+    std::uint64_t lo = rd();
+    return (hi << 32) | lo;
+}
+
+constexpr Seed splitmix(Seed x) {
+    x += 0x9E3779B97F4A7C15ull;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ull;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBull;
+    return x ^ (x >> 31);
+}
+
 class Gen {
     static constexpr int digits = std::numeric_limits<Float>::digits;
 

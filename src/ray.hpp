@@ -1,6 +1,7 @@
 #pragma once
 
 #include "values.hpp"
+#include "transforms.hpp"
 #include "image.hpp"
 #include "camera.hpp"
 
@@ -40,29 +41,33 @@ class RayCaster {
     Basis basis_;
     Size size_;
 
-    Float hwidth_;   // width/2
-    Float hheight_;  // height/2
+    Float halfwidth_;
+    Float halfheight_;
 
     Float thfovy_;  // tan(fovy/2)
     Float thfovx_;  // tan(fovx/2)
 
  public:
     RayCaster(Camera cam, Size size) : eye_{cam.eye}, basis_{cam}, size_(size) {
-        hwidth_ = static_cast<Float>(size.width) / 2;
-        hheight_ = static_cast<Float>(size.height) / 2;
+        halfwidth_ = static_cast<Float>(size.width) / 2;
+        halfheight_ = static_cast<Float>(size.height) / 2;
 
-        auto aspect = hwidth_/hheight_;
+        auto aspect = halfwidth_/halfheight_;
         auto fovy = glm::radians(cam.fovy);
         thfovy_ = glm::tan(fovy / 2);
         thfovx_ = aspect * thfovy_;
     }
 
     Ray cast(Point pixel) const {
-        auto x = static_cast<Float>(pixel.x) + 0.5;
-        auto y = static_cast<Float>(pixel.y) + 0.5;
+        return cast(pixel, Vec2{0.5, 0.5});
+    }
 
-        auto alpha = thfovx_ * (x - hwidth_) / hwidth_;
-        auto beta = thfovy_ * (hheight_ - y) / hheight_;
+    Ray cast(Point pixel, Vec2 jitter) const {
+        auto x = static_cast<Float>(pixel.x) + jitter.x;
+        auto y = static_cast<Float>(pixel.y) + jitter.y;
+
+        auto alpha = thfovx_ * (x - halfwidth_) / halfwidth_;
+        auto beta = thfovy_ * (halfheight_ - y) / halfheight_;
 
         auto dir = alpha * basis_.u + beta * basis_.v - basis_.w;
 

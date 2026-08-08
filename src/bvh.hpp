@@ -82,7 +82,7 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
             return {};
         }
 
-        std::optional<Hit> closest;
+        const Hittable* best = nullptr;
         Float closestT = inf;
 
         struct Entry { NodeId id; Float enter; };
@@ -97,11 +97,10 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
 
             if (n.leaf()) {
                 for (ObjId i = n.start; i < n.start + n.count; ++i) {
-                    if (auto hit = objects[i]->intersect(ray)) {
-                        if (hit->t < closestT) {
-                            closestT = hit->t;
-                            closest = std::move(hit);
-                        }
+                    Float t = objects[i]->tworld(ray);
+                    if (t > 0 && t < closestT) {
+                        closestT = t;
+                        best = objects[i].get();
                     }
                 }
             } else {
@@ -116,7 +115,8 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
                 if (tL < inf) { assert(top < StackSize); stk[top++] = {near, tL}; }
             }
         }
-        return closest;
+        if (!best) { return {}; }
+        return best->makeHit(ray, closestT);
     }
 
     [[nodiscard]] bool occluded(const Ray& ray, Float tmax = inf,

@@ -13,18 +13,20 @@ class Sphere: public Hittable {
     Vec3 center_ = {0, 0, 0};
     Float radius_ = 1;
 
- public:
-    Sphere(const Object& obj, Vec3 center, Float radius) : Hittable{obj}, center_{center}, radius_{radius} {}
+  public:
+    Sphere(std::shared_ptr<const Material> m, Vec3 center, Float radius, std::shared_ptr<const Transforms> xf = nullptr)
+        : Hittable{std::move(m), std::move(xf)}, center_{center}, radius_{radius} {}
 
     Box aabb() const override {
         Vec3 lo = center_ - Vec3{radius_};
         Vec3 hi = center_ + Vec3{radius_};
+        if (!transforms) { return {lo, hi}; }
         Box w;
         for (int i = 0; i < 8; ++i) {
             Vec3 corner{ (i&1) ? hi.x : lo.x,
                          (i&2) ? hi.y : lo.y,
                          (i&4) ? hi.z : lo.z };
-            Vec3 p = transformVec3(transform, corner);
+            Vec3 p = transformVec3(transforms->m, corner);
             w.min = glm::min(w.min, p);
             w.max = glm::max(w.max, p);
         }

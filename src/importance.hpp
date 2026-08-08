@@ -53,7 +53,7 @@ struct Uniform final : public Importance<Uniform> {
         Vec3 wiWorld = b.toWorld(wi);
         Float p = pdf(hit, wiWorld);
         if (p <= 0) return {};
-        auto f = brdf::eval(hit.object->material, wo, wi);
+        auto f = brdf::eval(*hit.object->material, wo, wi);
         return Sample{wiWorld, f, p};
     }
 
@@ -73,7 +73,7 @@ struct Cosine final : public Importance<Cosine> {
         Vec3 wiWorld = b.toWorld(wi);
         Float p = pdf(hit, wiWorld);
         if (p <= 0) return {};
-        auto f = brdf::eval(hit.object->material, wo, wi);
+        auto f = brdf::eval(*hit.object->material, wo, wi);
         return Sample{wiWorld, f, p};
     }
 
@@ -86,7 +86,7 @@ struct BRDF final : public Importance<BRDF> {
     std::optional<Sample> sample_(const Hit& hit, Float uc, Vec2 u2) const {
         auto b = Basis(hit.normal);
         auto wo = b.toLocal(hit.wo);
-        auto s = brdf::sample(hit.object->material, wo, uc, u2);
+        auto s = brdf::sample(*hit.object->material, wo, uc, u2);
         if (!s) {
             return {};
         }
@@ -98,12 +98,12 @@ struct BRDF final : public Importance<BRDF> {
         auto b = Basis(hit.normal);
         auto woLocal = b.toLocal(hit.wo);
         auto wiLocal = b.toLocal(wi);
-        return brdf::pdf(hit.object->material, woLocal, wiLocal);
+        return brdf::pdf(*hit.object->material, woLocal, wiLocal);
     }
 };
 
 inline Float pdfLight(const Hit& light) {
-    if (!light.front) return 0;  // single-sided light
+    if (!light.front) return 0;  // single-sided emitter
     Float pa = light.object->pdfArea();
     if (pa <= 0) return 0;
     Float cos = glm::dot(light.normal, light.wo);

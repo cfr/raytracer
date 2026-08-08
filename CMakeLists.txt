@@ -18,6 +18,9 @@ endif()
 
 option(USE_PCG "Use the PCG generator instead of std::mt19937(_64)" OFF)
 
+# NOTE: float might be slower because of grazing ray quantization => more BVH visits
+option(USE_FLOAT32 "Use 32-bit float instead of double" OFF)
+
 find_package(glm CONFIG QUIET)
 
 if(NOT glm_FOUND)
@@ -51,12 +54,19 @@ if(USE_PCG)
 endif()
 
 add_executable(raytracer
-    src/raytracer.cpp
+    src/main.cpp
 )
 
 target_include_directories(raytracer PRIVATE src)
 target_link_libraries(raytracer PRIVATE glm::glm)
 target_compile_features(raytracer PRIVATE cxx_std_23)
+
+if(USE_FLOAT32)
+    target_compile_definitions(raytracer PRIVATE USE_FLOAT32)
+    message(STATUS "Precision: float32")
+else()
+    message(STATUS "Precision: double (default)")
+endif()
 
 if(USE_PCG)
     target_link_libraries(raytracer PRIVATE pcg::pcg)

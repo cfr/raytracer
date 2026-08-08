@@ -8,6 +8,22 @@
 
 namespace raytracer {
 
+using Transform = glm::tmat4x4<Float, glm::defaultp>;
+
+constexpr Transform identity = Transform{1};
+
+inline Vec3 transformVec3(Transform m, Vec3 v) {
+    auto v4 = Vec4(v, 1);
+    auto tv = m * v4;
+    return {tv / tv.w};
+}
+
+struct Transforms {
+    Transform m = identity;
+    Transform inv = identity;
+    Transform invT = identity;
+};
+
 class TStack {
     std::stack<Transform> stack_;
 
@@ -18,7 +34,7 @@ class TStack {
 
  public:
     TStack() {
-        stack_.push(Transform{1});
+        stack_.push(identity);
     }
 
     Transform top() const {

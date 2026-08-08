@@ -17,6 +17,7 @@ struct Material {
     Color diffuse = colors::black;   // kd
     Color specular = colors::black;  // ks
     Color emission = colors::black;
+    Color ambient = colors::black;   // whitted-only per object
     Float t = 0;                     // t = avg(ks) / (avg(ks) + avg(kd))
     Float shininess = 0;
     Float refraction = 0;
@@ -35,25 +36,16 @@ struct Material {
     }
 
     bool emissive() const {
-        return glm::any(glm::greaterThan(emission, Color{0.0}));
+        return glm::any(glm::greaterThan(emission, Color{0}));
     }
 
     bool reflective() const {
-        return glm::any(glm::greaterThan(specular, Color{0.0}));
+        return glm::any(glm::greaterThan(specular, Color{0}));
     }
 
     bool refractive() const {
         return refraction > 0;
     }
-};
-
-struct Object {
-    size_t id = 0;
-    Material material;
-    Transform transform = Transform{1};
-    Transform inverse = Transform{1};
-    Transform inverseTranspose = Transform{1};
-    Color ambient = colors::black;  // per object
 };
 
 }  // namespace raytracer

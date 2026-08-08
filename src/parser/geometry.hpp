@@ -2,8 +2,8 @@
 
 #include "values.hpp"
 #include "hittable.hpp"
-#include "sphere.hpp"
-#include "triangle.hpp"
+#include "shape/sphere.hpp"
+#include "shape/triangle.hpp"
 #include "parser/common.hpp"
 
 #include <string>
@@ -12,7 +12,7 @@
 
 namespace raytracer::parser {
 
-bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, Object& obj, std::vector<ManagedObject>& objects, size_t& objId) {
+bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, const std::shared_ptr<const Material>& cur, const Transforms& xf, std::vector<ManagedObject>& objects) {
     auto cmd = tokens.at(0);
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
@@ -34,7 +34,7 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         return true;
     }
     else if (cmd == "tri") {
-        if (tokens.size() < 4) {
+        if (tokens.size() != 4) {
             throw ParseException("Expected 'tri <idx1> <idx2> <idx3>'");
         }
         auto id0 = parseNum<size_t>(tokens[1]);
@@ -44,12 +44,11 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
             auto a = vertices.at(id0);
             auto b = vertices.at(id1);
             auto c = vertices.at(id2);
-            if (tokens.size() >= 5) {
-                obj.id = parseNum<size_t>(tokens[4]);
-            } else {
-                obj.id = objId++;
-            }
-            auto tri = std::make_shared<Triangle>(obj, a, b, c);
+            // bake the transform
+            auto tri = std::make_shared<Triangle>(cur,
+                transformVec3(xf.m, a),
+                transformVec3(xf.m, b),
+                transformVec3(xf.m, c));
             objects.push_back(tri);
         } catch (const std::exception& e) {
             throw ParseException(e.what());
@@ -57,7 +56,7 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         return true;
     }
     else if (cmd == "sphere") {
-        if (tokens.size() < 5) {
+        if (tokens.size() != 5) {
             throw ParseException("Expected 'sphere <x> <y> <z> <r>'");
         }
         Vec3 c;
@@ -65,13 +64,11 @@ bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& ve
         c.y = parseNum<Float>(tokens[2]);
         c.z = parseNum<Float>(tokens[3]);
         Float r = parseNum<Float>(tokens[4]);
-        if (tokens.size() >= 6) {
-            obj.id = parseNum<size_t>(tokens[5]);
-        } else {
-            obj.id = objId++;
+        std::shared_ptr<const Transforms> sxf;
+        if (xf.m != identity) {
+            sxf = std::make_shared<Transforms>(xf);
         }
-        auto sphere = std::make_shared<Sphere>(obj, c, r);
-        objects.push_back(sphere);
+        objects.push_back(std::make_shared<Sphere>(cur, c, r, std::move(sxf)));
         return true;
     }
     // TODO: maxvertnorms, vertexnormal, trinormal
