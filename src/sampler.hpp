@@ -16,10 +16,10 @@ class Stratify2D {
     size_t ysamples_ = 1;
 
  public:
-    explicit Stratify2D(size_t samples) : samples_(samples) {
-        auto xsamples = size_t(std::sqrt(Float(samples)));
-        while (xsamples > 1 && samples % xsamples != 0) { xsamples--; }
-        ysamples_ = samples / xsamples;
+    explicit Stratify2D(size_t samples) : samples_(glm::max(1uz, samples)) {
+        auto xsamples = size_t(std::sqrt(Float(samples_)));
+        while (xsamples > 1 && samples_ % xsamples != 0) { xsamples--; }
+        ysamples_ = samples_ / xsamples;
         xsamples_ = xsamples;
     }
 

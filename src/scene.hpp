@@ -3,11 +3,11 @@
 #include "values.hpp"
 #include "image.hpp"
 #include "camera.hpp"
-#include "object.hpp"
+#include "material.hpp"
 #include "ray.hpp"
 #include "hittable.hpp"
 #include "bvh.hpp"
-#include "quad.hpp"
+#include "shape/quad.hpp"
 #include "integrator.hpp"
 
 #include <vector>
@@ -44,12 +44,13 @@ struct Settings {
     Float gamma = 1.0;
     Integrator integrator;
     std::string output = "out.ppm";
+    std::optional<Seed> seed;  // {} = use random device, otherwise per-row seed + y
 };
 
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
-    std::vector<std::shared_ptr<Quad>> areaLights;
+    std::vector<std::shared_ptr<const Quad>> areaLights;
     BoundingVolumeHierarchy<ManagedObject> bvh;
 };
 

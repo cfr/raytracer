@@ -4,7 +4,7 @@
 #include "sampler.hpp"
 #include "importance.hpp"
 #include "brdf.hpp"
-#include "object.hpp"
+#include "material.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
@@ -25,6 +25,7 @@ struct Integrator {
     Type type = Type::Whitted;
     size_t lightSamples = 1;
     size_t samplesPerPixel = 1;
+    bool jitter = false;  // expects composite spp
     bool stratify = false; // light
     NEE nextEvent = NEE::Off;
     bool russianRoulette = false;
@@ -32,6 +33,10 @@ struct Integrator {
 
     Sampler sampler(Seed seed) const {
         return Sampler(seed, Stratify2D(lightSamples), stratify);
+    }
+
+    Stratify2D pixels() const {
+        return Stratify2D(samplesPerPixel);
     }
 
     template <class F> auto dispatch(F&& f) const {

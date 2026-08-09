@@ -7,8 +7,10 @@
 #include <stdexcept>
 #include <charconv>
 #include <format>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace raytracer::parser {
@@ -17,6 +19,11 @@ class ParseException : public std::runtime_error {
  public:
     using std::runtime_error::runtime_error;
 };
+
+inline std::shared_ptr<const Material> makeMaterial(Material m) {
+    m.precomputeT();
+    return std::make_shared<Material>(std::move(m));
+}
 
 template <typename T>
 T parseNum(std::string_view sv) {
@@ -62,7 +69,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'gamma <value>'");
         }
-        settings.gamma = glm::max(0.1, parseNum<Float>(tokens[1]));
+        settings.gamma = glm::max(Float(0.1), parseNum<Float>(tokens[1]));
         return true;
     }
     else if (cmd == "output") {
@@ -94,7 +101,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightsamples <count>'");
         }
-        settings.integrator.lightSamples = std::max(1uz, parseNum<size_t>(tokens[1]));
+        settings.integrator.lightSamples = glm::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
     else if (cmd == "lightstratify") {
@@ -106,6 +113,17 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
         settings.integrator.stratify = onoff == "on";
+        return true;
+    }
+    else if (cmd == "jitter") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'jitter <on/off>'");
+        }
+        auto onoff = tokens[1];
+        if (onoff != "on" && onoff != "off") {
+            throw ParseException("Expected 'jitter <on/off>'");
+        }
+        settings.integrator.jitter = onoff == "on";
         return true;
     }
     else if (cmd == "nexteventestimation") {
@@ -135,11 +153,18 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         settings.integrator.russianRoulette = onoff == "on";
         return true;
     }
+    else if (cmd == "seed") {
+        if (tokens.size() != 2) {
+            throw ParseException("Expected 'seed <value>'");
+        }
+        settings.seed = parseNum<Seed>(tokens[1]);
+        return true;
+    }
     else if (cmd == "spp") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'spp <count>'");
         }
-        settings.integrator.samplesPerPixel = std::max(1uz, parseNum<size_t>(tokens[1]));
+        settings.integrator.samplesPerPixel = glm::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
     else if (cmd == "importancesampling") {

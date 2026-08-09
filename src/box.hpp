@@ -39,7 +39,7 @@ struct Box {
     }
 
     Vec3 center() const {
-        return (min + max) * 0.5;
+        return (min + max) * Float(0.5);
     }
 };
 

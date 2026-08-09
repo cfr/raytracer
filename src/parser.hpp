@@ -1,7 +1,8 @@
 #pragma once
 
 #include "scene.hpp"
-#include "tstack.hpp"
+#include "transforms.hpp"
+#include "parser/args.hpp"
 #include "parser/common.hpp"
 #include "parser/materials.hpp"
 #include "parser/geometry.hpp"
@@ -47,9 +48,9 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
 
     Material material;
     TStack stack;
-    Object obj;
+    Transforms xf;
+    auto current = makeMaterial(material);
     std::vector<Vec3> vertices;
-    size_t objId = 1;
 
     while (std::getline(input, line)) {
         lineNo++;
@@ -59,16 +60,16 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         try {
             if (parseSettings(tokens, settings)) { continue; }
             if (parseCamera(tokens, camera)) { continue; }
-            if (parseGeometry(tokens, vertices, obj, objects, objId)) { continue; }
-            if (parseLights(tokens, obj, scene, objId)) { continue; }
+            if (parseGeometry(tokens, vertices, current, xf, objects)) { continue; }
+            if (parseLights(tokens, xf, scene)) { continue; }
             if (parseMaterial(tokens, material)) {
-                obj.material = material;
+                current = makeMaterial(material);
                 continue;
             }
             if (parseTransform(tokens, stack)) {
-                obj.transform = stack.top();
-                obj.inverse = glm::inverse(obj.transform);
-                obj.inverseTranspose = glm::transpose(obj.inverse);
+                xf.m = stack.top();
+                xf.inv = glm::inverse(xf.m);
+                xf.invT = glm::transpose(xf.inv);
                 continue;
             }
             throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
@@ -81,10 +82,6 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     // area lights are also geometry
     for (const auto& light : scene.areaLights) {
         objects.push_back(light);
-    }
-
-    for (auto& object : objects) {
-        object->material.precomputeT();
     }
 
     BoundingVolumeHierarchy<ManagedObject> bvh{objects};
