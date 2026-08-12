@@ -50,7 +50,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settin
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::println("usage: raytracer [--seed N] [--jitter] scene.test");
+        std::println("usage: raytracer [--seed N] [--spp S] [--width W] [--jitter] scene.test");
         return 0;
     }
 
@@ -59,6 +59,12 @@ int main(int argc, char** argv) {
         auto [scene, camera, settings] = parser::readScene(args.path);
         settings.integrator.jitter = settings.integrator.jitter || args.jitter;
         if (args.seed) { settings.seed = args.seed; }
+        if (args.spp) { settings.integrator.samplesPerPixel = *args.spp; }
+        if (args.width) {
+            auto w = *args.width;
+            settings.size.height = settings.size.height * w / settings.size.width;
+            settings.size.width = w;
+        }
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
 

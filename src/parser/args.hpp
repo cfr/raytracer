@@ -11,7 +11,13 @@
 
 namespace raytracer::parser {
 
-struct Args { std::string path; std::optional<Seed> seed; bool jitter = false; };
+struct Args {
+    std::string path;
+    std::optional<Seed> seed;
+    std::optional<size_t> spp;
+    std::optional<size_t> width;
+    bool jitter = false;
+};
 
 inline Args parseArgs(int argc, char** argv) {
     Args a;
@@ -21,6 +27,16 @@ inline Args parseArgs(int argc, char** argv) {
         else if (arg == "--seed") {
             if (++i == argc) { throw ParseException("Expected '--seed <value>'"); }
             a.seed = parseNum<Seed>(argv[i]);
+        }
+        else if (arg == "--spp") {
+            if (++i == argc) { throw ParseException("Expected '--spp <value>'"); }
+            a.spp = parseNum<size_t>(argv[i]);
+            if (*a.spp == 0) { throw ParseException("--spp must be >= 1"); }
+        }
+        else if (arg == "--width") {
+            if (++i == argc) { throw ParseException("Expected '--width <value>'"); }
+            a.width = parseNum<size_t>(argv[i]);
+            if (*a.width == 0) { throw ParseException("--width must be >= 1"); }
         }
         else if (arg.starts_with("--")) { throw ParseException(std::format("Unknown option: '{}'", arg)); }
         else if (!a.path.empty()) { throw ParseException("Multiple scene files given"); }

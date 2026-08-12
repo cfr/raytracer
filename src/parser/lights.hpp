@@ -49,10 +49,10 @@ bool parseLights(const std::vector<std::string>& tokens, const Transforms& xf, S
         Vec3 edge1 = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
         Vec3 edge2 = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
         Color rad = {parseNum<Float>(tokens[10]), parseNum<Float>(tokens[11]), parseNum<Float>(tokens[12])};
-        auto v0 = transformVec3(xf.m, position);
-        auto v1 = transformVec3(xf.m, position + edge1);
-        auto v2 = transformVec3(xf.m, position + edge1 + edge2);
-        auto v3 = transformVec3(xf.m, position + edge2);
+        auto v0 = transformPoint(xf.m, position);
+        auto v1 = transformPoint(xf.m, position + edge1);
+        auto v2 = transformPoint(xf.m, position + edge1 + edge2);
+        auto v3 = transformPoint(xf.m, position + edge2);
         if (glm::length(glm::cross(v3 - v0, v1 - v0)) < Hittable::step) {
             throw ParseException("Degenerate quadLight: edges are parallel or zero-length");
         }

@@ -190,9 +190,7 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
                         prims.begin() + mid,
                         prims.begin() + end,
             [axis](const Prim& a, const Prim& b) {
-                Float ca = a.box.min[axis] + a.box.max[axis];  // 2x centroid
-                Float cb = b.box.min[axis] + b.box.max[axis];
-                return ca < cb;
+                return a.box.centroid()[axis] < b.box.centroid()[axis];
             });
 
         nodes[id].left  = build(prims, start, mid);

@@ -29,4 +29,4 @@ quadLight  1 1 -1  0 0 2  1 -1 0  3 0 0
 # Create a sphere which should cast a soft shadow onto the plane.
 
 diffuse 0.3 0.3 0.3
-sphere  0 -0.25 0  0.5
+sphere  0 -0.25 0 0.5

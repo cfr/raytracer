@@ -22,7 +22,7 @@ class Triangle: public Hittable {
     Vec3 nc_;
 
  public:
-    Triangle(std::shared_ptr<const Material> m, Vec3 a, Vec3 b, Vec3 c)
+    Triangle(MaterialPtr m, Vec3 a, Vec3 b, Vec3 c)
         : Hittable{std::move(m)}, a_(a), b_(b), c_(c), edge1_(b - a), edge2_(c - a) {
         auto normal = glm::normalize(glm::cross(edge1_, edge2_));
         na_ = normal;

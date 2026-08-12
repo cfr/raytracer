@@ -3,6 +3,7 @@
 #include "values.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <memory>
 #include <stack>
 #include <stdexcept>
 
@@ -12,10 +13,10 @@ using Transform = glm::tmat4x4<Float, glm::defaultp>;
 
 constexpr Transform identity = Transform{1};
 
-inline Vec3 transformVec3(Transform m, Vec3 v) {
-    auto v4 = Vec4(v, 1);
-    auto tv = m * v4;
-    return {tv / tv.w};
+inline Vec3 transformPoint(Transform m, Vec3 p) {
+    auto p4 = Vec4(p, 1);
+    auto tp = m * p4;
+    return {tp / tp.w};
 }
 
 struct Transforms {
@@ -23,6 +24,8 @@ struct Transforms {
     Transform inv = identity;
     Transform invT = identity;
 };
+
+using TransformsPtr = std::shared_ptr<const Transforms>;
 
 class TStack {
     std::stack<Transform> stack_;

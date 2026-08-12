@@ -50,8 +50,8 @@ struct Settings {
 struct Scene {
     Attenuation attenuation;
     std::vector<Light> lights;
-    std::vector<std::shared_ptr<const Quad>> areaLights;
-    BoundingVolumeHierarchy<ManagedObject> bvh;
+    std::vector<QuadPtr> areaLights;
+    BoundingVolumeHierarchy<ObjectPtr> bvh;
 };
 
 }  // namespace raytracer

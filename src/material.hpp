@@ -3,6 +3,7 @@
 #include "values.hpp"
 
 #include <glm/glm.hpp>
+#include <memory>
 
 namespace raytracer {
 
@@ -26,10 +27,10 @@ struct Material {
     void precomputeT() {
         auto& s = specular;
         auto& d = diffuse;
-        auto ks = (s.x + s.y + s.z) / 3.0f;
-        auto kd = (d.x + d.y + d.z) / 3.0f;
+        auto ks = (s.x + s.y + s.z) / Float(3);
+        auto kd = (d.x + d.y + d.z) / Float(3);
         if (ks == 0 && kd == 0) {
-            t = 1.0;
+            t = 1;
         } else {
             t = ks / (ks + kd);
         }
@@ -47,5 +48,7 @@ struct Material {
         return refraction > 0;
     }
 };
+
+using MaterialPtr = std::shared_ptr<const Material>;
 
 }  // namespace raytracer

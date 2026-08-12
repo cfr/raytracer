@@ -20,9 +20,13 @@ class ParseException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
-inline std::shared_ptr<const Material> makeMaterial(Material m) {
+inline MaterialPtr makeMaterial(Material m) {
     m.precomputeT();
     return std::make_shared<Material>(std::move(m));
+}
+
+inline TransformsPtr sharedTransforms(const Transforms& xf) {
+    return xf.m == identity ? nullptr : std::make_shared<Transforms>(xf);
 }
 
 template <typename T>
