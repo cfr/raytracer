@@ -44,7 +44,7 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     Settings settings;
     Camera camera;
     Scene scene;
-    std::vector<ManagedObject> objects;
+    std::vector<ObjectPtr> objects;
 
     Material material;
     TStack stack;
@@ -84,7 +84,7 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         objects.push_back(light);
     }
 
-    BoundingVolumeHierarchy<ManagedObject> bvh{objects};
+    BoundingVolumeHierarchy<ObjectPtr> bvh{objects};
     scene.bvh = std::move(bvh);
     return {scene, camera, settings};
 }

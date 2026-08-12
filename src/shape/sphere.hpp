@@ -14,23 +14,12 @@ class Sphere: public Hittable {
     Float radius_ = 1;
 
   public:
-    Sphere(std::shared_ptr<const Material> m, Vec3 center, Float radius, std::shared_ptr<const Transforms> xf = nullptr)
+    Sphere(MaterialPtr m, Vec3 center, Float radius, TransformsPtr xf = nullptr)
         : Hittable{std::move(m), std::move(xf)}, center_{center}, radius_{radius} {}
 
     Box aabb() const override {
-        Vec3 lo = center_ - Vec3{radius_};
-        Vec3 hi = center_ + Vec3{radius_};
-        if (!transforms) { return {lo, hi}; }
-        Box w;
-        for (int i = 0; i < 8; ++i) {
-            Vec3 corner{ (i&1) ? hi.x : lo.x,
-                         (i&2) ? hi.y : lo.y,
-                         (i&4) ? hi.z : lo.z };
-            Vec3 p = transformVec3(transforms->m, corner);
-            w.min = glm::min(w.min, p);
-            w.max = glm::max(w.max, p);
-        }
-        return w;
+        Box local{center_ - Vec3{radius_}, center_ + Vec3{radius_}};
+        return transforms ? local.transformed(*transforms) : local;
     }
 
     Vec4 normal(Vec3 point) const override {
@@ -43,10 +32,10 @@ class Sphere: public Hittable {
         auto b  = 2 * glm::dot(ray.dir, rc);
         auto c  = glm::dot(rc, rc) - radius_*radius_;
 
-        auto det = b*b - 4*a*c;
-        if (det < 0) { return 0; }
+        auto disc = b*b - 4*a*c;
+        if (disc < 0) { return 0; }
 
-        auto sq   = glm::sqrt(det);
+        auto sq   = glm::sqrt(disc);
         auto near = (-b - sq) / (2 * a);
         auto far  = (-b + sq) / (2 * a);
 

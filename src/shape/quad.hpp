@@ -5,6 +5,7 @@
 #include "hittable.hpp"
 
 #include <glm/glm.hpp>
+#include <memory>
 
 namespace raytracer {
 
@@ -19,7 +20,7 @@ struct Quad : Hittable {
     Float area = 0;
     Color radiance = colors::black;
 
-    Quad(std::shared_ptr<const Material> m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3, Color radiance)
+    Quad(MaterialPtr m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3, Color radiance)
         : Hittable{std::move(m)}, v0(v0), v1(v1), v2(v2), v3(v3), radiance(radiance) {
         edge1 = v1 - v0;
         edge2 = v3 - v0;
@@ -81,5 +82,7 @@ struct Quad : Hittable {
         return v0 + u.x * edge1 + u.y * edge2;
     }
 };
+
+using QuadPtr = std::shared_ptr<const Quad>;
 
 }  // namespace raytracer

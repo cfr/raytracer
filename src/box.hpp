@@ -1,6 +1,7 @@
 #pragma once
 
 #include "values.hpp"
+#include "transforms.hpp"
 
 #include <glm/glm.hpp>
 
@@ -40,6 +41,45 @@ struct Box {
 
     Vec3 center() const {
         return (min + max) * Float(0.5);
+    }
+
+    bool empty() const {
+        return min.x > max.x || min.y > max.y || min.z > max.z;
+    }
+
+    void expand(const Vec3& p) {
+        min = glm::min(min, p);
+        max = glm::max(max, p);
+    }
+
+    void expand(const Box& b) {
+        min = glm::min(min, b.min);
+        max = glm::max(max, b.max);
+    }
+
+    Vec3 extent() const {
+        return empty() ? Vec3(0) : max - min;
+    }
+
+    Vec3 centroid() const {
+        return empty() ? Vec3(0) : Float(0.5) * (min + max);
+    }
+
+    Float surfaceArea() const {
+        Vec3 d = extent();
+        return Float(2) * (d.x*d.y + d.y*d.z + d.z*d.x);
+    }
+
+    Box transformed(const Transforms& xf) const {
+        if (empty()) { return Box(); }
+        Box w;
+        for (int i = 0; i < 8; ++i) {
+            w.expand(transformPoint(xf.m, Vec3{
+                (i & 1) ? max.x : min.x,
+                (i & 2) ? max.y : min.y,
+                (i & 4) ? max.z : min.z }));
+        }
+        return w;
     }
 };
 

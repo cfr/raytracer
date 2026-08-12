@@ -4,7 +4,7 @@
 #include "values.hpp"
 #include "scene.hpp"
 #include "ray.hpp"
-#include "light.hpp"
+#include "shade.hpp"
 
 #include <glm/geometric.hpp>
 
