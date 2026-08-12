@@ -10,7 +10,7 @@
 
 namespace raytracer::parser {
 
-bool parseLights(const std::vector<std::string>& tokens, const Transforms& xf, Scene& scene) {
+inline bool parseLights(const std::vector<std::string>& tokens, const Transforms& xf, Scene& scene) {
     auto cmd = tokens[0];
     if (cmd == "attenuation") {
         if (tokens.size() != 4) {

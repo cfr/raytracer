@@ -6,7 +6,7 @@ importancesampling brdf
 nexteventestimation mis
 russianroulette on
 camera 0 1 3 0 1 0 0 1 0 45
-output cornellMIS.png
+output cornell-mis.png
 
 maxdepth -1
 

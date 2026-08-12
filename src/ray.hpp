@@ -2,7 +2,6 @@
 
 #include "values.hpp"
 #include "transforms.hpp"
-#include "image.hpp"
 #include "camera.hpp"
 
 #include <glm/geometric.hpp>

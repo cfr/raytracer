@@ -10,7 +10,7 @@
 
 namespace raytracer::parser {
 
-bool parseTransform(const std::vector<std::string>& tokens, TStack& stack) {
+inline bool parseTransform(const std::vector<std::string>& tokens, TStack& stack) {
     auto cmd = tokens[0];
     if (cmd == "translate") {
         if (tokens.size() != 4) {

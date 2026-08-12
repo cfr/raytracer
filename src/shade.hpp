@@ -23,7 +23,7 @@ inline Color emitted(const Hit& h) {
     return h.front ? h.object->material->emission : colors::black;
 }
 
-Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
+inline Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& material, const Light& light) {
     Float nDotL = glm::dot(hit.normal, ldir);
     auto lambert = material.diffuse * light.color * glm::max(nDotL, Float(0));
 
@@ -32,7 +32,7 @@ Color blinnPhong(Vec3 eyedir, Vec3 ldir, const Hit& hit, const Material& materia
     return lambert + specular;
 }
 
-Color whitted(const Hit& hit, const Scene& scene) {
+inline Color whitted(const Hit& hit, const Scene& scene) {
     auto color = hit.object->material->ambient + emitted(hit);
 
     for (const auto& source : scene.lights) {
@@ -58,7 +58,7 @@ Color whitted(const Hit& hit, const Scene& scene) {
     return color;
 }
 
-Color direct(const Hit& hit, const Scene& scene, const Integrator& integrator, Sampler& sampler, bool mis) {
+inline Color direct(const Hit& hit, const Scene& scene, const Integrator& integrator, Sampler& sampler, bool mis) {
     Color color = colors::black;
     auto samples = mis ? 1 : sampler.samples();
     Basis b{hit.normal};
@@ -102,7 +102,7 @@ Color direct(const Hit& hit, const Scene& scene, const Integrator& integrator, S
     return color;
 }
 
-Color analytic(const Hit& hit, const Scene& scene) {
+inline Color analytic(const Hit& hit, const Scene& scene) {
     auto color = emitted(hit);
 
     for (const auto& source : scene.areaLights) {

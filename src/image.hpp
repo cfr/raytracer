@@ -53,16 +53,24 @@ class Image {
         data_[size_.width * pt.y + pt.x] = color;
     }
 
-    void writePPM(std::ostream& out) const {
-        out << "P3\n" << size_.width << ' ' << size_.height << "\n255\n";
+    void writePPM(std::ostream& out, bool ascii = false) const {
+        out << (ascii ? "P3\n" : "P6\n") << size_.width << ' ' << size_.height << "\n255\n";
+        static constexpr Float scale = 255.0;
         for (auto pix : *this) {
-            static constexpr Float scale = 255.0;
-            auto r = std::lround(scale * pix.r);
-            auto g = std::lround(scale * pix.g);
-            auto b = std::lround(scale * pix.b);
-            out << r << ' ' << g << ' ' << b << '\n';
+            auto r = std::lround(scale * glm::clamp(pix.r, Float(0), Float(1)));
+            auto g = std::lround(scale * glm::clamp(pix.g, Float(0), Float(1)));
+            auto b = std::lround(scale * glm::clamp(pix.b, Float(0), Float(1)));
+            if (ascii) {
+                out << r << ' ' << g << ' ' << b << '\n';
+            } else {
+                unsigned char rgb[3] = {
+                    static_cast<unsigned char>(r),
+                    static_cast<unsigned char>(g),
+                    static_cast<unsigned char>(b),
+                };
+                out.write(reinterpret_cast<const char*>(rgb), 3);
+            }
         }
-        out << std::endl;
     }
 };
 

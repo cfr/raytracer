@@ -16,7 +16,10 @@ struct Args {
     std::optional<Seed> seed;
     std::optional<size_t> spp;
     std::optional<size_t> width;
+    std::optional<std::string> out;
     bool jitter = false;
+    bool quiet = false;
+    bool p3 = false;
 };
 
 inline Args parseArgs(int argc, char** argv) {
@@ -24,6 +27,8 @@ inline Args parseArgs(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         std::string_view arg = argv[i];
         if (arg == "--jitter") { a.jitter = true; }
+        else if (arg == "--quiet") { a.quiet = true; }
+        else if (arg == "--p3") { a.p3 = true; }
         else if (arg == "--seed") {
             if (++i == argc) { throw ParseException("Expected '--seed <value>'"); }
             a.seed = parseNum<Seed>(argv[i]);
@@ -37,6 +42,10 @@ inline Args parseArgs(int argc, char** argv) {
             if (++i == argc) { throw ParseException("Expected '--width <value>'"); }
             a.width = parseNum<size_t>(argv[i]);
             if (*a.width == 0) { throw ParseException("--width must be >= 1"); }
+        }
+        else if (arg == "--out") {
+            if (++i == argc) { throw ParseException("Expected '--out <path>'"); }
+            a.out = argv[i];
         }
         else if (arg.starts_with("--")) { throw ParseException(std::format("Unknown option: '{}'", arg)); }
         else if (!a.path.empty()) { throw ParseException("Multiple scene files given"); }

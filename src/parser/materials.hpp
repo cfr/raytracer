@@ -20,7 +20,7 @@ enum class MaterialType: int {
     Roughness
 };
 
-std::optional<MaterialType> materialType(const std::string& token) {
+inline std::optional<MaterialType> materialType(const std::string& token) {
     if (token == "diffuse") { return MaterialType::Diffuse; }
     if (token == "specular") { return MaterialType::Specular; }
     if (token == "shininess") { return MaterialType::Shininess; }
@@ -31,7 +31,7 @@ std::optional<MaterialType> materialType(const std::string& token) {
     return {};
 }
 
-bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
+inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
     if (tokens[0] == "brdf") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'brdf <phong/ggx>'");
@@ -59,6 +59,9 @@ bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
             throw ParseException("Expected 'refraction <r>'");
         }
         mat.refraction = parseNum<Float>(tokens[1]);
+        if (mat.refraction != 0 && mat.refraction <= Float(1)) {
+            throw ParseException("Expected 'refraction <r>' where r = 0 or r > 1");
+        }
         return true;
     }
     if (type == MaterialType::Roughness) {

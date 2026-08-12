@@ -30,6 +30,7 @@ struct Integrator {
     NEE nextEvent = NEE::Off;
     bool russianRoulette = false;
     importance::Type importanceSampling = importance::Type::Cosine;
+    int depth = 5;  // clamped to 0..maxBounces in parser
 
     Sampler sampler(Seed seed) const {
         return Sampler(seed, Stratify2D(lightSamples), stratify);
