@@ -21,7 +21,7 @@
 
 namespace raytracer::parser {
 
-std::vector<std::string> tokenize(const std::string& line) {
+inline std::vector<std::string> tokenize(const std::string& line) {
     static const auto re = std::regex{R"(\s+)"};
     auto vec = std::vector<std::string>(
         std::sregex_token_iterator{begin(line), end(line), re, -1},
@@ -37,7 +37,7 @@ std::vector<std::string> tokenize(const std::string& line) {
     return vec;
 }
 
-std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
+inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     std::string line;
     int lineNo = 0;
 
@@ -89,7 +89,7 @@ std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     return {scene, camera, settings};
 }
 
-std::tuple<Scene, Camera, Settings> readScene(const std::string& path) {
+inline std::tuple<Scene, Camera, Settings> readScene(const std::string& path) {
     std::ifstream file;
     file.open(path);
     if (!file) { throw ParseException("Can't open file '" + path + "'"); }

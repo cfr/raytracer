@@ -45,7 +45,7 @@ struct Material {
     }
 
     bool refractive() const {
-        return refraction > 0;
+        return refraction > 1;
     }
 };
 

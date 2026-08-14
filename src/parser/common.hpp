@@ -44,7 +44,7 @@ T parseNum(std::string_view sv) {
     return value;
 }
 
-bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
+inline bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     auto cmd = tokens[0];
     if (cmd == "size") {
         if (tokens.size() != 3) {
@@ -59,7 +59,11 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
-        settings.depth = parseNum<int>(tokens[1]);
+        constexpr int maxBounces = 512;
+        int depth = parseNum<int>(tokens[1]);
+        if (depth < 0) { depth = maxBounces; }
+        settings.integrator.depth = glm::min(depth, maxBounces);
+
         return true;
     }
     else if (cmd == "threads") {
@@ -80,7 +84,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
         }
-        settings.output = tokens[1] + ".ppm";
+        settings.output = tokens[1];
         return true;
     }
     else if (cmd == "integrator") {
@@ -190,7 +194,7 @@ bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
     return false;
 }
 
-bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) {
+inline bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) {
     auto cmd = tokens[0];
     if (cmd == "camera") {
         if (tokens.size() != 11) {

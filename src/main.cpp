@@ -10,6 +10,7 @@
 #include "frame.hpp"
 
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -24,14 +25,15 @@
 
 using namespace raytracer;
 
-void write(const std::string& path, const Image& image) {
+std::string write(std::string path, const Image& image, bool ascii) {
+    if (!path.ends_with(".ppm")) { path += ".ppm"; }
     std::ofstream file;
-    file.open(path);
+    file.open(path, std::ios::out | std::ios::binary);
     if (!file) {
         throw std::runtime_error("Can't open file '" + path + "'");
     }
-    image.writePPM(file);
-    std::println("Saved {}.", path);
+    image.writePPM(file, ascii);
+    return path;
 }
 
 Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settings, Seed seed, size_t y) {
@@ -40,7 +42,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settin
     auto pixels = settings.integrator.pixels();
 
     for (auto point : row) {
-        Color color = tracePixel(caster, point, scene, settings.integrator, sampler, pixels, settings.depth);
+        Color color = tracePixel(caster, point, scene, settings.integrator, sampler, pixels);
         color = gamma(color, settings.gamma);
         auto clamped = Color{glm::clamp(color, Color{0}, Color{1})};
         row.set(point, clamped);
@@ -50,7 +52,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settin
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::println("usage: raytracer [--seed N] [--spp S] [--width W] [--jitter] scene.test");
+        std::println("usage: raytracer [--quiet] [--seed n] [--spp s] [--width w] [--out path] [--p3] [--jitter] scene.test");
         return 0;
     }
 
@@ -65,12 +67,23 @@ int main(int argc, char** argv) {
             settings.size.height = settings.size.height * w / settings.size.width;
             settings.size.width = w;
         }
+        if (args.out) { settings.output = *args.out; }
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
 
         size_t threads = settings.threads ? settings.threads : std::thread::hardware_concurrency();
         ThreadPool pool{threads};
         std::random_device rd;
+
+        if (!args.quiet) {
+            std::println("Rendering {}, {}x{}, {} spp, depth {}, rr {}, jitter {}, seed = {}",
+                args.path,
+                settings.size.width, settings.size.height, settings.integrator.samplesPerPixel,
+                settings.integrator.depth,
+                settings.integrator.russianRoulette ? "on" : "off",
+                settings.integrator.jitter ? "on" : "off",
+                settings.seed ? std::to_string(*settings.seed) : "random");
+        }
 
         std::vector<std::future<Row>> rows;
         for (auto y : std::views::iota(0uz, settings.size.height)) {
@@ -84,12 +97,18 @@ int main(int argc, char** argv) {
             for (auto point : row) {
                 image.set(point, row.get(point));
             }
-            std::print("\r{}%", ++y * 100 / settings.size.height);
-            std::fflush(stdout);
+            if (!args.quiet) {
+                std::print("\r{}%", ++y * 100 / settings.size.height);
+                std::fflush(stdout);
+            }
         }
-        std::print("\n");
-        write(settings.output, image);
-    } catch (const std::exception& e) {
-        std::println("{}", e.what());
+        auto saved = write(settings.output, image, args.p3);
+        if (!args.quiet) {
+            std::println("\nSaved {}.", saved);
+        }
+        return 0;
+    } catch (const std::exception& ex) {
+        std::println(stderr, "{}", ex.what());
+        return 1;
     }
 }

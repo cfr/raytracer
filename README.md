@@ -13,6 +13,8 @@ Requires C++23 compiler (e.g., Clang 17+) and [GLM](https://github.com/g-truc/gl
 
 # Scenes
 
+![drei-koerper](drei-koerper.jpg)
+
 ![cornell](cornell.jpg)
 
 ![ggx](ggx.jpg)

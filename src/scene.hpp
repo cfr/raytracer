@@ -1,7 +1,6 @@
 #pragma once
 
 #include "values.hpp"
-#include "image.hpp"
 #include "camera.hpp"
 #include "material.hpp"
 #include "ray.hpp"
@@ -39,7 +38,6 @@ struct Light {
 
 struct Settings {
     Size size = {640, 480};
-    int depth = 5;
     size_t threads = 0;
     Float gamma = 1.0;
     Integrator integrator;

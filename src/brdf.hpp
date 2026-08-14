@@ -33,7 +33,7 @@ inline Float lobeCos(Vec3 wo, Vec3 wi) {
     return glm::max(Float(0), glm::dot(mirror(wo), wi));
 }
 
-Color eval(const Material& m, Vec3 wo, Vec3 wi) {
+inline Color eval(const Material& m, Vec3 wo, Vec3 wi) {
     if (!sameHemisphere(wo, wi)) return colors::black;
 
     Color diff = m.diffuse / pi;
@@ -45,7 +45,7 @@ Color eval(const Material& m, Vec3 wo, Vec3 wi) {
     return diff + spec;
 }
 
-Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
+inline Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
     if (!sameHemisphere(wo, wi)) return 0;
 
     Float diff = (1 - m.t) * glm::abs(wi.z) / pi;
@@ -57,7 +57,7 @@ Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
     return diff + spec;
 }
 
-std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
+inline std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
     if (wo.z == 0) return {};
     Float phi = 2 * pi * u2.x;
     Vec3 wi;
@@ -153,7 +153,7 @@ inline std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u
 
 } // namespace ggx
 
-Color eval(const Material& m, Vec3 wo, Vec3 wi) {
+inline Color eval(const Material& m, Vec3 wo, Vec3 wi) {
     switch (m.brdfType) {
     case Type::Phong:
         return phong::eval(m, wo, wi);
@@ -163,7 +163,7 @@ Color eval(const Material& m, Vec3 wo, Vec3 wi) {
     return colors::black;
 }
 
-Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
+inline Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
     switch (m.brdfType) {
     case Type::Phong:
         return phong::pdf(m, wo, wi);
@@ -173,7 +173,7 @@ Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
     return 0;
 }
 
-std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
+inline std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
     switch (m.brdfType) {
     case Type::Phong:
         return phong::sample(m, wo, uc, u2);

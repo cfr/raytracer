@@ -13,7 +13,7 @@
 
 namespace raytracer::parser {
 
-bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, const MaterialPtr& cur, const Transforms& xf, std::vector<ObjectPtr>& objects) {
+inline bool parseGeometry(const std::vector<std::string>& tokens, std::vector<Vec3>& vertices, const MaterialPtr& cur, const Transforms& xf, std::vector<ObjectPtr>& objects) {
     auto cmd = tokens.at(0);
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
