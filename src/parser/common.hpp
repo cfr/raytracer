@@ -2,14 +2,19 @@
 
 #include "values.hpp"
 #include "scene.hpp"
+#include "camera.hpp"
+
+#include <glm/geometric.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <charconv>
 #include <format>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -29,17 +34,27 @@ inline TransformsPtr sharedTransforms(const Transforms& xf) {
     return xf.m == identity ? nullptr : std::make_shared<Transforms>(xf);
 }
 
+inline constexpr size_t maxPixels = size_t(1) << 26;  // 8k x 8k
+
 template <typename T>
 T parseNum(std::string_view sv) {
     T value;
     if (!sv.empty() && sv[0] == '+') { sv = sv.substr(1); }  // skip leading +
     auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
 
+    if (ec == std::errc::result_out_of_range) {
+        throw ParseException(std::format("Number out of range: '{}'", sv));
+    }
     if (ec != std::errc{}) {
         throw ParseException(std::format("Invalid number format: '{}'", sv));
     }
     if (ptr != sv.data() + sv.size()) {
         throw ParseException(std::format("Trailing characters in number: '{}'", sv));
+    }
+    if constexpr (std::is_floating_point_v<T>) {
+        if (!std::isfinite(value)) {
+            throw ParseException(std::format("Non-finite number: '{}'", sv));
+        }
     }
     return value;
 }
@@ -52,6 +67,12 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         }
         auto width = parseNum<size_t>(tokens[1]);
         auto height = parseNum<size_t>(tokens[2]);
+        if (width == 0 || height == 0) {
+            throw ParseException("Expected 'size <width> <height>', width > 0, height > 0");
+        }
+        if (width > maxPixels / height) {
+            throw ParseException(std::format("Expected 'size <width> <height>', at most {} pixels", maxPixels));
+        }
         settings.size = Size{width, height};
         return true;
     }
@@ -63,7 +84,6 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         int depth = parseNum<int>(tokens[1]);
         if (depth < 0) { depth = maxBounces; }
         settings.integrator.depth = glm::min(depth, maxBounces);
-
         return true;
     }
     else if (cmd == "threads") {
@@ -172,7 +192,11 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'spp <count>'");
         }
-        settings.integrator.samplesPerPixel = glm::max(1uz, parseNum<size_t>(tokens[1]));
+        auto spp = parseNum<size_t>(tokens[1]);
+        if (spp == 0) {
+            throw ParseException("Expected 'spp <count>', spp > 0");
+        }
+        settings.integrator.samplesPerPixel = spp;
         return true;
     }
     else if (cmd == "importancesampling") {
@@ -205,6 +229,12 @@ inline bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) 
         c.center = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
         c.up = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
         c.fovy = parseNum<Float>(tokens[10]);
+        if (Basis::degenerate(c)) {
+            throw ParseException("Degenerate camera: up parallel to view direction");
+        }
+        if (c.fovy <= 0 || c.fovy >= 180) {
+            throw ParseException("Expected 'camera ... <fovy>', 0 < fovy < 180");
+        }
         camera = c;
         return true;
     }

@@ -38,7 +38,11 @@ class Image {
     }
 
     explicit Image(Size s)
-        : size_{s}, data_{s.width*s.height, Color{0}} {}
+        : size_{s}, data_{s.width*s.height, Color{0}} {
+        if (s.width == 0 || s.height == 0) {
+            throw std::runtime_error("Image dimensions must be > 0");
+        }
+    }
 
     Image(size_t width, size_t height)
         : Image(Size{width, height}) {}
@@ -53,7 +57,7 @@ class Image {
         data_[size_.width * pt.y + pt.x] = color;
     }
 
-    void writePPM(std::ostream& out, bool ascii = false) const {
+    bool writePPM(std::ostream& out, bool ascii = false) const {
         out << (ascii ? "P3\n" : "P6\n") << size_.width << ' ' << size_.height << "\n255\n";
         static constexpr Float scale = 255.0;
         for (auto pix : *this) {
@@ -71,6 +75,7 @@ class Image {
                 out.write(reinterpret_cast<const char*>(rgb), 3);
             }
         }
+        return out.good();
     }
 };
 
