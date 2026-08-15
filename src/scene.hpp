@@ -1,17 +1,15 @@
 #pragma once
 
 #include "values.hpp"
-#include "camera.hpp"
-#include "material.hpp"
-#include "ray.hpp"
+#include "tolerance.hpp"
 #include "hittable.hpp"
 #include "bvh.hpp"
 #include "shape/quad.hpp"
 #include "integrator.hpp"
 
+#include <glm/common.hpp>
+
 #include <vector>
-#include <array>
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -23,7 +21,7 @@ struct Attenuation {
     Float quadratic = 0;
 
     Float factor(Float distance) const {
-        Float d = glm::max(distance, Hittable::step);
+        Float d = glm::max(distance, tol::tmin);
         return 1 / (constant + d * linear + d * d * quadratic);
     }
 };

@@ -71,6 +71,12 @@ inline Float cosTheta(const Hit& h, Vec3 w) {
     return glm::dot(h.normal, w);
 }
 
+inline Float sinAngle(Vec3 a, Vec3 b) {
+    Float la = glm::length(a), lb = glm::length(b);
+    if (la == 0 || lb == 0) { return 0; }
+    return glm::length(glm::cross(a, b)) / (la * lb);
+}
+
 // local space
 
 inline bool sameHemisphere(Vec3 a, Vec3 b) {

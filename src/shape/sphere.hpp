@@ -1,6 +1,7 @@
 #pragma once
 
 #include "values.hpp"
+#include "tolerance.hpp"
 #include "ray.hpp"
 #include "hittable.hpp"
 
@@ -39,8 +40,8 @@ class Sphere: public Hittable {
         auto near = (-b - sq) / (2 * a);
         auto far  = (-b + sq) / (2 * a);
 
-        if (near > step) { return near; }
-        if (far  > step) { return far; }
+        if (near > tol::tmin) { return near; }
+        if (far  > tol::tmin) { return far; }
         return 0;
     }
 };

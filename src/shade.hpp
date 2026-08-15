@@ -1,22 +1,21 @@
 #pragma once
 
-#include "integrator.hpp"
 #include "values.hpp"
+#include "tolerance.hpp"
 #include "scene.hpp"
 #include "shape/quad.hpp"
 #include "brdf.hpp"
+#include "integrator.hpp"
 
-#include <glm/geometric.hpp>
+#include <glm/common.hpp>
 #include <glm/exponential.hpp>
-
-#include <algorithm>
-#include <limits>
+#include <glm/geometric.hpp>
 
 namespace raytracer {
 
 inline Ray offset(const Hit& h, Vec3 wi) {
     Vec3 n = glm::dot(h.normal, wi) < 0 ? -h.normal : h.normal;
-    return Ray{h.point + n * Hittable::eps(h.point), wi};
+    return Ray{h.point + n * tol::offset(h.point), wi};
 }
 
 inline Color emitted(const Hit& h) {
@@ -58,7 +57,7 @@ inline Color direct(const Hit& hit, const Scene& scene, const Integrator& integr
     auto samples = mis ? 1 : sampler.samples();
     Basis b{hit.normal};
 
-    Float e = Hittable::eps(hit.point);
+    Float e = tol::offset(hit.point);
     Vec3 origin = hit.point + e * hit.normal;
     Float minDist2 = e * e;
 
@@ -76,7 +75,7 @@ inline Color direct(const Hit& hit, const Scene& scene, const Integrator& integr
             Float d2 = glm::dot(d, d);
             Float cosI = glm::dot(hit.normal, d);
             if (cosI <= 0 || d2 < minDist2) { continue; }
-            Float r = std::sqrt(d2);
+            Float r = glm::sqrt(d2);
             Vec3 wi = d / r;
             Vec3 sd = xl - origin;
             Float rl = glm::length(sd);

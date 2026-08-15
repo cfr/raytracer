@@ -13,6 +13,8 @@ enum class Type : int { Phong, GGX };
 
 }
 
+constexpr Float minRoughness = 1e-3;
+
 struct Material {
     brdf::Type brdfType = brdf::Type::Phong;
     Color diffuse = colors::black;   // kd
@@ -22,7 +24,7 @@ struct Material {
     Float t = 0;                     // t = avg(ks) / (avg(ks) + avg(kd))
     Float shininess = 0;
     Float refraction = 0;
-    Float roughness = 0;
+    Float roughness = minRoughness;
 
     void precomputeT() {
         auto& s = specular;
