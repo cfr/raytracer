@@ -4,7 +4,7 @@
 #include "ray.hpp"
 #include "hittable.hpp"
 
-#include <glm/exponential.hpp>
+#include <glm/common.hpp>
 #include <glm/geometric.hpp>
 
 namespace raytracer {

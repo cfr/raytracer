@@ -7,10 +7,10 @@
 #include "shade.hpp"
 #include "dielectric.hpp"
 
+#include <glm/common.hpp>
 #include <glm/geometric.hpp>
 
-#include <limits>
-#include <memory>
+#include <optional>
 
 namespace raytracer {
 

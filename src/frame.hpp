@@ -2,6 +2,8 @@
 
 #include "values.hpp"
 
+#include <cstddef>
+#include <compare>
 #include <iterator>
 #include <vector>
 

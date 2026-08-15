@@ -9,6 +9,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include <cstdint>
+#include <cstddef>
 #include <limits>
 
 namespace raytracer {

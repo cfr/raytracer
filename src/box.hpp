@@ -3,7 +3,7 @@
 #include "values.hpp"
 #include "transforms.hpp"
 
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
 
 #include <utility>
 

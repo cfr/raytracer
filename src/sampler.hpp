@@ -2,10 +2,9 @@
 
 #include "values.hpp"
 #include "rand.hpp"
-#include "camera.hpp"
 
-#include <glm/geometric.hpp>
-#include <glm/trigonometric.hpp>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
 
 namespace raytracer {
 
@@ -17,7 +16,7 @@ class Stratify2D {
 
  public:
     explicit Stratify2D(size_t samples) : samples_(glm::max(1uz, samples)) {
-        auto xsamples = size_t(std::sqrt(Float(samples_)));
+        auto xsamples = size_t(glm::sqrt(Float(samples_)));
         while (xsamples > 1 && samples_ % xsamples != 0) { xsamples--; }
         ysamples_ = samples_ / xsamples;
         xsamples_ = xsamples;

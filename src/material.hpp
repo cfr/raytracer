@@ -2,7 +2,7 @@
 
 #include "values.hpp"
 
-#include <glm/glm.hpp>
+#include <glm/vector_relational.hpp>
 #include <memory>
 
 namespace raytracer {

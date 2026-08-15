@@ -4,7 +4,7 @@
 #include "scene.hpp"
 #include "camera.hpp"
 
-#include <glm/geometric.hpp>
+#include <glm/common.hpp>
 
 #include <algorithm>
 #include <cmath>

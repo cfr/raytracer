@@ -6,9 +6,6 @@
 #include "brdf.hpp"
 #include "material.hpp"
 
-#include <glm/geometric.hpp>
-#include <glm/trigonometric.hpp>
-
 #include <optional>
 #include <utility>
 
