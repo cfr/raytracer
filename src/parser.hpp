@@ -68,6 +68,9 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
             }
             if (parseTransform(tokens, stack)) {
                 xf.m = stack.top();
+                if (glm::determinant(xf.m) == 0) {
+                    throw ParseException("Singular transform");
+                }
                 xf.inv = glm::inverse(xf.m);
                 xf.invT = glm::transpose(xf.inv);
                 continue;
@@ -92,7 +95,7 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
 inline std::tuple<Scene, Camera, Settings> readScene(const std::string& path) {
     std::ifstream file;
     file.open(path);
-    if (!file) { throw ParseException("Can't open file '" + path + "'"); }
+    if (!file) { throw ParseException("Failed to open file '" + path + "'"); }
     return parseScene(file);
 }
 

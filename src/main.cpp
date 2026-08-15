@@ -30,9 +30,13 @@ std::string write(std::string path, const Image& image, bool ascii) {
     std::ofstream file;
     file.open(path, std::ios::out | std::ios::binary);
     if (!file) {
-        throw std::runtime_error("Can't open file '" + path + "'");
+        throw std::runtime_error("Failed to open file '" + path + "'");
     }
-    image.writePPM(file, ascii);
+    bool ok = image.writePPM(file, ascii);
+    file.close();
+    if (!ok || !file) {
+        throw std::runtime_error("Failed to write file '" + path + "'");
+    }
     return path;
 }
 

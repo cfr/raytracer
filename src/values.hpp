@@ -54,7 +54,8 @@ struct Hit {
 };
 
 inline Vec3 halfvec(Vec3 a, Vec3 b) {
-    return glm::normalize(a+b);
+    Vec3 h = a + b;
+    return glm::dot(h, h) == 0 ? Vec3{0} : glm::normalize(h);
 }
 
 inline Color gamma(Color c, Float g) {

@@ -36,12 +36,12 @@ inline Args parseArgs(int argc, char** argv) {
         else if (arg == "--spp") {
             if (++i == argc) { throw ParseException("Expected '--spp <value>'"); }
             a.spp = parseNum<size_t>(argv[i]);
-            if (*a.spp == 0) { throw ParseException("--spp must be >= 1"); }
+            if (*a.spp == 0) { throw ParseException("--spp must be > 0"); }
         }
         else if (arg == "--width") {
             if (++i == argc) { throw ParseException("Expected '--width <value>'"); }
             a.width = parseNum<size_t>(argv[i]);
-            if (*a.width == 0) { throw ParseException("--width must be >= 1"); }
+            if (*a.width == 0) { throw ParseException("--width must be > 0"); }
         }
         else if (arg == "--out") {
             if (++i == argc) { throw ParseException("Expected '--out <path>'"); }

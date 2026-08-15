@@ -9,7 +9,6 @@
 
 namespace raytracer {
 
-
 struct Camera {
     Vec3 eye = {0, 0, 0};
     Vec3 center = {0, 0, -1};
@@ -22,10 +21,16 @@ struct Basis {
     Vec3 v;
     Vec3 w;
 
+    static bool degenerate(const Camera& cam) {
+        Vec3 view = cam.eye - cam.center;
+        if (glm::dot(view, view) == 0 || glm::dot(cam.up, cam.up) == 0) { return true; }
+        return glm::length(glm::cross(glm::normalize(cam.up), glm::normalize(view))) < 1e-4;
+    }
+
     explicit Basis(const Camera& cam) {
         w = glm::normalize(cam.eye - cam.center);
         Vec3 t = glm::cross(cam.up, w);
-        assert(glm::length(t) > 1e-4);
+        assert(!degenerate(cam));
         u = t / glm::length(t);
         v = glm::cross(w, u);
     }

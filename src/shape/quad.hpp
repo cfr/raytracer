@@ -18,10 +18,9 @@ struct Quad : Hittable {
     Vec3 edge2 = {0, 0, 0};
     Vec3 planeNormal = {0, 0, 0};
     Float area = 0;
-    Color radiance = colors::black;
 
-    Quad(MaterialPtr m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3, Color radiance)
-        : Hittable{std::move(m)}, v0(v0), v1(v1), v2(v2), v3(v3), radiance(radiance) {
+    Quad(MaterialPtr m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3)
+        : Hittable{std::move(m)}, v0(v0), v1(v1), v2(v2), v3(v3) {
         edge1 = v1 - v0;
         edge2 = v3 - v0;
         Vec3 n = glm::cross(edge2, edge1);

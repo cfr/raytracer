@@ -16,9 +16,16 @@ inline bool parseLights(const std::vector<std::string>& tokens, const Transforms
         if (tokens.size() != 4) {
             throw ParseException("Expected 'attenuation <c> <l> <q>'");
         }
-        scene.attenuation.constant = parseNum<Float>(tokens[1]);
-        scene.attenuation.linear = parseNum<Float>(tokens[2]);
-        scene.attenuation.quadratic = parseNum<Float>(tokens[3]);
+        auto c = parseNum<Float>(tokens[1]);
+        auto l = parseNum<Float>(tokens[2]);
+        auto q = parseNum<Float>(tokens[3]);
+        if (c < 0 || l < 0 || q < 0) {
+            throw ParseException("Expected 'attenuation <c> <l> <q>', coefficients >= 0");
+        }
+        if (c == 0 && l == 0 && q == 0) {
+            throw ParseException("Expected 'attenuation <c> <l> <q>', at least one coefficient > 0");
+        }
+        scene.attenuation = {c, l, q};
         return true;
     }
     else if (cmd == "directional") {
@@ -53,12 +60,14 @@ inline bool parseLights(const std::vector<std::string>& tokens, const Transforms
         auto v1 = transformPoint(xf.m, position + edge1);
         auto v2 = transformPoint(xf.m, position + edge1 + edge2);
         auto v3 = transformPoint(xf.m, position + edge2);
-        if (glm::length(glm::cross(v3 - v0, v1 - v0)) < Hittable::step) {
+        Vec3 e1 = v1 - v0, e2 = v3 - v0;
+        Float l1 = glm::length(e1), l2 = glm::length(e2);
+        if (l1 == 0 || l2 == 0 || glm::length(glm::cross(e2, e1)) < 1e-6 * l1 * l2) {
             throw ParseException("Degenerate quadLight: edges are parallel or zero-length");
         }
         Material emissive;
         emissive.emission = rad;  // occluding emitter
-        auto quad = std::make_shared<Quad>(makeMaterial(emissive), v0, v1, v2, v3, rad);
+        auto quad = std::make_shared<Quad>(makeMaterial(emissive), v0, v1, v2, v3);
         scene.areaLights.push_back(quad);
         return true;
     }

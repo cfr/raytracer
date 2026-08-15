@@ -23,17 +23,18 @@ struct Attenuation {
     Float quadratic = 0;
 
     Float factor(Float distance) const {
-        return 1 / (constant + distance * linear + distance * distance * quadratic);
+        Float d = glm::max(distance, Hittable::step);
+        return 1 / (constant + d * linear + d * d * quadratic);
     }
 };
 
 struct Light {
-    enum class Type: int {
-        Directional,
-        Point
-    };
     Vec4 position = {0, 0, 0, 0};
     Color color = colors::black;
+
+    bool point() const {
+        return position.w > 0;  // not directional light
+    }
 };
 
 struct Settings {

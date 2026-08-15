@@ -36,22 +36,17 @@ inline Color whitted(const Hit& hit, const Scene& scene) {
     auto color = hit.object->material->ambient + emitted(hit);
 
     for (const auto& source : scene.lights) {
-        bool isPoint = source.position.w > 0;  // not directional light
         auto ldir = Vec3(source.position);
-        if (isPoint) {
+        auto attenuation = Float(1);
+        auto distance = inf;
+        if (source.point()) {
             ldir = Vec3(source.position) - hit.point;
+            distance = glm::distance(Vec3(source.position), hit.point);
+            attenuation = scene.attenuation.factor(distance);
         }
         ldir = glm::normalize(ldir);
         auto shadowRay = offset(hit, ldir);
-        Float distance =
-            isPoint ? glm::distance(Vec3(source.position), hit.point) : inf;
         if (scene.bvh.occluded(shadowRay, distance, hit.object)) { continue; }
-
-        Float attenuation = 1.0;
-
-        if (isPoint) {
-            attenuation = scene.attenuation.factor(distance);
-        }
 
         color += attenuation * blinnPhong(hit.wo, ldir, hit, *hit.object->material, source);
     }
@@ -97,7 +92,7 @@ inline Color direct(const Hit& hit, const Scene& scene, const Integrator& integr
             }
             qcol += w * f * (cosI * cosL / (d2 * d2));
         }
-        color += qcol * quad->radiance * (quad->area / samples);
+        color += qcol * quad->material->emission * (quad->area / samples);
     }
     return color;
 }
@@ -106,7 +101,7 @@ inline Color analytic(const Hit& hit, const Scene& scene) {
     auto color = emitted(hit);
 
     for (const auto& source : scene.areaLights) {
-        color += hit.object->material->diffuse / pi * source->radiance * source->irradiance(hit.point, hit.normal);
+        color += hit.object->material->diffuse / pi * source->material->emission * source->irradiance(hit.point, hit.normal);
     }
     return color;
 }
