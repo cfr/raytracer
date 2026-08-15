@@ -1,6 +1,7 @@
 #pragma once
 
 #include "values.hpp"
+#include "tolerance.hpp"
 
 #include <glm/geometric.hpp>
 
@@ -22,9 +23,7 @@ struct Basis {
     Vec3 w;
 
     static bool degenerate(const Camera& cam) {
-        Vec3 view = cam.eye - cam.center;
-        if (glm::dot(view, view) == 0 || glm::dot(cam.up, cam.up) == 0) { return true; }
-        return glm::length(glm::cross(glm::normalize(cam.up), glm::normalize(view))) < 1e-4;
+        return sinAngle(cam.up, cam.eye - cam.center) < tol::basis;
     }
 
     explicit Basis(const Camera& cam) {
@@ -36,7 +35,7 @@ struct Basis {
     }
 
     explicit Basis(Vec3 n) : w{n} {
-        assert(std::abs(glm::length(n) - 1) < 1e-4);
+        assert(std::abs(glm::length(n) - 1) < tol::unit);
         // Tom Duff et al, 2017, "Building an Orthonormal Basis, Revisited"
         Float sign = std::copysign(Float(1), n.z);
         Float a = -1 / (sign + n.z);

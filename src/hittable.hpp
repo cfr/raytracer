@@ -3,14 +3,13 @@
 #include "values.hpp"
 #include "material.hpp"
 #include "transforms.hpp"
+#include "tolerance.hpp"
 #include "box.hpp"
 #include "ray.hpp"
 
 #include <glm/geometric.hpp>
-#include <glm/trigonometric.hpp>
 
 #include <optional>
-#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -19,15 +18,8 @@ namespace raytracer {
 using ObjectPtr = std::shared_ptr<const Hittable>;
 
 struct Hittable {
-    static constexpr Float step = 0.0001;  // min distance for intersection
-
     MaterialPtr material;
     TransformsPtr transforms;  // nullptr = identity
-
-    // TODO: Wächter & Binder's integer-arithmetic offset
-    static Float eps(Vec3 p) {
-        return step * std::max({Float(1), glm::abs(p.x), glm::abs(p.y), glm::abs(p.z)});
-    }
 
     explicit Hittable(MaterialPtr m, TransformsPtr xf = nullptr)
         : material{std::move(m)}, transforms{std::move(xf)} {}
@@ -47,7 +39,7 @@ struct Hittable {
     // world-space distance to object for unit ray, affine transform, 0 if none
     Float tworld(const Ray& ray) const {
         auto t = transforms ? tlocal(ray.transformed(transforms->inv)) : tlocal(ray);
-        return t < step ? 0 : t;
+        return t < tol::tmin ? 0 : t;
     }
 
     // full hit record for a ray known to hit at world distance tw

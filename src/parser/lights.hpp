@@ -1,6 +1,8 @@
 #pragma once
 
 #include "values.hpp"
+#include "tolerance.hpp"
+#include "transforms.hpp"
 #include "scene.hpp"
 #include "parser/common.hpp"
 
@@ -61,8 +63,7 @@ inline bool parseLights(const std::vector<std::string>& tokens, const Transforms
         auto v2 = transformPoint(xf.m, position + edge1 + edge2);
         auto v3 = transformPoint(xf.m, position + edge2);
         Vec3 e1 = v1 - v0, e2 = v3 - v0;
-        Float l1 = glm::length(e1), l2 = glm::length(e2);
-        if (l1 == 0 || l2 == 0 || glm::length(glm::cross(e2, e1)) < 1e-6 * l1 * l2) {
+        if (sinAngle(e2, e1) < tol::collinear) {
             throw ParseException("Degenerate quadLight: edges are parallel or zero-length");
         }
         Material emissive;

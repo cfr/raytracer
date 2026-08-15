@@ -146,9 +146,6 @@ tri 19 20 23
 popTransform
 
 # Glass ball
-diffuse 0 0 0
-specular 0 0 0
-roughness 0
 refraction 1.55
 sphere 1.3575 0.6157 0.4767 0.6157
 

@@ -1,19 +1,24 @@
 #pragma once
 
 #include "values.hpp"
+#include "tolerance.hpp"
 #include "ray.hpp"
 #include "hittable.hpp"
 
+#include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 
 namespace raytracer {
 
 class Quadric: public Hittable {
 
     static constexpr Vec2 noclip = {-inf, inf};
+    static constexpr Float linearRatio = 1e-4;  // |a/b| below this: solve as linear
 
     Vec3 q_ = {1, 1, 1};     // quadratic [A B C]
     Vec3 l_ = {0, 0, 0};     // linear [G H I]
@@ -117,7 +122,7 @@ class Quadric: public Hittable {
     Vec4 normal(Vec3 point) const override {
         Vec3 g = Float(2) * q_ * point + l_;
         Float len2 = glm::dot(g, g);
-        if (len2 < step) { return Vec4(0, 1, 0, 0); }  // apex
+        if (len2 == 0) { return Vec4(0, 1, 0, 0); }  // apex
         return Vec4(g * glm::inversesqrt(len2), 0);
     }
 
@@ -129,7 +134,7 @@ class Quadric: public Hittable {
                 + glm::dot(l_, ray.origin) + j_;
 
         Float t0, t1;
-        if (glm::abs(a) <= step * glm::abs(b)) {
+        if (glm::abs(a) <= linearRatio * glm::abs(b)) {
             if (b == 0) { return 0; }
             t0 = t1 = -c / b;
         } else {
@@ -142,8 +147,8 @@ class Quadric: public Hittable {
             if (t0 > t1) { std::swap(t0, t1); }
         }
 
-        if (t0 > step && inExtent(ray, t0)) { return t0; }
-        if (t1 > step && inExtent(ray, t1)) { return t1; }
+        if (t0 > tol::tmin && inExtent(ray, t0)) { return t0; }
+        if (t1 > tol::tmin && inExtent(ray, t1)) { return t1; }
         return 0;
     }
 };

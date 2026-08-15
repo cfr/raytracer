@@ -88,10 +88,6 @@ inline Float lobeT(const Material& m) {
     return glm::max(Float(0.25), m.t);
 }
 
-inline Float alpha(const Material& m) {
-    return glm::max(Float(1e-3), m.roughness);
-}
-
 inline Float d(Float alpha, Vec3 h) {
     Float c = h.z;
     if (c <= 0) return 0;
@@ -116,7 +112,7 @@ inline Color eval(const Material& m, Vec3 wo, Vec3 wi) {
     if (wo.z <= 0 || wi.z <= 0) return colors::black;
     Vec3 h = halfvec(wo, wi);
 
-    Float a = alpha(m);
+    Float a = m.roughness;
     Color spec  = fresnel(m, wo, h) * g1(a, wi) * g1(a, wo) * d(a, h) / (4 * wi.z * wo.z);
     return m.diffuse / pi + spec;
 }
@@ -127,7 +123,8 @@ inline Float pdf(const Material& m, Vec3 wo, Vec3 wi) {
     Float woDotH = glm::dot(wo, h);
     if (woDotH <= 0) return 0;
 
-    return (1 - lobeT(m)) * wi.z / pi + lobeT(m) * d(alpha(m), h) * h.z / (4 * woDotH);
+    Float a = m.roughness;
+    return (1 - lobeT(m)) * wi.z / pi + lobeT(m) * d(a, h) * h.z / (4 * woDotH);
 }
 
 inline std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u2) {
@@ -136,7 +133,7 @@ inline std::optional<Sample> sample(const Material& m, Vec3 wo, Float uc, Vec2 u
     Vec3  wi;
 
     if (uc <= lobeT(m)) {
-        Float a2   = alpha(m) * alpha(m);
+        Float a2   = m.roughness * m.roughness;
         Float cosT = glm::sqrt((1 - u2.y) / (1 + u2.y * (a2 - 1)));
         Float sinT = glm::sqrt(glm::max(Float(0), 1 - cosT * cosT));
         Vec3 h{glm::cos(phi) * sinT, glm::sin(phi) * sinT, cosT};

@@ -1,7 +1,10 @@
 #pragma once
 
 #include "values.hpp"
+#include "material.hpp"
 #include "parser/common.hpp"
+
+#include <glm/common.hpp>
 
 #include <optional>
 #include <string>
@@ -67,7 +70,9 @@ inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat)
         if (tokens.size() != 2) {
             throw ParseException("Expected 'roughness <r>'");
         }
-        mat.roughness = parseNum<Float>(tokens[1]);
+        Float r = parseNum<Float>(tokens[1]);
+        if (r < 0 || r > 1) { throw ParseException("Expected 'roughness <r>', r in [0, 1]"); }
+        mat.roughness = glm::max(minRoughness, r);
         return true;
     }
     // parse specular or diffuse or emission or ambient
