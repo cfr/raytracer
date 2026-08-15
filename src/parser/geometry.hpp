@@ -1,11 +1,14 @@
 #pragma once
 
 #include "values.hpp"
+#include "transforms.hpp"
 #include "hittable.hpp"
 #include "shape/sphere.hpp"
 #include "shape/triangle.hpp"
 #include "shape/quadric.hpp"
 #include "parser/common.hpp"
+
+#include <glm/trigonometric.hpp>
 
 #include <string>
 #include <vector>

@@ -2,10 +2,12 @@
 
 #include "values.hpp"
 
+#include <glm/common.hpp>
+
 #include <iterator>
 #include <compare>
 #include <cmath>
-#include <cstdint>
+#include <stdexcept>
 #include <ostream>
 #include <vector>
 

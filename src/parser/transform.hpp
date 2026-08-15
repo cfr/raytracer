@@ -1,7 +1,6 @@
 #pragma once
 
 #include "values.hpp"
-#include "scene.hpp"
 #include "transforms.hpp"
 #include "parser/common.hpp"
 

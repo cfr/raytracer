@@ -9,9 +9,11 @@
 #include "parser/transform.hpp"
 #include "parser/lights.hpp"
 
+#include <glm/matrix.hpp>
+
 #include <fstream>
+#include <istream>
 #include <string>
-#include <string_view>
 #include <format>
 #include <algorithm>
 #include <regex>

@@ -4,7 +4,10 @@
 #include "ray.hpp"
 #include "hittable.hpp"
 
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
+#include <glm/geometric.hpp>
+#include <glm/vector_relational.hpp>
+#include <glm/trigonometric.hpp>
 #include <memory>
 
 namespace raytracer {

@@ -4,6 +4,8 @@
 #include "hittable.hpp"
 #include "brdf.hpp"
 
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
 namespace raytracer {

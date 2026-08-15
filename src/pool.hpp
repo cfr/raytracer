@@ -11,7 +11,6 @@
 #include <concepts>
 #include <stop_token>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 namespace raytracer {

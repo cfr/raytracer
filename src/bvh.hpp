@@ -5,13 +5,10 @@
 #include "ray.hpp"
 #include "hittable.hpp"
 
-#include <glm/glm.hpp>
-#include <glm/exponential.hpp>
-#include <glm/geometric.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <concepts>
 #include <limits>
 #include <optional>
 #include <utility>
