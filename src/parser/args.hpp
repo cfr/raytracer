@@ -15,6 +15,7 @@ struct Args {
     std::optional<Seed> seed;
     std::optional<size_t> spp;
     std::optional<size_t> width;
+    std::optional<size_t> threads;
     std::optional<std::string> out;
     bool jitter = false;
     bool quiet = false;
@@ -41,6 +42,10 @@ inline Args parseArgs(int argc, char** argv) {
             if (++i == argc) { throw ParseException("Expected '--width <value>'"); }
             a.width = parseNum<size_t>(argv[i]);
             if (*a.width == 0) { throw ParseException("--width must be > 0"); }
+        }
+        else if (arg == "--threads") {
+            if (++i == argc) { throw ParseException("Expected '--threads <value>'"); }
+            a.threads = parseNum<size_t>(argv[i]);
         }
         else if (arg == "--out") {
             if (++i == argc) { throw ParseException("Expected '--out <path>'"); }

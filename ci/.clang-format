@@ -1,0 +1,62 @@
+---
+# Requires clang-format >= 16
+BasedOnStyle: LLVM
+Standard: Latest
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+AccessModifierOffset: -2
+IndentCaseLabels: false
+NamespaceIndentation: None
+IndentPPDirectives: None
+
+# Column / line breaking
+ColumnLimit: 100
+BreakBeforeBraces: Attach
+BreakBeforeBinaryOperators: NonAssignment
+AlignAfterOpenBracket: Align
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: NextLine
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# Single-line constructs: nothing non-empty (ex enums)
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: true
+
+# Alignment
+AlignConsecutiveAssignments: None
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+SpacesBeforeTrailingComments: 2
+AlignEscapedNewlines: Left
+AlignConsecutiveMacros: Consecutive
+
+# Pointers / references: type-aligned
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# Spacing
+SpaceAfterTemplateKeyword: true
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+BitFieldColonSpacing: Both
+
+# Includes: manual grouping (project / deps / std), sort within groups
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive
+
+# Misc
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
+FixNamespaceComments: true
+InsertNewlineAtEOF: true
+LineEnding: LF

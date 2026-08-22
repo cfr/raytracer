@@ -1,0 +1,33 @@
+name: lint
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ci
+          load: true
+          tags: raytracer-ci:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: shellcheck
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/shell.sh
+
+      - name: clang-format
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/format.sh
+
+      - name: clang-tidy
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/lint.sh
