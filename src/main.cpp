@@ -58,7 +58,7 @@ Row traceRow(const Scene& scene, const RayCaster& caster, const Settings& settin
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::println("usage: raytracer [--quiet] [--seed n] [--spp s] [--width w] [--out path] [--p3] [--jitter] scene.test");
+        std::println("usage: raytracer [--quiet] [--seed n] [--spp s] [--width w] [--threads n] [--out path] [--p3] [--jitter] scene.test");
         return 0;
     }
 
@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
             settings.size.width = w;
         }
         if (args.out) { settings.output = *args.out; }
+        if (args.threads) { settings.threads = *args.threads; }
         auto image = Image{settings.size};
         auto caster = RayCaster{camera, settings.size};
 

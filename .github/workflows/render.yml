@@ -1,0 +1,27 @@
+name: render
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ci
+          load: true
+          tags: raytracer-ci:local
+          cache-from: type=gha
+
+      - name: image and perf regression
+        # add --icount
+        run: >
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/compare.sh
