@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 inline bool parseTransform(Tokens const& tokens, TStack& stack) {
     auto const& cmd = tokens[0];
@@ -50,4 +50,4 @@ inline bool parseTransform(Tokens const& tokens, TStack& stack) {
     return false;
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

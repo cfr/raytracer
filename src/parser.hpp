@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 inline void tokenize(std::string_view line, Tokens& tokens) {
     constexpr std::string_view space = " \t\n\v\f\r";
@@ -114,4 +114,4 @@ inline std::tuple<Scene, Camera, Settings> readScene(std::string const& path) {
     return parseScene(file);
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

@@ -9,7 +9,7 @@
 #include <stack>
 #include <stdexcept>
 
-namespace raytracer {
+namespace aktis {
 
 using Transform = glm::tmat4x4<Float, glm::defaultp>;
 
@@ -73,4 +73,4 @@ class TStack {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

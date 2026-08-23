@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene) {
     auto const& cmd = tokens[0];
@@ -85,4 +85,4 @@ inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene
     return false;
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

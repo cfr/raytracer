@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace raytracer {
+namespace aktis {
 
 struct Attenuation {
     Float constant = 1;
@@ -51,4 +51,4 @@ struct Scene {
     BoundingVolumeHierarchy<ObjectPtr> bvh;
 };
 
-}  // namespace raytracer
+}  // namespace aktis

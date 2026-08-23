@@ -13,7 +13,7 @@
 #include <random>
 #endif
 
-namespace raytracer {
+namespace aktis {
 
 template <typename device> Seed seed64(device& rd) {
     std::uint64_t const hi = rd();
@@ -54,4 +54,4 @@ class Gen {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

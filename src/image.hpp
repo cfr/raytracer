@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace raytracer {
+namespace aktis {
 
 class Image {
     Size size_;
@@ -95,4 +95,4 @@ class Image {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

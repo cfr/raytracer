@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace raytracer {
+namespace aktis {
 
 /* TODO: switch CRTP to concept:
 
@@ -135,4 +135,4 @@ inline Float misWeight(Float p, Float other) {
 
 }  // namespace importance
 
-}  // namespace raytracer
+}  // namespace aktis

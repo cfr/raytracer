@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the raytracer.
+# Build aktis.
 #
 #   ci/build.sh                     # build repo root into build/ci-<os>-<arch>
 #   ci/build.sh -s DIR -b DIR       # build another source tree elsewhere
@@ -52,4 +52,4 @@ cmake -S "$SRC" -B "$BUILD" -G Ninja \
 
 cmake --build "$BUILD" --parallel >/dev/null
 
-echo "build: OK ($TYPE) -> $BUILD/raytracer"
+echo "build: OK ($TYPE) -> $BUILD/aktis"

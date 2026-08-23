@@ -6,7 +6,7 @@
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 
-namespace raytracer {
+namespace aktis {
 
 class Stratify2D {
   private:
@@ -70,4 +70,4 @@ class Sampler {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

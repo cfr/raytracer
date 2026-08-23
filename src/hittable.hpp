@@ -13,7 +13,7 @@
 #include <optional>
 #include <utility>
 
-namespace raytracer {
+namespace aktis {
 
 using ObjectPtr = std::shared_ptr<Hittable const>;
 
@@ -75,4 +75,4 @@ struct Hittable {
     Hittable& operator=(Hittable&&) = default;
 };
 
-}  // namespace raytracer
+}  // namespace aktis

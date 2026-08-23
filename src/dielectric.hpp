@@ -8,7 +8,7 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
-namespace raytracer::dielectric {
+namespace aktis::dielectric {
 
 // world space
 struct Fresnel {
@@ -50,4 +50,4 @@ inline Sample sample(Hit const& hit, Float u) {
                   .delta = true};
 }
 
-}  // namespace raytracer::dielectric
+}  // namespace aktis::dielectric

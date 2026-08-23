@@ -4,8 +4,8 @@
 #   ci/format.sh          # report what's unformatted (CI mode)
 #   ci/format.sh --fix    # reformat files in place
 #
-#   docker build -t raytracer-ci ci/
-#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/format.sh
+#   docker build -t aktis-ci ci/
+#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/format.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

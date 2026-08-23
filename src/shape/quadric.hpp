@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace raytracer {
+namespace aktis {
 
 class Quadric : public Hittable {
     static constexpr Vec2 noclip = {-inf, inf};
@@ -187,4 +187,4 @@ class Quadric : public Hittable {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

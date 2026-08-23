@@ -11,7 +11,7 @@
 
 #include <optional>
 
-namespace raytracer {
+namespace aktis {
 
 struct Sample {
     Vec3 wi;
@@ -196,4 +196,4 @@ inline std::optional<Sample> sample(Material const& m, Vec3 wo, Float uc, Vec2 u
 
 }  // namespace brdf
 
-}  // namespace raytracer
+}  // namespace aktis

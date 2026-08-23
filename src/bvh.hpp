@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace raytracer {
+namespace aktis {
 
 template <typename T>
 concept SceneObject = requires(T obj, Ray const& ray, Float t) {
@@ -357,4 +357,4 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

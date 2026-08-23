@@ -18,9 +18,9 @@ jobs:
         with:
           context: ci
           load: true
-          tags: raytracer-ci:local
+          tags: aktis-ci:local
           cache-from: type=gha
 
       - name: image and perf regression
         run: >
-          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/compare.sh --icount
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/compare.sh --icount

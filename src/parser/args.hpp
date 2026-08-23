@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 struct Args {
     std::string path;
@@ -77,4 +77,4 @@ inline Args parseArgs(int argc, char** argv) {
     return a;
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

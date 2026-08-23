@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
 inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, MaterialPtr const& cur,
@@ -162,4 +162,4 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
 }
 // NOLINTEND(readability-function-cognitive-complexity)
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

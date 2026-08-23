@@ -12,7 +12,7 @@
 
 #include <optional>
 
-namespace raytracer {
+namespace aktis {
 
 inline Color traceWhitted(Ray const& ray, Scene const& scene, int depth) {
     if (depth <= 0) {
@@ -191,4 +191,4 @@ inline Color tracePixel(RayCaster const& caster, Point point, Scene const& scene
     return color / static_cast<Float>(integrator.samplesPerPixel);
 }
 
-}  // namespace raytracer
+}  // namespace aktis

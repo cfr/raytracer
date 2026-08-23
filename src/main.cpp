@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-using namespace raytracer;
+using namespace aktis;
 
 static std::string write(std::string path, Image const& image, bool ascii) {
     if (!path.ends_with(".ppm")) {
@@ -64,7 +64,7 @@ static Row traceRow(Scene const& scene, RayCaster const& caster, Settings const&
 
 int main(int argc, char** argv) try {
     if (argc < 2) {
-        std::println("usage: raytracer [--quiet] [--seed n] [--spp s] [--width w] "
+        std::println("usage: aktis [--quiet] [--seed n] [--spp s] [--width w] "
                      "[--threads n] [--out path] [--p3] [--jitter] scene.test");
         return 0;
     }

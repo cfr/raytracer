@@ -10,8 +10,8 @@
 #
 # Requires full history: actions/checkout@v4 with fetch-depth: 0.
 #
-#   docker build -t raytracer-ci ci/
-#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/compare.sh
+#   docker build -t aktis-ci ci/
+#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/compare.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -79,12 +79,12 @@ trap cleanup EXIT
 
 echo "== building head ($HEAD_SHA)"
 ci/build.sh -b "$WORK/build-head"
-HEAD_BIN="$WORK/build-head/raytracer"
+HEAD_BIN="$WORK/build-head/aktis"
 
 echo "== building base ($BASE $BASE_SHA)"
 git worktree add --detach --quiet "$TREE" "$BASE_REF"
 ci/build.sh -s "$TREE" -b "$WORK/build-base"
-BASE_BIN="$WORK/build-base/raytracer"
+BASE_BIN="$WORK/build-base/aktis"
 
 echo "== rendering"
 ci/render.sh "$HEAD_BIN" "$WORK/img-head"

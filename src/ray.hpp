@@ -7,7 +7,7 @@
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 
-namespace raytracer {
+namespace aktis {
 
 struct Ray {
     struct SkipInv {};
@@ -79,4 +79,4 @@ class RayCaster {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

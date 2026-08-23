@@ -8,7 +8,7 @@
 #include <limits>
 #include <utility>
 
-namespace raytracer {
+namespace aktis {
 
 struct Box {
     Vec3 min{inf};
@@ -78,4 +78,4 @@ struct Box {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

@@ -11,7 +11,7 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
-namespace raytracer {
+namespace aktis {
 
 inline Ray offset(Hit const& h, Vec3 wi) {
     Vec3 const n = glm::dot(h.normal, wi) < 0 ? -h.normal : h.normal;
@@ -119,4 +119,4 @@ inline Color analytic(Hit const& hit, Scene const& scene) {
     return color;
 }
 
-}  // namespace raytracer
+}  // namespace aktis

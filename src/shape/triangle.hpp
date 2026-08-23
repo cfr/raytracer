@@ -7,7 +7,7 @@
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 
-namespace raytracer {
+namespace aktis {
 
 class Triangle : public Hittable {
     Vec3 a_;
@@ -65,4 +65,4 @@ class Triangle : public Hittable {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 class ParseException : public std::runtime_error {
   public:
@@ -254,4 +254,4 @@ inline bool parseCamera(Tokens const& tokens, Camera& camera) {
     return false;
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

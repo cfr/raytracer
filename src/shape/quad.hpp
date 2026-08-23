@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace raytracer {
+namespace aktis {
 
 struct Quad : Hittable {
     Vec3 v0 = {0, 0, 0};
@@ -92,4 +92,4 @@ struct Quad : Hittable {
 
 using QuadPtr = std::shared_ptr<Quad const>;
 
-}  // namespace raytracer
+}  // namespace aktis

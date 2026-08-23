@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace raytracer {
+namespace aktis {
 
 #ifdef USE_FLOAT32
 using Float = glm::float32_t;
@@ -96,4 +96,4 @@ inline Float cosTheta(Vec3 w) {
     return w.z;
 }
 
-}  // namespace raytracer
+}  // namespace aktis

@@ -1,8 +1,7 @@
-hw3-submissionscenes
-raytracer
+aktis
 testscenes
 build
-raytracer.dSYM
+aktis.dSYM
 .DS_Store
 *.swp
 *.ppm

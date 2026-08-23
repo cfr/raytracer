@@ -1,7 +1,7 @@
 #
-# Build:  docker build -t raytracer-ci ci/
-# Run:    docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/format.sh
-#         docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/lint.sh
+# Build:  docker build -t aktis-ci ci/
+# Run:    docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/format.sh
+#         docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/lint.sh
 #
 FROM debian:trixie-slim
 

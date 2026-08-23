@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace raytracer::parser {
+namespace aktis::parser {
 
 enum class MaterialType : std::uint8_t {
     Diffuse,
@@ -117,4 +117,4 @@ inline bool parseMaterial(Tokens const& tokens, Material& mat) {
     }
 }
 
-}  // namespace raytracer::parser
+}  // namespace aktis::parser

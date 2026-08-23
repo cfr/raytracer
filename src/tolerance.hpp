@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-namespace raytracer::tol {
+namespace aktis::tol {
 
 // minimum ray distance / surface offset base (scene units)
 constexpr Float tmin = 1e-4;
@@ -24,4 +24,4 @@ constexpr Float basis = 1e-4;      // ill-conditioned normalize(cross())
 // vector normalization tolerance
 constexpr Float unit = 1e-4;
 
-}  // namespace raytracer::tol
+}  // namespace aktis::tol

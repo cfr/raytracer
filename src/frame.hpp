@@ -7,7 +7,7 @@
 #include <iterator>
 #include <vector>
 
-namespace raytracer {
+namespace aktis {
 
 class Frame {
     Size size_;
@@ -73,4 +73,4 @@ class Row {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

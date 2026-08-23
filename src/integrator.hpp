@@ -10,7 +10,7 @@
 #include <optional>
 #include <utility>
 
-namespace raytracer {
+namespace aktis {
 
 struct Integrator {
     enum class Type : std::uint8_t { Whitted, AnalyticDirect, Direct, PathTracer };
@@ -53,4 +53,4 @@ struct Integrator {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

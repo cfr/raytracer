@@ -8,7 +8,7 @@
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
-namespace raytracer {
+namespace aktis {
 
 class Sphere : public Hittable {
     Vec3 center_ = {0, 0, 0};
@@ -52,4 +52,4 @@ class Sphere : public Hittable {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

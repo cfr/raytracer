@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace raytracer {
+namespace aktis {
 
 namespace brdf {
 
@@ -55,4 +55,4 @@ struct Material {
 
 using MaterialPtr = std::shared_ptr<Material const>;
 
-}  // namespace raytracer
+}  // namespace aktis

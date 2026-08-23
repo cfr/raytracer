@@ -4,8 +4,8 @@
 #   ci/lint.sh          # report findings
 #   ci/lint.sh --fix    # apply fixits
 #
-#   docker build -t raytracer-ci ci/
-#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/lint.sh
+#   docker build -t aktis-ci ci/
+#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/lint.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-namespace raytracer {
+namespace aktis {
 
 class ThreadPool {
   public:
@@ -87,4 +87,4 @@ class ThreadPool {
     std::vector<std::jthread> workers_;
 };
 
-}  // namespace raytracer
+}  // namespace aktis

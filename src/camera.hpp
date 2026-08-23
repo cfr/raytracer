@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace raytracer {
+namespace aktis {
 
 struct Camera {
     Vec3 eye = {0, 0, 0};
@@ -53,4 +53,4 @@ struct Basis {
     }
 };
 
-}  // namespace raytracer
+}  // namespace aktis

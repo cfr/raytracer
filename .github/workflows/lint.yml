@@ -19,15 +19,15 @@ jobs:
         with:
           context: ci
           load: true
-          tags: raytracer-ci:local
+          tags: aktis-ci:local
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: shellcheck
-        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/shell.sh
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/shell.sh
 
       - name: clang-format
-        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/format.sh
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/format.sh
 
       - name: clang-tidy
-        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/lint.sh
+        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/lint.sh

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(raytracer
+project(aktis
     VERSION 1.0.0
     LANGUAGES CXX
     DESCRIPTION "Ray/Path Tracer"
@@ -53,24 +53,24 @@ if(USE_PCG)
     endif()
 endif()
 
-add_executable(raytracer
+add_executable(aktis
     src/main.cpp
 )
 
-target_include_directories(raytracer PRIVATE src)
-target_link_libraries(raytracer PRIVATE glm::glm)
-target_compile_features(raytracer PRIVATE cxx_std_23)
+target_include_directories(aktis PRIVATE src)
+target_link_libraries(aktis PRIVATE glm::glm)
+target_compile_features(aktis PRIVATE cxx_std_23)
 
 if(USE_FLOAT32)
-    target_compile_definitions(raytracer PRIVATE USE_FLOAT32)
+    target_compile_definitions(aktis PRIVATE USE_FLOAT32)
     message(STATUS "Precision: float32")
 else()
     message(STATUS "Precision: double (default)")
 endif()
 
 if(USE_PCG)
-    target_link_libraries(raytracer PRIVATE pcg::pcg)
-    target_compile_definitions(raytracer PRIVATE USE_PCG)
+    target_link_libraries(aktis PRIVATE pcg::pcg)
+    target_compile_definitions(aktis PRIVATE USE_PCG)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
@@ -79,7 +79,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     set(ARCH_NATIVE -mcpu=native)
 endif()
 
-target_compile_options(raytracer PRIVATE
+target_compile_options(aktis PRIVATE
     -Wall -Wextra
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:${ARCH_NATIVE} -funroll-loops -fno-math-errno -fno-trapping-math>
@@ -88,5 +88,5 @@ target_compile_options(raytracer PRIVATE
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported)
 if(ipo_supported)
-    set_property(TARGET raytracer PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set_property(TARGET aktis PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
