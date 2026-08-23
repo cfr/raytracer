@@ -22,26 +22,14 @@ struct Box {
             tenter = glm::min(glm::max(tenter, t1), glm::max(tenter, t2));
             texit = glm::max(glm::min(texit, t1), glm::min(texit, t2));
         }
-        return {tenter, texit};
+        constexpr Float u = std::numeric_limits<Float>::epsilon() / 2;
+        constexpr Float g3 = (3 * u) / (1 - (3 * u));
+        return {tenter - glm::abs(tenter) * (2 * g3), texit + glm::abs(texit) * (2 * g3)};
     }
 
-    [[nodiscard]] Float enter(Vec3 const& origin, Vec3 const& inv) const {
-        return slab(origin, inv).first;
-    }
-
-    [[nodiscard]] bool intersects(Vec3 const& origin, Vec3 const& inv) const {
+    [[nodiscard]] Float enter(Vec3 const& origin, Vec3 const& inv, Float tmax) const {
         auto [te, tx] = slab(origin, inv);
-        return te <= tx && tx >= 0;
-    }
-
-    [[nodiscard]] bool intersects(Vec3 const& origin, Vec3 const& inv, Float tmin,
-                                  Float tmax) const {
-        auto [te, tx] = slab(origin, inv);
-        return te <= tx && tx >= tmin && te <= tmax;
-    }
-
-    [[nodiscard]] Vec3 center() const {
-        return (min + max) * Float(0.5);
+        return (te <= tx && tx >= 0 && te <= tmax) ? te : inf;
     }
 
     [[nodiscard]] bool empty() const {
@@ -62,6 +50,10 @@ struct Box {
         return empty() ? Vec3(0) : max - min;
     }
 
+    [[nodiscard]] int majorAxis() const {
+        return maxAxis(extent());
+    }
+
     [[nodiscard]] Vec3 centroid() const {
         return empty() ? Vec3(0) : Float(0.5) * (min + max);
     }
@@ -77,16 +69,12 @@ struct Box {
         }
         Box w;
         for (int i = 0; i < 8; ++i) {
-            auto corner = Vec3{((i & 1) != 0) ? max.x : min.x, ((i & 2) != 0) ? max.y : min.y,
-                               ((i & 4) != 0) ? max.z : min.z};
+            Vec3 const corner{((i & 1) != 0) ? max.x : min.x, ((i & 2) != 0) ? max.y : min.y,
+                              ((i & 4) != 0) ? max.z : min.z};
             w.expand(transformPoint(xf.m, corner));
         }
         return w;
     }
 };
-
-inline Box merge(Box const& a, Box const& b) {
-    return {.min = glm::min(a.min, b.min), .max = glm::max(a.max, b.max)};
-}
 
 }  // namespace raytracer
