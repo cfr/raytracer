@@ -22,6 +22,5 @@ jobs:
           cache-from: type=gha
 
       - name: image and perf regression
-        # add --icount
         run: >
-          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/compare.sh
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci:local ci/compare.sh --icount

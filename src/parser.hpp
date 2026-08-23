@@ -9,38 +9,40 @@
 #include "scene.hpp"
 #include "transforms.hpp"
 
-#include <algorithm>
 #include <glm/matrix.hpp>
 
 #include <format>
 #include <fstream>
 #include <istream>
-#include <regex>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 namespace raytracer::parser {
 
-inline std::vector<std::string> tokenize(std::string const& line) {
-    static auto const re = std::regex{R"(\s+)"};
-    auto vec = std::vector<std::string>(std::sregex_token_iterator{begin(line), end(line), re, -1},
-                                        std::sregex_token_iterator{});
+inline void tokenize(std::string_view line, Tokens& tokens) {
+    constexpr std::string_view space = " \t\n\v\f\r";
 
-    // skip empty tokens
-    std::erase_if(vec, [](auto const& s) { return s.empty(); });
-    // remove comments
-    auto cit = std::ranges::find_if(vec, [](auto const& s) { return s[0] == '#'; });
-    if (cit != vec.end()) {
-        vec.erase(cit, vec.end());
+    tokens.clear();
+    for (size_t pos = 0;;) {
+        pos = line.find_first_not_of(space, pos);
+        if (pos == std::string_view::npos || line[pos] == '#') {
+            return;
+        }
+        auto const stop = line.find_first_of(space, pos);
+        tokens.push_back(line.substr(pos, stop - pos));
+        if (stop == std::string_view::npos) {
+            return;
+        }
+        pos = stop;
     }
-
-    return vec;
 }
 
 inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     std::string line;
+    Tokens tokens;
     int lineNo = 0;
 
     Settings settings;
@@ -56,7 +58,7 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
 
     while (std::getline(input, line)) {
         lineNo++;
-        auto tokens = tokenize(line);
+        tokenize(line, tokens);
         if (tokens.empty())
             continue;
 

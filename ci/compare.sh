@@ -9,6 +9,9 @@
 #   ci/compare.sh --rmse 0.5 --bias 0.2     # see ppmdiff.py
 #
 # Requires full history: actions/checkout@v4 with fetch-depth: 0.
+#
+#   docker build -t raytracer-ci ci/
+#   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/compare.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -22,7 +25,7 @@ ICOUNT_MAX=""
 RUNS=3
 TOL=()
 
-PERF_ARGS=(--width 160 --spp 4)
+PERF_ARGS=(--width 320 --spp 32)
 PERF_SCENES=(scenes/cornell.test scenes/dragon.test)
 
 while [ $# -gt 0 ]; do

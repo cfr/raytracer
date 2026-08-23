@@ -2,8 +2,9 @@
 
 #include "values.hpp"
 
-#include <algorithm>
 #include <glm/common.hpp>
+
+#include <algorithm>
 
 namespace raytracer::tol {
 

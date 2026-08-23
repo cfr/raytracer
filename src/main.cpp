@@ -11,10 +11,10 @@
 #include "trace.hpp"
 #include "values.hpp"
 
-#include <exception>
 #include <glm/common.hpp>
 
 #include <cstdio>
+#include <exception>
 #include <fstream>
 #include <functional>
 #include <future>

@@ -6,3 +6,4 @@ raytracer.dSYM
 .DS_Store
 *.swp
 *.ppm
+ci/__pycache__/

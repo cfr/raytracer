@@ -25,6 +25,8 @@ class ParseException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
+using Tokens = std::vector<std::string_view>;
+
 inline MaterialPtr makeMaterial(Material m) {
     m.precomputeT();
     return std::make_shared<Material>(m);
@@ -39,8 +41,8 @@ inline constexpr size_t maxPixels = size_t(1) << 26;  // 8k x 8k
 template <typename T> T parseNum(std::string_view sv) {
     T value;
     if (!sv.empty() && sv[0] == '+') {
-        sv = sv.substr(1);
-    }  // skip leading +
+        sv = sv.substr(1);  // skip leading +
+    }
     auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
 
     if (ec == std::errc::result_out_of_range) {
@@ -61,8 +63,8 @@ template <typename T> T parseNum(std::string_view sv) {
 }
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
-inline bool parseSettings(std::vector<std::string> const& tokens, Settings& settings) {
-    const auto& cmd = tokens[0];
+inline bool parseSettings(Tokens const& tokens, Settings& settings) {
+    auto const& cmd = tokens[0];
     if (cmd == "size") {
         if (tokens.size() != 3) {
             throw ParseException("Expected 'size <width> <height>'");
@@ -109,7 +111,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
         }
-        settings.output = tokens[1];
+        settings.output = std::string{tokens[1]};
         return true;
     }
     if (cmd == "integrator") {
@@ -117,7 +119,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
             throw ParseException(
                 "Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
         }
-        const auto& integrator = tokens[1];
+        auto const& integrator = tokens[1];
         if (integrator == "whitted" || integrator == "raytracer") {
             settings.integrator.type = Integrator::Type::Whitted;
         } else if (integrator == "direct") {
@@ -143,7 +145,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
-        const auto& onoff = tokens[1];
+        auto const& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
@@ -154,7 +156,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'jitter <on/off>'");
         }
-        const auto& onoff = tokens[1];
+        auto const& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'jitter <on/off>'");
         }
@@ -165,7 +167,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'nexteventestimation <on/off/mis>'");
         }
-        const auto& nee = tokens[1];
+        auto const& nee = tokens[1];
         if (nee == "off") {
             settings.integrator.nextEvent = Integrator::NEE::Off;
         } else if (nee == "on") {
@@ -181,7 +183,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'russianroulette <on/off>'");
         }
-        const auto& onoff = tokens[1];
+        auto const& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'russianroulette <on/off>'");
         }
@@ -210,7 +212,7 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
         if (tokens.size() != 2) {
             throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
         }
-        const auto& importance = tokens[1];
+        auto const& importance = tokens[1];
         if (importance == "hemisphere") {
             settings.integrator.importanceSampling = importance::Type::Uniform;
         } else if (importance == "cosine") {
@@ -226,8 +228,8 @@ inline bool parseSettings(std::vector<std::string> const& tokens, Settings& sett
 }
 // NOLINTEND(readability-function-cognitive-complexity)
 
-inline bool parseCamera(std::vector<std::string> const& tokens, Camera& camera) {
-    const auto& cmd = tokens[0];
+inline bool parseCamera(Tokens const& tokens, Camera& camera) {
+    auto const& cmd = tokens[0];
     if (cmd == "camera") {
         if (tokens.size() != 11) {
             throw ParseException(

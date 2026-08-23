@@ -17,10 +17,9 @@
 namespace raytracer::parser {
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
-inline bool parseGeometry(std::vector<std::string> const& tokens, std::vector<Vec3>& vertices,
-                          MaterialPtr const& cur, Transforms const& xf,
-                          std::vector<ObjectPtr>& objects) {
-    const auto& cmd = tokens.at(0);
+inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, MaterialPtr const& cur,
+                          Transforms const& xf, std::vector<ObjectPtr>& objects) {
+    auto const& cmd = tokens.at(0);
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxverts <count>'");

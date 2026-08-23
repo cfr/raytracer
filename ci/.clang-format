@@ -1,5 +1,4 @@
 ---
-# Requires clang-format >= 16
 BasedOnStyle: LLVM
 Standard: Latest
 
@@ -60,3 +59,6 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 FixNamespaceComments: true
 InsertNewlineAtEOF: true
 LineEnding: LF
+QualifierAlignment: Custom
+QualifierOrder: [static, inline, constexpr, type, const, volatile]
+
