@@ -8,6 +8,7 @@
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
 #include <glm/vector_relational.hpp>
+
 #include <memory>
 
 namespace raytracer {

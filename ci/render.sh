@@ -6,6 +6,7 @@
 #   ci/render.sh -C /tmp/base BIN OUTDIR      # resolve scenes in another tree
 #   ci/render.sh -t 1 BIN OUTDIR              # pin thread count
 #
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

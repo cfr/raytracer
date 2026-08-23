@@ -23,7 +23,7 @@ enum class MaterialType : std::uint8_t {
     Roughness
 };
 
-inline std::optional<MaterialType> materialType(std::string const& token) {
+inline std::optional<MaterialType> materialType(std::string_view token) {
     if (token == "diffuse") {
         return MaterialType::Diffuse;
     }
@@ -48,12 +48,12 @@ inline std::optional<MaterialType> materialType(std::string const& token) {
     return {};
 }
 
-inline bool parseMaterial(std::vector<std::string> const& tokens, Material& mat) {
+inline bool parseMaterial(Tokens const& tokens, Material& mat) {
     if (tokens[0] == "brdf") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'brdf <phong/ggx>'");
         }
-        const auto& b = tokens[1];
+        auto const& b = tokens[1];
         if (b != "phong" && b != "ggx") {
             throw ParseException("Expected 'brdf <phong/ggx>'");
         }

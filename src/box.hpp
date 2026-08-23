@@ -5,6 +5,7 @@
 
 #include <glm/common.hpp>
 
+#include <limits>
 #include <utility>
 
 namespace raytracer {

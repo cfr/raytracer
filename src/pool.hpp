@@ -23,7 +23,7 @@ class ThreadPool {
         workers_.reserve(size);
 
         for (size_t i = 0; i < size; ++i) {
-            workers_.emplace_back([this](const std::stop_token& st) { loop(st); });
+            workers_.emplace_back([this](std::stop_token const& st) { loop(st); });
         }
     }
 

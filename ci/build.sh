@@ -5,6 +5,7 @@
 #   ci/build.sh -s DIR -b DIR       # build another source tree elsewhere
 #   ci/build.sh --native            # add -march=native (NOT reproducible)
 #
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -5,11 +5,12 @@
 #include "tolerance.hpp"
 #include "values.hpp"
 
-#include <cmath>
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
+
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 

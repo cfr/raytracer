@@ -6,6 +6,7 @@
 #
 #   docker build -t raytracer-ci ci/
 #   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo raytracer-ci ci/format.sh
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
