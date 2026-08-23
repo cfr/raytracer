@@ -1,16 +1,14 @@
 #pragma once
 
-#include "values.hpp"
-#include "hittable.hpp"
 #include "brdf.hpp"
+#include "hittable.hpp"
+#include "values.hpp"
 
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 
-namespace raytracer {
-
-namespace dielectric {
+namespace raytracer::dielectric {
 
 // world space
 struct Fresnel {
@@ -20,34 +18,36 @@ struct Fresnel {
     bool tir;
 };
 
-inline Fresnel fresnel(const Hit& hit) {
-    Float ior = hit.object->material->refraction;
-    Vec3 n = hit.normal;
-    Float eta = hit.front ? Float(1) / ior : ior;
-    Float cosI = glm::clamp(glm::dot(hit.wo, n), Float(0), Float(1));
-    Float sinT2 = eta * eta * (Float(1) - cosI * cosI);
-    Vec3 wr = glm::reflect(-hit.wo, n);
+inline Fresnel fresnel(Hit const& hit) {
+    Float const ior = hit.object->material->refraction;
+    Vec3 const n = hit.normal;
+    Float const eta = hit.front ? Float(1) / ior : ior;
+    Float const cosI = glm::clamp(glm::dot(hit.wo, n), Float(0), Float(1));
+    Float const sinT2 = eta * eta * (Float(1) - cosI * cosI);
+    Vec3 const wr = glm::reflect(-hit.wo, n);
 
     if (sinT2 >= Float(1)) {
-        return {wr, wr, Float(1), true};
+        return {.wr = wr, .wt = wr, .reflectance = Float(1), .tir = true};
     }
 
-    Float cosT = glm::sqrt(Float(1) - sinT2);
-    Float c = hit.front ? cosI : cosT;
+    Float const cosT = glm::sqrt(Float(1) - sinT2);
+    Float const c = hit.front ? cosI : cosT;
     Float r0 = (Float(1) - ior) / (Float(1) + ior);
     r0 *= r0;
-    Float m = Float(1) - c, m2 = m * m;
-    Float fr = r0 + (Float(1) - r0) * m2 * m2 * m;
+    Float const m = Float(1) - c, m2 = m * m;
+    Float const fr = r0 + ((Float(1) - r0) * m2 * m2 * m);
 
-    return {wr, -eta * hit.wo + (eta * cosI - cosT) * n, fr, false};
+    return {
+        .wr = wr, .wt = -eta * hit.wo + ((eta * cosI) - cosT) * n, .reflectance = fr, .tir = false};
 }
 
 // NOTE: omits the 1/η² radiance scaling
-inline Sample sample(const Hit& hit, Float u) {
+inline Sample sample(Hit const& hit, Float u) {
     auto f = fresnel(hit);
-    return Sample{(f.tir || u < f.reflectance) ? f.wr : f.wt, colors::white, Float(1), true};
+    return Sample{.wi = (f.tir || u < f.reflectance) ? f.wr : f.wt,
+                  .f = colors::white,
+                  .pdf = Float(1),
+                  .delta = true};
 }
 
-}  // namespace dielectric
-
-}  // namespace raytracer
+}  // namespace raytracer::dielectric

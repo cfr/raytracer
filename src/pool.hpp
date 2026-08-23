@@ -1,30 +1,29 @@
 #pragma once
 
 #include <algorithm>
-#include <vector>
-#include <queue>
-#include <thread>
-#include <mutex>
+#include <concepts>
 #include <condition_variable>
 #include <functional>
 #include <future>
-#include <concepts>
-#include <stop_token>
 #include <memory>
+#include <mutex>
+#include <queue>
+#include <stop_token>
+#include <thread>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 namespace raytracer {
 
 class ThreadPool {
- public:
+  public:
     explicit ThreadPool(size_t size) {
         size = std::max(1uz, size);
         workers_.reserve(size);
 
         for (size_t i = 0; i < size; ++i) {
-            workers_.emplace_back([this](std::stop_token st) {
-                loop(st);
-            });
+            workers_.emplace_back([this](const std::stop_token& st) { loop(st); });
         }
     }
 
@@ -34,22 +33,25 @@ class ThreadPool {
         }
     }
 
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool& operator=(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool const&) = delete;
+    ThreadPool& operator=(ThreadPool const&) = delete;
+    ThreadPool(ThreadPool&&) = delete;
+    ThreadPool& operator=(ThreadPool&&) = delete;
 
     template <typename F, typename... Args>
-    requires std::invocable<F, Args...>
+        requires std::invocable<F, Args...>
     auto submit(F&& f, Args&&... args) {
         using ReturnType = std::invoke_result_t<F, Args...>;
 
         auto task = std::make_shared<std::packaged_task<ReturnType()>>(
-            std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-        );
+            [f = std::forward<F>(f), tup = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+                return std::apply(std::move(f), std::move(tup));
+            });
 
         std::future<ReturnType> result = task->get_future();
 
         {
-            std::unique_lock<std::mutex> lock(qmut_);
+            std::unique_lock<std::mutex> const lock(qmut_);
             tasks_.push([task]() { (*task)(); });
         }
 
@@ -57,7 +59,7 @@ class ThreadPool {
         return result;
     }
 
- private:
+  private:
     void loop(std::stop_token st) {
         while (true) {
             std::function<void()> task;
@@ -65,11 +67,11 @@ class ThreadPool {
             {
                 std::unique_lock<std::mutex> lock(qmut_);
 
-                cv_.wait(lock, st, [this, &st] {
-                    return !tasks_.empty() || st.stop_requested();
-                });
+                cv_.wait(lock, st, [this, &st] { return !tasks_.empty() || st.stop_requested(); });
 
-                if (st.stop_requested()) { return; }
+                if (st.stop_requested()) {
+                    return;
+                }
 
                 task = std::move(tasks_.front());
                 tasks_.pop();

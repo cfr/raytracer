@@ -1,17 +1,17 @@
 #pragma once
 
-#include "values.hpp"
-#include "scene.hpp"
 #include "camera.hpp"
+#include "scene.hpp"
+#include "values.hpp"
 
 #include <glm/common.hpp>
 
 #include <algorithm>
-#include <cmath>
-#include <stdexcept>
 #include <charconv>
+#include <cmath>
 #include <format>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -21,25 +21,26 @@
 namespace raytracer::parser {
 
 class ParseException : public std::runtime_error {
- public:
+  public:
     using std::runtime_error::runtime_error;
 };
 
 inline MaterialPtr makeMaterial(Material m) {
     m.precomputeT();
-    return std::make_shared<Material>(std::move(m));
+    return std::make_shared<Material>(m);
 }
 
-inline TransformsPtr sharedTransforms(const Transforms& xf) {
+inline TransformsPtr sharedTransforms(Transforms const& xf) {
     return xf.m == identity ? nullptr : std::make_shared<Transforms>(xf);
 }
 
 inline constexpr size_t maxPixels = size_t(1) << 26;  // 8k x 8k
 
-template <typename T>
-T parseNum(std::string_view sv) {
+template <typename T> T parseNum(std::string_view sv) {
     T value;
-    if (!sv.empty() && sv[0] == '+') { sv = sv.substr(1); }  // skip leading +
+    if (!sv.empty() && sv[0] == '+') {
+        sv = sv.substr(1);
+    }  // skip leading +
     auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
 
     if (ec == std::errc::result_out_of_range) {
@@ -59,8 +60,9 @@ T parseNum(std::string_view sv) {
     return value;
 }
 
-inline bool parseSettings(const std::vector<std::string>& tokens, Settings& settings) {
-    auto cmd = tokens[0];
+// NOLINTBEGIN(readability-function-cognitive-complexity)
+inline bool parseSettings(std::vector<std::string> const& tokens, Settings& settings) {
+    const auto& cmd = tokens[0];
     if (cmd == "size") {
         if (tokens.size() != 3) {
             throw ParseException("Expected 'size <width> <height>'");
@@ -71,47 +73,51 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
             throw ParseException("Expected 'size <width> <height>', width > 0, height > 0");
         }
         if (width > maxPixels / height) {
-            throw ParseException(std::format("Expected 'size <width> <height>', at most {} pixels", maxPixels));
+            throw ParseException(
+                std::format("Expected 'size <width> <height>', at most {} pixels", maxPixels));
         }
-        settings.size = Size{width, height};
+        settings.size = Size{.width = width, .height = height};
         return true;
     }
-    else if (cmd == "maxdepth") {
+    if (cmd == "maxdepth") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxdepth <depth>'");
         }
         constexpr int maxBounces = 512;
         int depth = parseNum<int>(tokens[1]);
-        if (depth < 0) { depth = maxBounces; }
+        if (depth < 0) {
+            depth = maxBounces;
+        }
         settings.integrator.depth = glm::min(depth, maxBounces);
         return true;
     }
-    else if (cmd == "threads") {
+    if (cmd == "threads") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'threads <count>'");
         }
         settings.threads = parseNum<size_t>(tokens[1]);
         return true;
     }
-    else if (cmd == "gamma") {
+    if (cmd == "gamma") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'gamma <value>'");
         }
         settings.gamma = glm::max(Float(0.1), parseNum<Float>(tokens[1]));
         return true;
     }
-    else if (cmd == "output") {
+    if (cmd == "output") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'output <filename>'");
         }
         settings.output = tokens[1];
         return true;
     }
-    else if (cmd == "integrator") {
+    if (cmd == "integrator") {
         if (tokens.size() != 2) {
-            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
+            throw ParseException(
+                "Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
         }
-        auto integrator = tokens[1];
+        const auto& integrator = tokens[1];
         if (integrator == "whitted" || integrator == "raytracer") {
             settings.integrator.type = Integrator::Type::Whitted;
         } else if (integrator == "direct") {
@@ -121,44 +127,45 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         } else if (integrator == "pathtracer") {
             settings.integrator.type = Integrator::Type::PathTracer;
         } else {
-            throw ParseException("Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
+            throw ParseException(
+                "Expected 'integrator <whitted/raytracer/direct/analyticdirect/pathtracer>'");
         }
         return true;
     }
-    else if (cmd == "lightsamples") {
+    if (cmd == "lightsamples") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightsamples <count>'");
         }
         settings.integrator.lightSamples = glm::max(1uz, parseNum<size_t>(tokens[1]));
         return true;
     }
-    else if (cmd == "lightstratify") {
+    if (cmd == "lightstratify") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
-        auto onoff = tokens[1];
+        const auto& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'lightstratify <on/off>'");
         }
         settings.integrator.stratify = onoff == "on";
         return true;
     }
-    else if (cmd == "jitter") {
+    if (cmd == "jitter") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'jitter <on/off>'");
         }
-        auto onoff = tokens[1];
+        const auto& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'jitter <on/off>'");
         }
         settings.integrator.jitter = onoff == "on";
         return true;
     }
-    else if (cmd == "nexteventestimation") {
+    if (cmd == "nexteventestimation") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'nexteventestimation <on/off/mis>'");
         }
-        auto nee = tokens[1];
+        const auto& nee = tokens[1];
         if (nee == "off") {
             settings.integrator.nextEvent = Integrator::NEE::Off;
         } else if (nee == "on") {
@@ -170,25 +177,25 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         }
         return true;
     }
-    else if (cmd == "russianroulette") {
+    if (cmd == "russianroulette") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'russianroulette <on/off>'");
         }
-        auto onoff = tokens[1];
+        const auto& onoff = tokens[1];
         if (onoff != "on" && onoff != "off") {
             throw ParseException("Expected 'russianroulette <on/off>'");
         }
         settings.integrator.russianRoulette = onoff == "on";
         return true;
     }
-    else if (cmd == "seed") {
+    if (cmd == "seed") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'seed <value>'");
         }
         settings.seed = parseNum<Seed>(tokens[1]);
         return true;
     }
-    else if (cmd == "spp") {
+    if (cmd == "spp") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'spp <count>'");
         }
@@ -199,11 +206,11 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
         settings.integrator.samplesPerPixel = spp;
         return true;
     }
-    else if (cmd == "importancesampling") {
+    if (cmd == "importancesampling") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'importancesampling <hemisphere/cosine/brdf>'");
         }
-        auto importance = tokens[1];
+        const auto& importance = tokens[1];
         if (importance == "hemisphere") {
             settings.integrator.importanceSampling = importance::Type::Uniform;
         } else if (importance == "cosine") {
@@ -217,16 +224,20 @@ inline bool parseSettings(const std::vector<std::string>& tokens, Settings& sett
     }
     return false;
 }
+// NOLINTEND(readability-function-cognitive-complexity)
 
-inline bool parseCamera(const std::vector<std::string>& tokens, Camera& camera) {
-    auto cmd = tokens[0];
+inline bool parseCamera(std::vector<std::string> const& tokens, Camera& camera) {
+    const auto& cmd = tokens[0];
     if (cmd == "camera") {
         if (tokens.size() != 11) {
-            throw ParseException("Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fovy>'");
+            throw ParseException(
+                "Expected 'camera <eyex> <eyey> <eyez> <cx> <cy> <cz> <upx> <upy> <upz> <fovy>'");
         }
         Camera c;
-        c.eye = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]), parseNum<Float>(tokens[3])};
-        c.center = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]), parseNum<Float>(tokens[6])};
+        c.eye = {parseNum<Float>(tokens[1]), parseNum<Float>(tokens[2]),
+                 parseNum<Float>(tokens[3])};
+        c.center = {parseNum<Float>(tokens[4]), parseNum<Float>(tokens[5]),
+                    parseNum<Float>(tokens[6])};
         c.up = {parseNum<Float>(tokens[7]), parseNum<Float>(tokens[8]), parseNum<Float>(tokens[9])};
         c.fovy = parseNum<Float>(tokens[10]);
         if (Basis::degenerate(c)) {

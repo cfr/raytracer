@@ -1,9 +1,9 @@
 #pragma once
 
-#include "values.hpp"
 #include "box.hpp"
-#include "ray.hpp"
 #include "hittable.hpp"
+#include "ray.hpp"
+#include "values.hpp"
 
 #include <algorithm>
 #include <array>
@@ -16,28 +16,28 @@
 
 namespace raytracer {
 
-template<typename T>
-concept SceneObject = requires(T obj, const Ray& ray) {
+template <typename T>
+concept SceneObject = requires(T obj, Ray const& ray) {
     { obj->aabb() } -> std::convertible_to<Box>;
     { obj->intersect(ray) } -> std::convertible_to<std::optional<Hit>>;
     { obj->tworld(ray) } -> std::convertible_to<Float>;
 };
 
 template <SceneObject Obj> class BoundingVolumeHierarchy {
-
     struct Node;
     using ObjId = std::vector<Obj>::size_type;
     using NodeId = std::vector<Node>::size_type;
     static constexpr NodeId nullNode = std::numeric_limits<NodeId>::max();
 
-    struct Node
-    {
+    struct Node {
         Box box;
         NodeId left = nullNode;
         NodeId right = nullNode;
         ObjId start = 0;
         ObjId count = 0;
-        bool leaf() const { return left == nullNode && right == nullNode; }
+        [[nodiscard]] bool leaf() const {
+            return left == nullNode && right == nullNode;
+        }
     };
 
     struct Prim {
@@ -52,8 +52,8 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
     std::vector<Node> nodes;
     NodeId root = nullNode;
 
- public:
-    BoundingVolumeHierarchy() {}
+  public:
+    BoundingVolumeHierarchy() = default;
 
     explicit BoundingVolumeHierarchy(std::vector<Obj> objs) {
         if (objs.empty()) {
@@ -62,7 +62,7 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         std::vector<Prim> prims;
         prims.reserve(objs.size());
         for (auto& obj : objs) {
-            Box box = obj->aabb();
+            Box const box = obj->aabb();
             prims.push_back(Prim{std::move(obj), box});
         }
         nodes.reserve(prims.size() * 2);
@@ -74,27 +74,31 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         }
     }
 
-    std::optional<Hit> intersect(const Ray& ray) const {
+    [[nodiscard]] std::optional<Hit> intersect(Ray const& ray) const {
         if (root == nullNode || childEnter(root, ray, inf) == inf) {
             return {};
         }
 
-        const Hittable* best = nullptr;
+        Hittable const* best = nullptr;
         Float closestT = inf;
 
-        struct Entry { NodeId id; Float enter; };
+        struct Entry {
+            NodeId id;
+            Float enter;
+        };
         std::array<Entry, StackSize> stk;
         size_t top = 0;
         stk[top++] = {root, 0};
 
         while (top > 0) {
             auto [id, enter] = stk[--top];
-            if (enter >= closestT) continue;
-            const Node& n = nodes[id];
+            if (enter >= closestT)
+                continue;
+            Node const& n = nodes[id];
 
             if (n.leaf()) {
                 for (ObjId i = n.start; i < n.start + n.count; ++i) {
-                    Float t = objects[i]->tworld(ray);
+                    Float const t = objects[i]->tworld(ray);
                     if (t > 0 && t < closestT) {
                         closestT = t;
                         best = objects[i].get();
@@ -108,17 +112,24 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
                     std::swap(tL, tR);
                     std::swap(near, far);
                 }
-                if (tR < inf) { assert(top < StackSize); stk[top++] = {far, tR}; }
-                if (tL < inf) { assert(top < StackSize); stk[top++] = {near, tL}; }
+                if (tR < inf) {
+                    assert(top < StackSize);
+                    stk[top++] = {far, tR};
+                }
+                if (tL < inf) {
+                    assert(top < StackSize);
+                    stk[top++] = {near, tL};
+                }
             }
         }
-        if (!best) { return {}; }
+        if (best == nullptr) {
+            return {};
+        }
         return best->makeHit(ray, closestT);
     }
 
-    [[nodiscard]] bool occluded(const Ray& ray, Float tmax = inf,
-                                const Hittable* ignore = nullptr) const
-    {
+    [[nodiscard]] bool occluded(Ray const& ray, Float tmax = inf,
+                                Hittable const* ignore = nullptr) const {
         if (root == nullNode || childEnter(root, ray, tmax) == inf) {
             return false;
         }
@@ -128,13 +139,14 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         stk[top++] = root;
 
         while (top > 0) {
-            const Node& n = nodes[stk[--top]];
+            Node const& n = nodes[stk[--top]];
 
             if (n.leaf()) {
                 for (ObjId i = n.start; i < n.start + n.count; ++i) {
-                    const auto& obj = objects[i];
-                    if (ignore && obj.get() == ignore) continue;
-                    Float t = obj->tworld(ray);
+                    auto const& obj = objects[i];
+                    if (ignore && obj.get() == ignore)
+                        continue;
+                    Float const t = obj->tworld(ray);
                     if (t > 0 && t <= tmax) {
                         return true;
                     }
@@ -147,29 +159,37 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
                     std::swap(tL, tR);
                     std::swap(near, far);
                 }
-                if (tR < inf) { assert(top < StackSize); stk[top++] = far; }
-                if (tL < inf) { assert(top < StackSize); stk[top++] = near; }
+                if (tR < inf) {
+                    assert(top < StackSize);
+                    stk[top++] = far;
+                }
+                if (tL < inf) {
+                    assert(top < StackSize);
+                    stk[top++] = near;
+                }
             }
         }
         return false;
     }
 
- private:
-    Float childEnter(NodeId id, const Ray& ray, Float tmax) const {
-        if (id == nullNode) return inf;
+  private:
+    [[nodiscard]] Float childEnter(NodeId id, Ray const& ray, Float tmax) const {
+        if (id == nullNode)
+            return inf;
         auto [te, tx] = nodes[id].box.slab(ray.origin, ray.inv);
         return (te <= tx && tx >= 0 && te <= tmax) ? te : inf;
     }
 
     NodeId build(std::vector<Prim>& prims, ObjId start, ObjId end) {
-        if (start >= end) return nullNode;
+        if (start >= end)
+            return nullNode;
 
         Box bounds = prims[start].box;
         for (ObjId i = start + 1; i < end; ++i) {
             bounds = merge(bounds, prims[i].box);
         }
 
-        NodeId id = static_cast<NodeId>(nodes.size());
+        NodeId const id = static_cast<NodeId>(nodes.size());
         nodes.emplace_back(Node{.box = bounds});
 
         if (end - start <= LeafSize) {
@@ -178,19 +198,16 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
             return id;
         }
 
-        Vec3 extent = bounds.max - bounds.min;
-        int axis = (extent.x >= extent.y && extent.x >= extent.z) ? 0
-                 : (extent.y >= extent.z) ? 1 : 2;
+        Vec3 const extent = bounds.max - bounds.min;
+        int const axis = maxAxis(extent);
 
-        ObjId mid = start + (end - start) / 2;
-        std::nth_element(prims.begin() + start,
-                        prims.begin() + mid,
-                        prims.begin() + end,
-            [axis](const Prim& a, const Prim& b) {
-                return a.box.centroid()[axis] < b.box.centroid()[axis];
-            });
+        ObjId const mid = start + ((end - start) / 2);
+        std::nth_element(prims.begin() + start, prims.begin() + mid, prims.begin() + end,
+                         [axis](Prim const& a, Prim const& b) {
+                             return a.box.centroid()[axis] < b.box.centroid()[axis];
+                         });
 
-        nodes[id].left  = build(prims, start, mid);
+        nodes[id].left = build(prims, start, mid);
         nodes[id].right = build(prims, mid, end);
         return id;
     }
