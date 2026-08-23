@@ -4,11 +4,12 @@
 
 #include <glm/common.hpp>
 
-#include <iterator>
-#include <compare>
+#include <array>
 #include <cmath>
-#include <stdexcept>
+#include <compare>
+#include <iterator>
 #include <ostream>
+#include <stdexcept>
 #include <vector>
 
 namespace raytracer {
@@ -17,46 +18,58 @@ class Image {
     Size size_;
     std::vector<Color> data_;
 
- public:
+  public:
     using iterator = typename std::vector<Color>::iterator;
     using const_iterator = typename std::vector<Color>::const_iterator;
 
-    iterator begin() { return data_.begin(); }
-    const_iterator begin() const { return data_.begin(); }
-    const_iterator cbegin() const { return data_.cbegin(); }
+    iterator begin() {
+        return data_.begin();
+    }
+    [[nodiscard]] const_iterator begin() const {
+        return data_.begin();
+    }
+    [[nodiscard]] const_iterator cbegin() const {
+        return data_.cbegin();
+    }
 
-    iterator end() { return data_.end(); }
-    const_iterator end() const { return data_.end(); }
-    const_iterator cend() const { return data_.cend(); }
+    iterator end() {
+        return data_.end();
+    }
+    [[nodiscard]] const_iterator end() const {
+        return data_.end();
+    }
+    [[nodiscard]] const_iterator cend() const {
+        return data_.cend();
+    }
 
-    Point point(const_iterator it) const {
+    [[nodiscard]] Point point(const_iterator it) const {
         auto d = std::distance(begin(), it);
         auto x = d % size_.width;
         auto y = d / size_.width;
         return {x, y};
     }
-    Point point(iterator it) const {
+    [[nodiscard]] Point point(iterator it) const {
         return point(static_cast<const_iterator>(it));
     }
 
-    explicit Image(Size s)
-        : size_{s}, data_{s.width*s.height, Color{0}} {
+    explicit Image(Size s) : size_{s}, data_{s.width * s.height, Color{0}} {
         if (s.width == 0 || s.height == 0) {
             throw std::runtime_error("Image dimensions must be > 0");
         }
     }
 
-    Image(size_t width, size_t height)
-        : Image(Size{width, height}) {}
+    Image(size_t width, size_t height) : Image(Size{.width = width, .height = height}) {}
 
-    Size size() const { return size_; }
+    [[nodiscard]] Size size() const {
+        return size_;
+    }
 
-    Color get(Point pt) const {
-        return data_[size_.width * pt.y + pt.x];
+    [[nodiscard]] Color get(Point pt) const {
+        return data_[(size_.width * pt.y) + pt.x];
     }
 
     void set(Point pt, Color color) {
-        data_[size_.width * pt.y + pt.x] = color;
+        data_[(size_.width * pt.y) + pt.x] = color;
     }
 
     bool writePPM(std::ostream& out, bool ascii = false) const {
@@ -69,12 +82,13 @@ class Image {
             if (ascii) {
                 out << r << ' ' << g << ' ' << b << '\n';
             } else {
-                unsigned char rgb[3] = {
+                std::array<unsigned char, 3> const rgb = {
                     static_cast<unsigned char>(r),
                     static_cast<unsigned char>(g),
                     static_cast<unsigned char>(b),
                 };
-                out.write(reinterpret_cast<const char*>(rgb), 3);
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- binary PPM output
+                out.write(reinterpret_cast<char const*>(rgb.data()), rgb.size());
             }
         }
         return out.good();

@@ -2,8 +2,8 @@
 
 #include "values.hpp"
 
-#include <glm/common.hpp>
 #include <algorithm>
+#include <glm/common.hpp>
 
 namespace raytracer::tol {
 
@@ -17,8 +17,8 @@ inline Float offset(Vec3 p) {
 }
 
 // thresholds on sinAngle() between two vectors
-constexpr Float collinear = 1e-6;   // parallel/zero edges
-constexpr Float basis = 1e-4;       // ill-conditioned normalize(cross())
+constexpr Float collinear = 1e-6;  // parallel/zero edges
+constexpr Float basis = 1e-4;      // ill-conditioned normalize(cross())
 
 // vector normalization tolerance
 constexpr Float unit = 1e-4;

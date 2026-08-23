@@ -1,18 +1,19 @@
 #pragma once
 
-#include "values.hpp"
 #include "material.hpp"
 #include "parser/common.hpp"
+#include "values.hpp"
 
 #include <glm/common.hpp>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace raytracer::parser {
 
-enum class MaterialType: int {
+enum class MaterialType : std::uint8_t {
     Diffuse,
     Specular,
     Shininess,
@@ -22,23 +23,37 @@ enum class MaterialType: int {
     Roughness
 };
 
-inline std::optional<MaterialType> materialType(const std::string& token) {
-    if (token == "diffuse") { return MaterialType::Diffuse; }
-    if (token == "specular") { return MaterialType::Specular; }
-    if (token == "shininess") { return MaterialType::Shininess; }
-    if (token == "emission") { return MaterialType::Emission; }
-    if (token == "ambient") { return MaterialType::Ambient; }
-    if (token == "refraction") { return MaterialType::Refraction; }
-    if (token == "roughness") { return MaterialType::Roughness; }
+inline std::optional<MaterialType> materialType(std::string const& token) {
+    if (token == "diffuse") {
+        return MaterialType::Diffuse;
+    }
+    if (token == "specular") {
+        return MaterialType::Specular;
+    }
+    if (token == "shininess") {
+        return MaterialType::Shininess;
+    }
+    if (token == "emission") {
+        return MaterialType::Emission;
+    }
+    if (token == "ambient") {
+        return MaterialType::Ambient;
+    }
+    if (token == "refraction") {
+        return MaterialType::Refraction;
+    }
+    if (token == "roughness") {
+        return MaterialType::Roughness;
+    }
     return {};
 }
 
-inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat) {
+inline bool parseMaterial(std::vector<std::string> const& tokens, Material& mat) {
     if (tokens[0] == "brdf") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'brdf <phong/ggx>'");
         }
-        auto b = tokens[1];
+        const auto& b = tokens[1];
         if (b != "phong" && b != "ggx") {
             throw ParseException("Expected 'brdf <phong/ggx>'");
         }
@@ -70,8 +85,10 @@ inline bool parseMaterial(const std::vector<std::string>& tokens, Material& mat)
         if (tokens.size() != 2) {
             throw ParseException("Expected 'roughness <r>'");
         }
-        Float r = parseNum<Float>(tokens[1]);
-        if (r < 0 || r > 1) { throw ParseException("Expected 'roughness <r>', r in [0, 1]"); }
+        Float const r = parseNum<Float>(tokens[1]);
+        if (r < 0 || r > 1) {
+            throw ParseException("Expected 'roughness <r>', r in [0, 1]");
+        }
         mat.roughness = glm::max(minRoughness, r);
         return true;
     }

@@ -3,13 +3,15 @@
 #include "values.hpp"
 
 #include <glm/vector_relational.hpp>
+
+#include <cstdint>
 #include <memory>
 
 namespace raytracer {
 
 namespace brdf {
 
-enum class Type : int { Phong, GGX };
+enum class Type : std::uint8_t { Phong, GGX };
 
 }
 
@@ -20,8 +22,8 @@ struct Material {
     Color diffuse = colors::black;   // kd
     Color specular = colors::black;  // ks
     Color emission = colors::black;
-    Color ambient = colors::black;   // whitted-only per object
-    Float t = 0;                     // t = avg(ks) / (avg(ks) + avg(kd))
+    Color ambient = colors::black;  // whitted-only per object
+    Float t = 0;                    // t = avg(ks) / (avg(ks) + avg(kd))
     Float shininess = 0;
     Float refraction = 0;
     Float roughness = minRoughness;
@@ -38,19 +40,19 @@ struct Material {
         }
     }
 
-    bool emissive() const {
+    [[nodiscard]] bool emissive() const {
         return glm::any(glm::greaterThan(emission, Color{0}));
     }
 
-    bool reflective() const {
+    [[nodiscard]] bool reflective() const {
         return glm::any(glm::greaterThan(specular, Color{0}));
     }
 
-    bool refractive() const {
+    [[nodiscard]] bool refractive() const {
         return refraction > 1;
     }
 };
 
-using MaterialPtr = std::shared_ptr<const Material>;
+using MaterialPtr = std::shared_ptr<Material const>;
 
 }  // namespace raytracer

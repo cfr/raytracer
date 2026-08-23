@@ -16,8 +16,8 @@
 namespace raytracer {
 
 template <typename device> Seed seed64(device& rd) {
-    std::uint64_t hi = rd();
-    std::uint64_t lo = rd();
+    std::uint64_t const hi = rd();
+    std::uint64_t const lo = rd();
     return (hi << 32) | lo;
 }
 
@@ -46,7 +46,7 @@ class Gen {
 
     Engine engine_;
 
- public:
+  public:
     explicit Gen(Seed seed) : engine_(seed) {}
 
     Float operator()() {

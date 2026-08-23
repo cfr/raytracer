@@ -5,11 +5,11 @@
 #define GLM_FORCE_PRECISION_HIGHP_DOUBLE
 
 #include <glm/glm.hpp>
-#include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/type_precision.hpp>
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
 namespace raytracer {
@@ -32,7 +32,7 @@ using Color = Vec3;
 namespace colors {
 constexpr Color black = Color{0};
 constexpr Color white = Color{1};
-}
+}  // namespace colors
 
 using Point = glm::ivec2;
 
@@ -50,12 +50,12 @@ struct Hit {
     Vec3 point;
     Vec3 normal;
     Float t = inf;
-    const Hittable* object = nullptr;
+    Hittable const* object = nullptr;
     bool front = true;
 };
 
 inline Vec3 halfvec(Vec3 a, Vec3 b) {
-    Vec3 h = a + b;
+    Vec3 const h = a + b;
     return glm::dot(h, h) == 0 ? Vec3{0} : glm::normalize(h);
 }
 
@@ -63,17 +63,26 @@ inline Color gamma(Color c, Float g) {
     return glm::pow(glm::max(c, colors::black), Color{1 / g});
 }
 
-inline bool sameHemisphere(const Hit& h, Vec3 b) {
+inline int maxAxis(Vec3 v) {
+    if (v.x >= v.y && v.x >= v.z) {
+        return 0;
+    }
+    return v.y >= v.z ? 1 : 2;
+}
+
+inline bool sameHemisphere(Hit const& h, Vec3 b) {
     return glm::dot(h.normal, h.wo) * glm::dot(h.normal, b) > 0;
 }
 
-inline Float cosTheta(const Hit& h, Vec3 w) {
+inline Float cosTheta(Hit const& h, Vec3 w) {
     return glm::dot(h.normal, w);
 }
 
 inline Float sinAngle(Vec3 a, Vec3 b) {
-    Float la = glm::length(a), lb = glm::length(b);
-    if (la == 0 || lb == 0) { return 0; }
+    Float const la = glm::length(a), lb = glm::length(b);
+    if (la == 0 || lb == 0) {
+        return 0;
+    }
     return glm::length(glm::cross(a, b)) / (la * lb);
 }
 

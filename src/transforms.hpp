@@ -27,22 +27,22 @@ struct Transforms {
     Transform invT = identity;
 };
 
-using TransformsPtr = std::shared_ptr<const Transforms>;
+using TransformsPtr = std::shared_ptr<Transforms const>;
 
 class TStack {
     std::stack<Transform> stack_;
 
-    void rmultiply(const Transform& m) {
+    void rmultiply(Transform const& m) {
         auto& t = stack_.top();
         t = t * m;
     }
 
- public:
+  public:
     TStack() {
         stack_.push(identity);
     }
 
-    Transform top() const {
+    [[nodiscard]] Transform top() const {
         return stack_.top();
     }
 
@@ -74,4 +74,3 @@ class TStack {
 };
 
 }  // namespace raytracer
-

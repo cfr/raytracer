@@ -1,15 +1,15 @@
 #pragma once
 
-#include "values.hpp"
-#include "ray.hpp"
 #include "hittable.hpp"
+#include "ray.hpp"
+#include "values.hpp"
 
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 
 namespace raytracer {
 
-class Triangle: public Hittable {
+class Triangle : public Hittable {
     Vec3 a_;
     Vec3 b_;
     Vec3 c_;
@@ -21,7 +21,7 @@ class Triangle: public Hittable {
     Vec3 nb_;
     Vec3 nc_;
 
- public:
+  public:
     Triangle(MaterialPtr m, Vec3 a, Vec3 b, Vec3 c)
         : Hittable{std::move(m)}, a_(a), b_(b), c_(c), edge1_(b - a), edge2_(c - a) {
         auto normal = glm::normalize(glm::cross(edge1_, edge2_));
@@ -30,20 +30,21 @@ class Triangle: public Hittable {
         nc_ = normal;
     }
 
-    Box aabb() const override {
-        return { glm::min(a_, glm::min(b_, c_)),
-                 glm::max(a_, glm::max(b_, c_)) };
+    [[nodiscard]] Box aabb() const override {
+        return {.min = glm::min(a_, glm::min(b_, c_)), .max = glm::max(a_, glm::max(b_, c_))};
     }
 
-    Vec4 normal(Vec3 /*point*/) const override {
+    [[nodiscard]] Vec4 normal(Vec3 /*point*/) const override {
         return Vec4{na_, 0};
     }
 
-    Float tlocal(Ray ray) const override {
+    [[nodiscard]] Float tlocal(Ray ray) const override {
         auto h = glm::cross(ray.dir, edge2_);
         auto a = glm::dot(edge1_, h);
 
-        if (a == 0) { return 0; }
+        if (a == 0) {
+            return 0;
+        }
 
         auto f = 1 / a;
         auto s = ray.origin - a_;

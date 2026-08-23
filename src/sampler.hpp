@@ -1,7 +1,7 @@
 #pragma once
 
-#include "values.hpp"
 #include "rand.hpp"
+#include "values.hpp"
 
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
@@ -9,26 +9,29 @@
 namespace raytracer {
 
 class Stratify2D {
- private:
+  private:
     size_t samples_ = 1;
     size_t xsamples_ = 1;
     size_t ysamples_ = 1;
 
- public:
+  public:
     explicit Stratify2D(size_t samples) : samples_(glm::max(1uz, samples)) {
         auto xsamples = size_t(glm::sqrt(Float(samples_)));
-        while (xsamples > 1 && samples_ % xsamples != 0) { xsamples--; }
+        while (xsamples > 1 && samples_ % xsamples != 0) {
+            xsamples--;
+        }
         ysamples_ = samples_ / xsamples;
         xsamples_ = xsamples;
     }
 
-    Vec2 unit2(Vec2 u, size_t index) const {
-        size_t sx = index % xsamples_;
-        size_t sy = index / xsamples_;
-        return {(sx + u.x) / xsamples_, (sy + u.y) / ysamples_};
+    [[nodiscard]] Vec2 unit2(Vec2 u, size_t index) const {
+        size_t const row = index / xsamples_;  // stratum row: integer division
+        Float const sx = static_cast<Float>(index % xsamples_);
+        Float const sy = static_cast<Float>(row);
+        return {(sx + u.x) / Float(xsamples_), (sy + u.y) / Float(ysamples_)};
     }
 
-    size_t samples() const {
+    [[nodiscard]] size_t samples() const {
         return samples_;
     }
 };
@@ -38,7 +41,7 @@ class Sampler {
     Stratify2D stratify2d_;
     bool stratify_;
 
- public:
+  public:
     explicit Sampler(Seed seed, Stratify2D stratify2d, bool stratify)
         : gen_(seed), stratify2d_(stratify2d), stratify_(stratify) {}
 
@@ -68,4 +71,3 @@ class Sampler {
 };
 
 }  // namespace raytracer
-
