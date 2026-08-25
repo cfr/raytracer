@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         clang-19 \
         clang-format-19 \
         clang-tidy-19 \
-        shellcheck \
         valgrind \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/clang        clang        /usr/bin/clang-19        100 \

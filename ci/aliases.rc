@@ -1,0 +1,24 @@
+# source ci/aliases.rc
+
+alias ci-rebuild='docker build -t aktis-ci ci/'
+
+
+# image regression, --base REF defaults to main
+alias ci-render='docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/compare.sh'
+
+
+# lint/format, add --fix to rewrite files
+alias ci-lint='docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/lint.sh'
+alias ci-format='docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/format.sh'
+
+
+# performance stats, BIN [BIN2] or --base REF, add -s to select scene, --args to pass args
+# measured: cycles and IPC
+alias ci-perf='ci/perfstat.sh'
+# simulated: no cycles, repeatable
+alias ci-perf-sim='docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci ci/perfstat.sh --callgrind --profile'
+
+
+# perform shellcheck, optional file argument, defaults to ci/*.sh
+alias ci-shell='ci/shell.sh'
+

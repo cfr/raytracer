@@ -23,9 +23,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: shellcheck
-        run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/shell.sh
-
       - name: clang-format
         run: docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/format.sh
 

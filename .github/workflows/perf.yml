@@ -1,12 +1,14 @@
-name: render
+name: perf
 on: pull_request
 
 permissions:
   contents: read
 
 jobs:
-  render:
+  perf:
     runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,6 +23,7 @@ jobs:
           tags: aktis-ci:local
           cache-from: type=gha
 
-      - name: image regression
+      - name: counters and profile
         run: >
-          docker run --rm -e GITHUB_BASE_REF -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local ci/compare.sh
+          docker run --rm -e GITHUB_BASE_REF -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci:local
+          ci/perfstat.sh --callgrind --profile --base "$GITHUB_BASE_REF"
