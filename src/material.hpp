@@ -5,7 +5,6 @@
 #include <glm/vector_relational.hpp>
 
 #include <cstdint>
-#include <memory>
 
 namespace aktis {
 
@@ -51,8 +50,8 @@ struct Material {
     [[nodiscard]] bool refractive() const {
         return refraction > 1;
     }
-};
 
-using MaterialPtr = std::shared_ptr<Material const>;
+    bool operator==(Material const&) const = default;
+};
 
 }  // namespace aktis

@@ -19,23 +19,23 @@ inline Color traceWhitted(Ray const& ray, Scene const& scene, int depth) {
         return colors::black;
     }
 
-    auto hit = scene.bvh.intersect(ray);
+    auto hit = scene.intersect(ray);
     if (!hit) {
         return colors::black;
     }
 
-    Hittable const* object = hit->object;
+    auto const& material = materialOf(scene, *hit);
     auto color = whitted(*hit, scene);
 
-    if (object->material->refractive()) {
-        auto f = dielectric::fresnel(*hit);
+    if (material.refractive()) {
+        auto f = dielectric::fresnel(material, *hit);
         color += f.reflectance * traceWhitted(offset(*hit, f.wr), scene, depth - 1);
         if (!f.tir) {
             color +=
                 (Float(1) - f.reflectance) * traceWhitted(offset(*hit, f.wt), scene, depth - 1);
         }
-    } else if (object->material->reflective()) {
-        color += object->material->specular
+    } else if (material.reflective()) {
+        color += material.specular
                  * traceWhitted(offset(*hit, glm::reflect(ray.dir, hit->normal)), scene, depth - 1);
     }
 
@@ -43,7 +43,7 @@ inline Color traceWhitted(Ray const& ray, Scene const& scene, int depth) {
 }
 
 inline Color traceAnalytic(Ray const& ray, Scene const& scene) {
-    auto hit = scene.bvh.intersect(ray);
+    auto hit = scene.intersect(ray);
     if (!hit) {
         return colors::black;
     }
@@ -52,14 +52,14 @@ inline Color traceAnalytic(Ray const& ray, Scene const& scene) {
 
 inline Color traceDirect(Ray const& ray, Scene const& scene, Integrator const& integrator,
                          Sampler& sampler) {
-    auto hit = scene.bvh.intersect(ray);
+    auto hit = scene.intersect(ray);
     if (!hit) {
         return colors::black;
     }
-    return emitted(*hit) + direct(*hit, scene, integrator, sampler, false);
+    return emitted(materialOf(scene, *hit), *hit) + direct(*hit, scene, integrator, sampler, false);
 }
 
-class PathTracer {
+class PathTracer final {
     Scene const& scene_;
     Integrator const& integrator_;
     Sampler& sampler_;
@@ -77,38 +77,39 @@ class PathTracer {
         : scene_{scene}, integrator_{integrator}, sampler_{sampler} {}
 
     Color trace(Ray const& ray, State s) {
-        auto hit = scene_.bvh.intersect(ray);
+        auto hit = scene_.intersect(ray);
         return hit ? shade(*hit, s) : colors::black;
     }
 
     Color shade(Hit const& hit, State s) {
         bool const nee = integrator_.nextEvent != Integrator::NEE::Off;
         bool const mis = integrator_.nextEvent == Integrator::NEE::MIS;
+        auto const& material = materialOf(scene_, hit);
 
         Color le = colors::black;
         // NOTE: single-sided emitter
-        if (hit.object->material->emissive() && hit.front) {
+        if (material.emissive() && hit.front) {
             if (s.primary || !nee || s.delta) {
-                le = hit.object->material->emission;
+                le = material.emission;
             } else if (mis) {
                 // direct() samples all lights, no need in 1/n
-                Float const pl = importance::pdfLight(hit);
+                Float const pl = importance::pdfLight(hit, scene_.shapes);
                 Float const w = importance::misWeight(s.pdfPrev, pl);
-                le = w * hit.object->material->emission;
+                le = w * material.emission;
             }
         }
         if (s.bounces >= integrator_.depth)
             return le;
 
-        bool const refractive = hit.object->material->refractive();
+        bool const refractive = material.refractive();
         Color const ldirect =
             (nee && !refractive) ? direct(hit, scene_, integrator_, sampler_, mis) : colors::black;
 
         std::optional<Sample> sample;
         if (refractive) {
-            sample = dielectric::sample(hit, sampler_.unit());
+            sample = dielectric::sample(material, hit, sampler_.unit());
         } else {
-            sample = integrator_.sample(hit, sampler_.unit(), sampler_.unit2());
+            sample = integrator_.sample(material, hit, sampler_.unit(), sampler_.unit2());
         }
         if (!sample)
             return le + ldirect;
@@ -160,7 +161,7 @@ inline Color trace(Ray const& ray, Scene const& scene, Integrator const& integra
     case Integrator::Type::Direct:
         return traceDirect(ray, scene, integrator, sampler);
     case Integrator::Type::PathTracer: {
-        auto hit = scene.bvh.intersect(ray);
+        auto hit = scene.intersect(ray);
         if (!hit) {
             return colors::black;
         }

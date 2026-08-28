@@ -3,7 +3,7 @@
 #include "brdf.hpp"
 #include "integrator.hpp"
 #include "scene.hpp"
-#include "shape/quad.hpp"
+#include "shapes.hpp"
 #include "tolerance.hpp"
 #include "values.hpp"
 
@@ -18,8 +18,8 @@ inline Ray offset(Hit const& h, Vec3 wi) {
     return Ray{h.point + n * tol::offset(h.point), wi};
 }
 
-inline Color emitted(Hit const& h) {
-    return h.front ? h.object->material->emission : colors::black;
+inline Color emitted(Material const& material, Hit const& h) {
+    return h.front ? material.emission : colors::black;
 }
 
 inline Color blinnPhong(Vec3 eyedir, Vec3 ldir, Hit const& hit, Material const& material,
@@ -34,7 +34,8 @@ inline Color blinnPhong(Vec3 eyedir, Vec3 ldir, Hit const& hit, Material const& 
 }
 
 inline Color whitted(Hit const& hit, Scene const& scene) {
-    auto color = hit.object->material->ambient + emitted(hit);
+    auto const& material = materialOf(scene, hit);
+    auto color = material.ambient + emitted(material, hit);
 
     for (auto const& source : scene.lights) {
         auto ldir = Vec3(source.position);
@@ -47,11 +48,11 @@ inline Color whitted(Hit const& hit, Scene const& scene) {
         }
         ldir = glm::normalize(ldir);
         auto shadowRay = offset(hit, ldir);
-        if (scene.bvh.occluded(shadowRay, distance, hit.object)) {
+        if (scene.occluded(shadowRay, distance, hit.shapeId)) {
             continue;
         }
 
-        color += attenuation * blinnPhong(hit.wo, ldir, hit, *hit.object->material, source);
+        color += attenuation * blinnPhong(hit.wo, ldir, hit, material, source);
     }
     return color;
 }
@@ -59,6 +60,7 @@ inline Color whitted(Hit const& hit, Scene const& scene) {
 inline Color direct(Hit const& hit, Scene const& scene, Integrator const& integrator,
                     Sampler& sampler, bool mis) {
     Color color = colors::black;
+    auto const& material = materialOf(scene, hit);
     auto samples = mis ? 1 : sampler.samples();
     Basis const b{hit.normal};
 
@@ -66,20 +68,22 @@ inline Color direct(Hit const& hit, Scene const& scene, Integrator const& integr
     Vec3 const origin = hit.point + e * hit.normal;
     Float const minDist2 = e * e;
 
-    for (auto const& quad : scene.areaLights) {
-        if (quad.get() == hit.object) {
+    for (auto const& lightId : scene.quadLights) {
+        if (lightId == hit.shapeId) {
             continue;
         }
+        Shape const& light = scene.shapes[lightId];
+        Quad const& quad = light.quad();
 
         // single-sided emitter, no abs
-        Float const cosL = glm::dot(quad->planeNormal, hit.point - quad->v0);
+        Float const cosL = glm::dot(quad.n, hit.point - quad.v0);
         if (cosL < e) {
             continue;
         }  // behind or co-planar
 
         Color qcol = colors::black;
         for (size_t i = 0; i < samples; i++) {
-            Vec3 const xl = quad->sample(samples == 1 ? sampler.unit2() : sampler.unit2(i));
+            Vec3 const xl = quad.sample(samples == 1 ? sampler.unit2() : sampler.unit2(i));
             Vec3 const d = xl - hit.point;
             Float const d2 = glm::dot(d, d);
             Float const cosI = glm::dot(hit.normal, d);
@@ -91,30 +95,33 @@ inline Color direct(Hit const& hit, Scene const& scene, Integrator const& integr
             Vec3 const sd = xl - origin;
             Float const rl = glm::length(sd);
             Ray const shadow{origin, sd / rl};
-            if (scene.bvh.occluded(shadow, rl - e, hit.object)) {
+            if (scene.occluded(shadow, rl - e, hit.shapeId)) {
                 continue;
             }
-            auto f = brdf::eval(*hit.object->material, b.toLocal(hit.wo), b.toLocal(wi));
+            auto f = brdf::eval(material, b.toLocal(hit.wo), b.toLocal(wi));
             Float w = 1;
             if (mis) {
                 Float const cosLn = cosL / r;
-                Float const pl = d2 / (quad->area * cosLn);
-                Float const pb = integrator.pdf(hit, wi);
+                Float const pl = d2 / (quad.area * cosLn);
+                Float const pb = integrator.pdf(material, hit, wi);
                 w = importance::misWeight(pl, pb);
             }
             qcol += w * f * (cosI * cosL / (d2 * d2));
         }
-        color += qcol * quad->material->emission * (quad->area / static_cast<Float>(samples));
+        color +=
+            qcol * materialOf(scene, light).emission * (quad.area / static_cast<Float>(samples));
     }
     return color;
 }
 
 inline Color analytic(Hit const& hit, Scene const& scene) {
-    auto color = emitted(hit);
+    auto const& material = materialOf(scene, hit);
+    auto color = emitted(material, hit);
 
-    for (auto const& source : scene.areaLights) {
-        color += hit.object->material->diffuse / pi * source->material->emission
-                 * source->irradiance(hit.point, hit.normal);
+    for (auto const& sourceId : scene.quadLights) {
+        Shape const& source = scene.shapes[sourceId];
+        color += material.diffuse / pi * materialOf(scene, source).emission
+                 * source.quad().irradiance(hit.point, hit.normal);
     }
     return color;
 }

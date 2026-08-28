@@ -1,80 +1,73 @@
 #pragma once
 
-#include "hittable.hpp"
+#include "box.hpp"
 #include "ray.hpp"
 #include "values.hpp"
 
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
 #include <glm/trigonometric.hpp>
-#include <glm/vector_relational.hpp>
-
-#include <memory>
 
 namespace aktis {
 
-struct Quad : Hittable {
-    Vec3 v0 = {0, 0, 0};
-    Vec3 v1 = {0, 0, 0};
-    Vec3 v2 = {0, 0, 0};
-    Vec3 v3 = {0, 0, 0};
-    Vec3 edge1 = {0, 0, 0};
-    Vec3 edge2 = {0, 0, 0};
-    Vec3 planeNormal = {0, 0, 0};
-    Float area = 0;
+// parallelogram: corners v0, v0 + edge1, v0 + edge1 + edge2, v0 + edge2
+struct Quad {
+    Vec3 v0;
+    Vec3 edge1;
+    Vec3 edge2;
+    Vec3 n;
+    Float area;
 
-    Quad(MaterialPtr m, Vec3 v0, Vec3 v1, Vec3 v2, Vec3 v3)
-        : Hittable{std::move(m)}, v0(v0), v1(v1), v2(v2), v3(v3) {
-        edge1 = v1 - v0;
-        edge2 = v3 - v0;
-        Vec3 const n = glm::cross(edge2, edge1);
-        area = glm::length(n);
-        planeNormal = n / area;
+    [[nodiscard]] static Quad of(Vec3 v0, Vec3 edge1, Vec3 edge2) {
+        Quad q;
+        q.v0 = v0;
+        q.edge1 = edge1;
+        q.edge2 = edge2;
+        Vec3 const normal = glm::cross(edge2, edge1);
+        q.area = glm::length(normal);
+        q.n = normal / q.area;
+        return q;
     }
 
-    [[nodiscard]] Box aabb() const override {
+    [[nodiscard]] Box aabb() const {
+        Vec3 const v1 = v0 + edge1;
+        Vec3 const v2 = v0 + edge1 + edge2;
+        Vec3 const v3 = v0 + edge2;
         Vec3 const lo = glm::min(glm::min(v0, v1), glm::min(v2, v3));
         Vec3 const hi = glm::max(glm::max(v0, v1), glm::max(v2, v3));
         return {.min = lo, .max = hi};
     }
 
-    [[nodiscard]] Float pdfArea() const override {
+    [[nodiscard]] Float pdfArea() const {
         return 1 / area;
     }
 
-    [[nodiscard]] Vec4 normal(Vec3 /*point*/) const override {
-        return Vec4{planeNormal, 0};
+    [[nodiscard]] Vec4 normal(Vec3 /*point*/) const {
+        return Vec4{n, 0};
     }
 
-    [[nodiscard]] Float tlocal(Ray ray) const override {
-        Float const denom = glm::dot(planeNormal, ray.dir);
+    [[nodiscard]] Float tlocal(Ray ray) const {
+        Float const denom = glm::dot(n, ray.dir);
         if (denom == 0)
             return 0;
 
-        Float const t = glm::dot(v0 - ray.origin, planeNormal) / denom;
+        Float const t = glm::dot(v0 - ray.origin, n) / denom;
         if (t <= 0)
             return 0;
 
-        Vec3 const p = ray.at(t);
-
-        Float const d0 = glm::dot(glm::cross(v1 - v0, p - v0), planeNormal);
-        Float const d1 = glm::dot(glm::cross(v2 - v1, p - v1), planeNormal);
-        Float const d2 = glm::dot(glm::cross(v3 - v2, p - v2), planeNormal);
-        Float const d3 = glm::dot(glm::cross(v0 - v3, p - v3), planeNormal);
-
-        auto const d = Vec4{d0, d1, d2, d3};
-        auto const zero = Vec4{0};
-        bool const inside =
-            glm::all(glm::greaterThanEqual(d, zero)) || glm::all(glm::lessThanEqual(d, zero));
+        Vec3 const q = ray.at(t) - v0;
+        Float const u = glm::dot(glm::cross(edge2, q), n) / area;
+        Float const v = glm::dot(glm::cross(q, edge1), n) / area;
+        bool const inside = u >= 0 && u <= 1 && v >= 0 && v <= 1;
 
         return inside ? t : 0;
     }
 
     [[nodiscard]] Float irradiance(Vec3 const r, Vec3 const rnormal) const {
         Vec3 const u0 = glm::normalize(v0 - r);
-        Vec3 const u1 = glm::normalize(v1 - r);
-        Vec3 const u2 = glm::normalize(v2 - r);
-        Vec3 const u3 = glm::normalize(v3 - r);
+        Vec3 const u1 = glm::normalize(v0 + edge1 - r);
+        Vec3 const u2 = glm::normalize(v0 + edge1 + edge2 - r);
+        Vec3 const u3 = glm::normalize(v0 + edge2 - r);
         auto edge = [](Vec3 a, Vec3 b) -> Vec3 {
             Float const theta = glm::acos(glm::clamp(glm::dot(a, b), Float(-1), Float(1)));
             Vec3 const c = glm::cross(a, b);
@@ -89,7 +82,5 @@ struct Quad : Hittable {
         return v0 + u.x * edge1 + u.y * edge2;
     }
 };
-
-using QuadPtr = std::shared_ptr<Quad const>;
 
 }  // namespace aktis

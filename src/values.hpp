@@ -4,9 +4,14 @@
 #define GLM_FORCE_PRECISION_HIGHP_FLOAT
 #define GLM_FORCE_PRECISION_HIGHP_DOUBLE
 
-#include <glm/glm.hpp>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/type_precision.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -37,20 +42,26 @@ constexpr Color white = Color{1};
 using Point = glm::ivec2;
 
 using Seed = std::uint64_t;
+using MaterialId = std::uint32_t;
+using TransformId = std::uint32_t;
+using ShapeId = std::uint32_t;
+
+constexpr MaterialId noMaterial = std::numeric_limits<MaterialId>::max();
+constexpr TransformId noTransform = std::numeric_limits<TransformId>::max();
+constexpr ShapeId noShape = std::numeric_limits<ShapeId>::max();
 
 struct Size {
     size_t width = 0;
     size_t height = 0;
 };
 
-struct Hittable;
-
 struct Hit {
     Vec3 wo;
     Vec3 point;
     Vec3 normal;
     Float t = inf;
-    Hittable const* object = nullptr;
+    ShapeId shapeId = noShape;
+    MaterialId materialId = noMaterial;
     bool front = true;
 };
 

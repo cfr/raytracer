@@ -1,18 +1,15 @@
 #pragma once
 
 #include "box.hpp"
-#include "hittable.hpp"
 #include "ray.hpp"
 #include "values.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <optional>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -22,77 +19,66 @@
 
 namespace aktis {
 
-template <typename T>
-concept SceneObject = requires(T obj, Ray const& ray, Float t) {
-    { obj->aabb() } -> std::convertible_to<Box>;
-    { obj->tworld(ray) } -> std::convertible_to<Float>;
-    { obj->makeHit(ray, t) } -> std::convertible_to<Hit>;
-    { obj.get() } -> std::convertible_to<Hittable const*>;
-};
+using PrimId = std::uint32_t;
 
-template <SceneObject Obj> class BoundingVolumeHierarchy {
-    using ObjId = std::uint32_t;
+// Called with the slot of each candidate primitive, near-first; returns true to stop.
+template <class F>
+concept LeafCallback = std::is_invocable_r_v<bool, F const&, PrimId>;
+
+// Binned-SAH BVH. Tree is an index structure, build reorders arrays
+class BoundingVolumeHierarchy final {
     using NodeId = std::uint32_t;
     static constexpr NodeId nullNode = std::numeric_limits<NodeId>::max();
 
-    using ObjRaw = decltype(std::declval<Obj const&>().get());
-
+    // left node is always next (id + 1), leaf prims is [first, first + count)
     struct Node {
         Box box;
-        // internal: index of the right child (the left child is always id + 1)
-        // leaf:     index of its first primitive in ptrs_/ids_
-        std::uint32_t payload = nullNode;
-        ObjId count = 0;  // 0 = internal
+        std::uint32_t payload = nullNode;  // leaf: first; internal: right child
+        PrimId count = 0;                  // 0 = internal
 
         explicit Node(Box const& b) : box{b} {}
+
         [[nodiscard]] bool leaf() const {
             return count > 0;
         }
         [[nodiscard]] NodeId right() const {
             return payload;
         }
-        [[nodiscard]] ObjId start() const {
+        [[nodiscard]] PrimId first() const {
             return payload;
+        }
+        void makeLeaf(PrimId first, PrimId n) {
+            payload = first;
+            count = n;
+        }
+        void setRight(NodeId id) {
+            payload = id;
         }
     };
 
     struct Prim {
         Box box;
-        ObjId index;
-    };
-
-    struct PruningSlot {
-        NodeId id;
-        Float enter;
-        [[nodiscard]] bool stale(Float tmax) const {
-            return enter > tmax;
-        }
-    };
-    struct PlainSlot {
-        NodeId id;
-        PlainSlot() = default;
-        PlainSlot(NodeId id, Float /*unused*/) : id{id} {}
-        [[nodiscard]] bool stale(Float /*unused*/) const {
-            return false;
-        }
+        PrimId index;
     };
 
     struct Bounds {
         Box box;
-        Box centroids;
+        Box centroids;  // aabb of centroids
     };
 
-    static constexpr ObjId sahMinPrims = 2;
-    static constexpr ObjId sahMaxPrims = 8;
+    static constexpr PrimId sahMinPrims = 2;  // never split fewer
+    static constexpr PrimId sahMaxPrims = 8;  // may stay a leaf
     static constexpr int binCount = 16;
-    static constexpr Float traversalCost = 0.125;
+    static constexpr Float traversalCost = 1.0;
     static constexpr int maxDepth = 64;
+    // pop one, push two
     static constexpr size_t stackSize = maxDepth + 2;
 
     static auto onAxis(int axis) {
         return [axis](Prim const& p) { return p.box.centroid()[axis]; };
     }
 
+    // centroid coordinate -> [0, binCount)
     struct BinMap {
         Float scale = 0;
         Float cmin = 0;
@@ -105,7 +91,7 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
 
     struct Split {
         int axis = -1;
-        int bin = 0;
+        int bin = 0;  // last bin that goes left
         Float cost = inf;
         BinMap map;
 
@@ -117,116 +103,104 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         }
     };
 
-    std::vector<Obj> objects_;
-    std::vector<ObjRaw> ptrs_;
-    std::vector<ObjId> ids_;
     std::vector<Node> nodes_;
     NodeId root_ = nullNode;
+    std::vector<PrimId> ids_;  // original order, for tie-break
 
   public:
     BoundingVolumeHierarchy() = default;
 
-    explicit BoundingVolumeHierarchy(std::vector<Obj> objs) {
-        if (objs.empty()) {
+    // builds from world-space boxes
+    explicit BoundingVolumeHierarchy(std::span<Box const> boxes) {
+        if (boxes.empty()) {
             return;
         }
-        if (objs.size() > std::numeric_limits<ObjId>::max() / 2) {
+        if (boxes.size() > std::numeric_limits<PrimId>::max() / 2) {
             throw std::length_error("too many primitives for the BVH's 32-bit indices");
         }
+
         std::vector<Prim> prims;
-        prims.reserve(objs.size());
-        for (ObjId index = 0; auto const& obj : objs) {
-            prims.push_back(Prim{obj->aabb(), index++});
+        prims.reserve(boxes.size());
+        for (PrimId index = 0; auto const& box : boxes) {
+            prims.push_back(Prim{box, index++});
         }
         nodes_.reserve(prims.size() * 2);
-        root_ = build(prims, 0, static_cast<ObjId>(prims.size()), 0);
-
-        objects_.reserve(prims.size());
-        ptrs_.reserve(prims.size());
+        root_ = build(prims, 0, static_cast<PrimId>(prims.size()), 0);
         ids_.reserve(prims.size());
-        for (auto& prim : prims) {
-            objects_.push_back(std::move(objs[prim.index]));
-            ptrs_.push_back(objects_.back().get());
+        for (Prim const& prim : prims) {
             ids_.push_back(prim.index);
         }
     }
 
-    [[nodiscard]] std::optional<Hit> intersect(Ray const& ray) const {
-        ObjRaw best = nullptr;
-        ObjId bestId = 0;
-        Float closestT = inf;
-
-        traverse<Prune::yes>(ray, closestT, [&](ObjRaw obj, ObjId slot) {
-            Float const t = obj->tworld(ray);
-            if (t > 0 && (t < closestT || (t == closestT && ids_[slot] < bestId))) {
-                closestT = t;
-                best = obj;
-                bestId = ids_[slot];
-            }
-            return false;
-        });
-
-        if (!best) {
-            return {};
-        }
-        return best->makeHit(ray, closestT);
+    // slot -> original index
+    [[nodiscard]] std::vector<PrimId> const& order() const {
+        return ids_;
     }
 
-    [[nodiscard]] bool occluded(Ray const& ray, Float tmax = inf,
-                                Hittable const* ignore = nullptr) const {
-        bool hit = false;
-        traverse<Prune::no>(ray, tmax, [&](ObjRaw obj, ObjId /*slot*/) {
-            if (obj == ignore) {
-                return false;
-            }
-            Float const t = obj->tworld(ray);
-            if (t > 0 && t <= tmax) {
-                hit = true;
-            }
-            return hit;
-        });
-        return hit;
+    [[nodiscard]] size_t size() const {
+        return ids_.size();
+    }
+
+    // any-hit traversal within tmax, no pruning; return true from the callback to stop
+    template <LeafCallback F> void any(Ray const& ray, Float tmax, F const& leafCallback) const {
+        traverse<Prune::no>(ray, tmax, leafCallback);
+    }
+
+    // closest-hit traversal, near-first: callback(slot) tests one primitive, may lower tmax
+    template <LeafCallback F>
+    void closest(Ray const& ray, Float& tmax, F const& leafCallback) const {
+        traverse<Prune::yes>(ray, tmax, leafCallback);
     }
 
   private:
     enum class Prune : std::uint8_t { no, yes };
 
-    template <Prune prune, typename LeafFn>
-    void traverse(Ray const& ray, Float& tmax, LeafFn const& leaf) const {
+    template <Prune prune, LeafCallback F>
+    void traverse(Ray const& ray, Float& tmax, F const& leafCallback) const {
         if (root_ == nullNode) {
             return;
         }
 
-        using Slot = std::conditional_t<prune == Prune::yes, PruningSlot, PlainSlot>;
+        // occlusion only needs the node id; intersect also tracks the box entry t
+        struct Slot {
+            NodeId id;
+            Float enter;
+        };
         std::array<Slot, stackSize> stack;
         size_t top = 0;
 
         auto enterOf = [&](NodeId id) { return nodes_[id].box.enter(ray.origin, ray.inv, tmax); };
         auto push = [&](NodeId id, Float enter) {
             if (enter == inf) {
-                return;
+                return;  // missed
             }
             assert(top < stackSize);
-            stack[top++] = Slot{id, enter};
+            stack[top].id = id;
+            if constexpr (prune == Prune::yes) {
+                stack[top].enter = enter;
+            }
+            ++top;
         };
 
         push(root_, enterOf(root_));
         while (top > 0) {
-            Slot const slot = stack[--top];
-            if (slot.stale(tmax)) {
-                continue;
+            --top;
+            if constexpr (prune == Prune::yes) {
+                if (stack[top].enter > tmax) {
+                    continue;  // a nearer hit was found since this node was pushed
+                }
             }
-            Node const& node = nodes_[slot.id];
+            Node const& node = nodes_[stack[top].id];
 
             if (node.leaf()) {
-                ObjId const base = node.start();
-                for (ObjId k = 0; k < node.count; ++k) {
-                    if (leaf(ptrs_[base + k], base + k)) {
+                PrimId const first = node.first();
+                for (PrimId k = 0; k < node.count; ++k) {
+                    if (leafCallback(first + k)) {
                         return;
                     }
                 }
             } else {
-                NodeId near = slot.id + 1, far = node.right();
+                NodeId near = stack[top].id + 1, far = node.right();
                 Float tN = enterOf(near), tF = enterOf(far);
                 if (tF < tN) {
                     std::swap(tN, tF);
@@ -249,82 +223,90 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
         return b;
     }
 
-    static Split findSplit(std::span<Prim const> prims, Bounds const& bounds) {
-        Split best;
-        Float const area = bounds.box.surfaceArea();
-        if (!(area > 0)) {
-            return best;
+    struct Bin {
+        Box box;
+        int count = 0;
+    };
+    struct Side {
+        Float area = 0;
+        int count = 0;
+    };
+
+    // cheapest bin boundary along one axis, inf-cost Split if none
+    static Split splitOnAxis(std::span<Prim const> prims, Bounds const& bounds, int axis,
+                             Float area) {
+        Float const cmin = bounds.centroids.min[axis];
+        Float const cmax = bounds.centroids.max[axis];
+
+        // bin the primitives by centroid
+        auto coord = onAxis(axis);
+        BinMap const map{Float(binCount) / (cmax - cmin), cmin};
+        std::array<Bin, binCount> bins{};
+        for (Prim const& p : prims) {
+            Bin& bin = bins[map(coord(p))];
+            bin.box.expand(p.box);
+            ++bin.count;
         }
 
-        struct Bin {
-            Box box;
-            int count = 0;
-        };
-        struct Side {
-            Float area = 0;
-            int count = 0;
-        };
+        // suffix sweep: right[i] aggregates bins [i, binCount)
+        std::array<Side, binCount> right{};
+        Box rightBox;
+        for (int i = binCount - 1, count = 0; i >= 0; --i) {
+            count += bins[i].count;
+            rightBox.expand(bins[i].box);
+            right[i] = Side{rightBox.surfaceArea(), count};
+        }
 
-        for (int axis = 0; axis < 3; ++axis) {
-            Float const cmin = bounds.centroids.min[axis];
-            Float const cmax = bounds.centroids.max[axis];
-            if (!(cmax > cmin))
+        // prefix sweep: pick the cheapest boundary
+        Split best;
+        Box leftBox;
+        for (int i = 0, leftCount = 0; i < binCount - 1; ++i) {
+            leftCount += bins[i].count;
+            leftBox.expand(bins[i].box);
+            Side const& r = right[i + 1];
+            if (leftCount == 0 || r.count == 0)
                 continue;
-
-            auto coord = onAxis(axis);
-            BinMap const map{Float(binCount) / (cmax - cmin), cmin};
-            std::array<Bin, binCount> bins{};
-            for (Prim const& p : prims) {
-                Bin& bin = bins[map(coord(p))];
-                bin.box.expand(p.box);
-                ++bin.count;
-            }
-
-            std::array<Side, binCount> right{};
-            Box rightBox;
-            for (int i = binCount - 1, count = 0; i >= 0; --i) {
-                count += bins[i].count;
-                rightBox.expand(bins[i].box);
-                right[i] = Side{rightBox.surfaceArea(), count};
-            }
-
-            Box leftBox;
-            for (int i = 0, leftCount = 0; i < binCount - 1; ++i) {
-                leftCount += bins[i].count;
-                leftBox.expand(bins[i].box);
-                Side const& r = right[i + 1];
-                if (leftCount == 0 || r.count == 0)
-                    continue;
-                Float const cost =
-                    traversalCost
-                    + (Float(leftCount) * leftBox.surfaceArea() + Float(r.count) * r.area) / area;
-                if (cost < best.cost) {
-                    best = Split{axis, i, cost, map};
-                }
+            Float const cost =
+                traversalCost
+                + (Float(leftCount) * leftBox.surfaceArea() + Float(r.count) * r.area) / area;
+            if (cost < best.cost) {
+                best = Split{axis, i, cost, map};
             }
         }
         return best;
     }
 
-    NodeId build(std::vector<Prim>& prims, ObjId start, ObjId end, int depth) {
-        if (start >= end)
-            return nullNode;
+    static Split findSplit(std::span<Prim const> prims, Bounds const& bounds) {
+        Float const area = bounds.box.surfaceArea();
+        if (!(area > 0)) {
+            return {};
+        }
 
-        ObjId n = end - start;
+        Split best;
+        for (int axis = 0; axis < 3; ++axis) {
+            if (!(bounds.centroids.max[axis] > bounds.centroids.min[axis]))
+                continue;
+            Split const candidate = splitOnAxis(prims, bounds, axis, area);
+            if (candidate.cost < best.cost) {
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
+    NodeId build(std::vector<Prim>& prims, PrimId start, PrimId end, int depth) {
+        assert(start < end);
+
+        PrimId n = end - start;
         std::span<Prim> range{prims.begin() + start, n};
         Bounds const bounds = boundsOf(range);
 
-        NodeId id = static_cast<NodeId>(nodes_.size());
+        NodeId const id = static_cast<NodeId>(nodes_.size());
         nodes_.emplace_back(bounds.box);
 
-        auto makeLeaf = [&] {
-            nodes_[id].payload = start;
-            nodes_[id].count = n;
-            return id;
-        };
-
         if (n <= sahMinPrims || depth >= maxDepth) {
-            return makeLeaf();
+            nodes_[id].makeLeaf(start, n);
+            return id;
         }
 
         auto medianSplit = [&](int axis) {
@@ -335,24 +317,26 @@ template <SceneObject Obj> class BoundingVolumeHierarchy {
 
         Split split = findSplit(range, bounds);
 
-        ObjId mid;
+        PrimId mid;
         if (split.found()) {
+            // splitting must beat testing all n primitives directly
             if (split.cost >= Float(n) && n <= sahMaxPrims) {
-                return makeLeaf();
+                nodes_[id].makeLeaf(start, n);
+                return id;
             }
             auto right =
                 std::ranges::partition(range, [&](Prim const& p) { return split.goesLeft(p); });
-            mid = start + static_cast<ObjId>(right.begin() - range.begin());
+            mid = start + static_cast<PrimId>(right.begin() - range.begin());
             if (mid == start || mid == end) {
-                mid = medianSplit(split.axis);
+                mid = medianSplit(split.axis);  // all in one bin: fall back
             }
         } else {
-            mid = medianSplit(bounds.box.majorAxis());
+            mid = medianSplit(bounds.box.majorAxis());  // degenerate bounds
         }
 
         [[maybe_unused]] NodeId const left = build(prims, start, mid, depth + 1);
-        assert(left == id + 1);
-        nodes_[id].payload = build(prims, mid, end, depth + 1);
+        assert(left == id + 1);  // preorder: the left child follows its parent
+        nodes_[id].setRight(build(prims, mid, end, depth + 1));
         return id;
     }
 };

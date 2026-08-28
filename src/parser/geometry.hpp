@@ -1,25 +1,30 @@
 #pragma once
 
-#include "hittable.hpp"
 #include "parser/common.hpp"
-#include "shape/quadric.hpp"
-#include "shape/sphere.hpp"
-#include "shape/triangle.hpp"
+#include "shapes.hpp"
 #include "transforms.hpp"
 #include "values.hpp"
 
 #include <glm/trigonometric.hpp>
 
-#include <memory>
-#include <string>
 #include <vector>
 
 namespace aktis::parser {
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
-inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, MaterialPtr const& cur,
-                          Transforms const& xf, std::vector<ObjectPtr>& objects) {
+inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Material const& mat,
+                          Transforms const& xf, std::vector<Transforms>& tstore,
+                          std::vector<Material>& materials, std::vector<Shape>& objects) {
     auto const& cmd = tokens.at(0);
+    // vertices.at() throws std::out_of_range, the shape factories throw
+    // std::invalid_argument; both surface as ParseException with the line number
+    auto addShape = [&objects](auto&& make) {
+        try {
+            objects.push_back(make());
+        } catch (std::exception const& ex) {
+            throw ParseException(ex.what());
+        }
+    };
     if (cmd == "maxverts") {
         if (tokens.size() != 2) {
             throw ParseException("Expected 'maxverts <count>'");
@@ -48,17 +53,14 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         auto id0 = parseNum<size_t>(tokens[1]);
         auto id1 = parseNum<size_t>(tokens[2]);
         auto id2 = parseNum<size_t>(tokens[3]);
-        try {
+        addShape([&] {
             auto a = vertices.at(id0);
             auto b = vertices.at(id1);
             auto c = vertices.at(id2);
             // bake the transform
-            auto tri = std::make_shared<Triangle>(cur, transformPoint(xf.m, a),
-                                                  transformPoint(xf.m, b), transformPoint(xf.m, c));
-            objects.push_back(tri);
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+            return Shape::triangle(makeMaterial(mat, materials), transformPoint(xf.m, a),
+                                   transformPoint(xf.m, b), transformPoint(xf.m, c));
+        });
         return true;
     }
     if (cmd == "sphere") {
@@ -70,7 +72,11 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         c.y = parseNum<Float>(tokens[2]);
         c.z = parseNum<Float>(tokens[3]);
         Float const r = parseNum<Float>(tokens[4]);
-        objects.push_back(std::make_shared<Sphere>(cur, c, r, sharedTransforms(xf)));
+        if (r <= 0) {
+            throw ParseException("sphere requires r > 0");
+        }
+        objects.push_back(
+            Shape::sphere(makeMaterial(mat, materials), c, r, makeTransform(xf, tstore)));
         return true;
     }
     if (cmd == "quadric") {
@@ -89,11 +95,10 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         Vec2 e;
         e.x = parseNum<Float>(tokens[8]);
         e.y = parseNum<Float>(tokens[9]);
-        try {
-            objects.push_back(std::make_shared<Quadric>(cur, q, l, j, e, sharedTransforms(xf)));
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+        addShape([&] {
+            return Shape::quadric(makeMaterial(mat, materials), makeTransform(xf, tstore),
+                                  Quadric::of(q, l, j, e));
+        });
         return true;
     }
     if (cmd == "cone") {
@@ -102,12 +107,10 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         }
         Float const halfAngle = glm::radians(parseNum<Float>(tokens[1]));
         Float const h = parseNum<Float>(tokens[2]);
-        try {
-            objects.push_back(
-                std::make_shared<Quadric>(Quadric::cone(cur, halfAngle, h, sharedTransforms(xf))));
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+        addShape([&] {
+            return Shape::quadric(makeMaterial(mat, materials), makeTransform(xf, tstore),
+                                  Quadric::cone(halfAngle, h));
+        });
         return true;
     }
     if (cmd == "conerh") {
@@ -116,12 +119,10 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         }
         Float const r = parseNum<Float>(tokens[1]);
         Float const h = parseNum<Float>(tokens[2]);
-        try {
-            objects.push_back(
-                std::make_shared<Quadric>(Quadric::coneRH(cur, r, h, sharedTransforms(xf))));
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+        addShape([&] {
+            return Shape::quadric(makeMaterial(mat, materials), makeTransform(xf, tstore),
+                                  Quadric::coneRH(r, h));
+        });
         return true;
     }
     if (cmd == "cylinder") {
@@ -133,12 +134,10 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         if (h <= 0) {
             throw ParseException("cylinder requires h > 0");
         }
-        try {
-            objects.push_back(std::make_shared<Quadric>(
-                Quadric::cylinder(cur, r, Vec2{-h / 2, h / 2}, sharedTransforms(xf))));
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+        addShape([&] {
+            return Shape::quadric(makeMaterial(mat, materials), makeTransform(xf, tstore),
+                                  Quadric::cylinder(r, Vec2{-h / 2, h / 2}));
+        });
         return true;
     }
     if (cmd == "paraboloid") {
@@ -149,12 +148,10 @@ inline bool parseGeometry(Tokens const& tokens, std::vector<Vec3>& vertices, Mat
         if (h <= 0) {
             throw ParseException("paraboloid requires h > 0");
         }
-        try {
-            objects.push_back(std::make_shared<Quadric>(
-                Quadric::paraboloid(cur, Vec2{0, h}, sharedTransforms(xf))));
-        } catch (std::exception const& ex) {
-            throw ParseException(ex.what());
-        }
+        addShape([&] {
+            return Shape::quadric(makeMaterial(mat, materials), makeTransform(xf, tstore),
+                                  Quadric::paraboloid(Vec2{0, h}));
+        });
         return true;
     }
     // TODO: maxvertnorms, vertexnormal, trinormal

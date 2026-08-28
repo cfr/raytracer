@@ -5,7 +5,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <memory>
 #include <stack>
 #include <stdexcept>
 
@@ -26,8 +25,6 @@ struct Transforms {
     Transform inv = identity;
     Transform invT = identity;
 };
-
-using TransformsPtr = std::shared_ptr<Transforms const>;
 
 class TStack {
     std::stack<Transform> stack_;

@@ -6,7 +6,6 @@
 
 #include <array>
 #include <cmath>
-#include <compare>
 #include <iterator>
 #include <ostream>
 #include <stdexcept>
