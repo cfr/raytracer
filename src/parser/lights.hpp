@@ -2,17 +2,17 @@
 
 #include "parser/common.hpp"
 #include "scene.hpp"
+#include "shapes.hpp"
 #include "tolerance.hpp"
 #include "transforms.hpp"
 #include "values.hpp"
 
-#include <memory>
-#include <string>
 #include <vector>
 
 namespace aktis::parser {
 
-inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene) {
+inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene,
+                        std::vector<Shape>& lightShapes) {
     auto const& cmd = tokens[0];
     if (cmd == "attenuation") {
         if (tokens.size() != 4) {
@@ -70,7 +70,6 @@ inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene
                            parseNum<Float>(tokens[12])};
         auto const v0 = transformPoint(xf.m, position);
         auto const v1 = transformPoint(xf.m, position + edge1);
-        auto const v2 = transformPoint(xf.m, position + edge1 + edge2);
         auto const v3 = transformPoint(xf.m, position + edge2);
         Vec3 const e1 = v1 - v0, e2 = v3 - v0;
         if (sinAngle(e2, e1) < tol::collinear) {
@@ -78,8 +77,7 @@ inline bool parseLights(Tokens const& tokens, Transforms const& xf, Scene& scene
         }
         Material emissive;
         emissive.emission = rad;  // occluding emitter
-        auto quad = std::make_shared<Quad>(makeMaterial(emissive), v0, v1, v2, v3);
-        scene.areaLights.push_back(quad);
+        lightShapes.push_back(Shape::quad(makeMaterial(emissive, scene.materials), v0, e1, e2));
         return true;
     }
     return false;

@@ -10,12 +10,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+SRC="$(pwd -P)"
 BUILD="build/lint-$(uname -s)"
 FETCH_ARGS=()
 [ -d /opt/glm ] && FETCH_ARGS+=(-DFETCHCONTENT_SOURCE_DIR_GLM=/opt/glm)
 [ -d /opt/pcg-cpp ] && FETCH_ARGS+=(-DFETCHCONTENT_SOURCE_DIR_PCG=/opt/pcg-cpp)
 
-cmake -S . -B "$BUILD" -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
+# clear cache configured from another source path
+if [ -f "$BUILD/CMakeCache.txt" ] &&
+    ! grep -qxF "CMAKE_HOME_DIRECTORY:INTERNAL=$SRC" "$BUILD/CMakeCache.txt"; then
+    rm -rf "${BUILD:?}"
+fi
+
+cmake -S "$SRC" -B "$BUILD" -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug \
     -Wno-deprecated --no-warn-unused-cli \
     ${FETCH_ARGS[@]+"${FETCH_ARGS[@]}"} > /dev/null
 

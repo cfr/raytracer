@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hittable.hpp"
+#include "box.hpp"
 #include "ray.hpp"
 #include "tolerance.hpp"
 #include "values.hpp"
@@ -10,28 +10,27 @@
 
 namespace aktis {
 
-class Sphere : public Hittable {
-    Vec3 center_ = {0, 0, 0};
-    Float radius_ = 1;
+struct Sphere {
+    Vec3 center;
+    Float radius;
 
-  public:
-    Sphere(MaterialPtr m, Vec3 center, Float radius, TransformsPtr xf = nullptr)
-        : Hittable{std::move(m), std::move(xf)}, center_{center}, radius_{radius} {}
-
-    [[nodiscard]] Box aabb() const override {
-        Box const local{.min = center_ - Vec3{radius_}, .max = center_ + Vec3{radius_}};
-        return transforms ? local.transformed(*transforms) : local;
+    [[nodiscard]] Box aabb() const {
+        return {.min = center - Vec3{radius}, .max = center + Vec3{radius}};
     }
 
-    [[nodiscard]] Vec4 normal(Vec3 point) const override {
-        return Vec4{point - center_, 0};
+    [[nodiscard]] static Float pdfArea() {
+        return 0;  // not samplable
     }
 
-    [[nodiscard]] Float tlocal(Ray ray) const override {
-        auto rc = ray.origin - center_;
+    [[nodiscard]] Vec4 normal(Vec3 point) const {
+        return Vec4{point - center, 0};
+    }
+
+    [[nodiscard]] Float tlocal(Ray ray) const {
+        auto rc = ray.origin - center;
         auto a = glm::dot(ray.dir, ray.dir);
         auto b = 2 * glm::dot(ray.dir, rc);
-        auto c = glm::dot(rc, rc) - (radius_ * radius_);
+        auto c = glm::dot(rc, rc) - (radius * radius);
 
         auto disc = (b * b) - (4 * a * c);
         if (disc < 0) {

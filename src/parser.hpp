@@ -1,6 +1,5 @@
 #pragma once
 
-#include "parser/args.hpp"
 #include "parser/common.hpp"
 #include "parser/geometry.hpp"
 #include "parser/lights.hpp"
@@ -48,12 +47,12 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
     Settings settings;
     Camera camera;
     Scene scene;
-    std::vector<ObjectPtr> objects;
+    std::vector<Shape> objects;
+    std::vector<Shape> lightShapes;
 
     Material material;
     TStack stack;
     Transforms xf;
-    auto current = makeMaterial(material);
     std::vector<Vec3> vertices;
 
     while (std::getline(input, line)) {
@@ -69,14 +68,10 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
             if (parseCamera(tokens, camera)) {
                 continue;
             }
-            if (parseGeometry(tokens, vertices, current, xf, objects)) {
-                continue;
-            }
-            if (parseLights(tokens, xf, scene)) {
-                continue;
-            }
             if (parseMaterial(tokens, material)) {
-                current = makeMaterial(material);
+                continue;
+            }
+            if (parseLights(tokens, xf, scene, lightShapes)) {
                 continue;
             }
             if (parseTransform(tokens, stack)) {
@@ -88,6 +83,10 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
                 xf.invT = glm::transpose(xf.inv);
                 continue;
             }
+            if (parseGeometry(tokens, vertices, material, xf, scene.transforms, scene.materials,
+                              objects)) {
+                continue;
+            }
             throw ParseException(std::format("Unknown token: '{}'", tokens[0]));
         } catch (ParseException const& e) {
             // add line number
@@ -95,14 +94,15 @@ inline std::tuple<Scene, Camera, Settings> parseScene(std::istream& input) {
         }
     }
 
-    // area lights are also geometry
-    for (auto const& light : scene.areaLights) {
+    // area lights are also geometry, ordered after the regular objects
+    for (auto const& light : lightShapes) {
+        scene.quadLights.push_back(static_cast<ShapeId>(objects.size()));
         objects.push_back(light);
     }
 
-    BoundingVolumeHierarchy<ObjectPtr> bvh{objects};
-    scene.bvh = std::move(bvh);
-    return {scene, camera, settings};
+    scene.shapes = std::move(objects);
+    scene.build();
+    return {std::move(scene), camera, settings};
 }
 
 inline std::tuple<Scene, Camera, Settings> readScene(std::string const& path) {

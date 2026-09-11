@@ -45,6 +45,12 @@ FETCH_ARGS=()
 TYPE_ARGS=(-DCMAKE_BUILD_TYPE="$TYPE")
 [ -n "$FLAGS" ] && TYPE_ARGS+=(-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="$FLAGS")
 
+# clear cache configured from another source path
+if [ -f "$BUILD/CMakeCache.txt" ] &&
+    ! grep -qxF "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd "$SRC" && pwd -P)" "$BUILD/CMakeCache.txt"; then
+    rm -rf "${BUILD:?}"
+fi
+
 cmake -S "$SRC" -B "$BUILD" -G Ninja \
     "${TYPE_ARGS[@]}" \
     -Wno-deprecated --no-warn-unused-cli \

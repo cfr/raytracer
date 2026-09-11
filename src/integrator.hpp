@@ -45,11 +45,12 @@ struct Integrator {
         std::unreachable();
     }
 
-    [[nodiscard]] Float pdf(Hit const& hit, Vec3 wi) const {
-        return dispatch([&](auto s) { return s.pdf(hit, wi); });
+    [[nodiscard]] Float pdf(Material const& material, Hit const& hit, Vec3 wi) const {
+        return dispatch([&](Importance auto s) { return s.pdf(material, hit, wi); });
     }
-    [[nodiscard]] std::optional<Sample> sample(Hit const& hit, Float uc, Vec2 u2) const {
-        return dispatch([&](auto s) { return s.sample(hit, uc, u2); });
+    [[nodiscard]] std::optional<Sample> sample(Material const& material, Hit const& hit, Float uc,
+                                               Vec2 u2) const {
+        return dispatch([&](Importance auto s) { return s.sample(material, hit, uc, u2); });
     }
 };
 

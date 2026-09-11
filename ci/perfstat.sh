@@ -1,29 +1,44 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Hardware counters and profile breakdown, single-threaded and deterministic.
 #
 #   ci/perfstat.sh BIN                                  # counters for one build
 #   ci/perfstat.sh BASE_BIN HEAD_BIN                    # counter table with deltas
 #   ci/perfstat.sh --profile BIN                        # where the time goes, by symbol
 #   ci/perfstat.sh --profile BASE HEAD                  # both profiles, base then head
-#   ci/perfstat.sh -s dragon BIN                        # one scene (repeatable)
+#   ci/perfstat.sh -s dragon BIN                        # one scene (repeatable):
+#                                                       #   a name below, scenes/NAME.test,
+#                                                       #   or a path to any .test file
 #   ci/perfstat.sh --runs 5 BASE HEAD                   # N runs, with stddev to judge noise
+#   ci/perfstat.sh --raw-time BASE HEAD                 # wall clock only, no PMU (macOS too)
+#   ci/perfstat.sh --raw-time --base main               # ... building both refs
 #   ci/perfstat.sh --callgrind BASE HEAD                # simulated, no PMU -- for CI
 #   ci/perfstat.sh --callgrind --profile BIN            # profile without a PMU
 #   ci/perfstat.sh --base main                          # build both refs and compare
-#   ci/perfstat.sh --args "--width 320 --spp 32" BIN
+#   ci/perfstat.sh --args "--width 320 --spp 32" BIN    # override the scene args
 #
 #   docker build -t aktis-ci ci/
 #   docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/repo aktis-ci \
 #       ci/perfstat.sh --callgrind --base main
 
 set -euo pipefail
+ORIG_PWD="$PWD"
 cd "$(dirname "$0")/.."
+
+# argument paths are relative to the user path
+from_pwd() {
+    case "$1" in
+    /*) printf '%s\n' "$1" ;;
+    *) if [ -e "$1" ]; then printf '%s\n' "$1"; else printf '%s\n' "$ORIG_PWD/$1"; fi ;;
+    esac
+}
 
 PROFILE=0
 CALLGRIND=0
+RAW_TIME=0
 BASE=""
 RUNS=1
 THREADS=1
+THREADS_SET=0
 LIMIT=1.0
 FREQ=999
 SEED="${SEED:-1}"
@@ -31,9 +46,16 @@ SCENE_ARGS=""
 WANT=()
 BINS=()
 
+# counters and profiles for a short, comparable run
+COUNTER_ARGS="--width 200 --spp 16"
 PERF_SCENES=(
-    "cornell:scenes/cornell.test:--width 200 --spp 16"
-    "dragon:scenes/dragon.test:--width 200 --spp 16"
+    "cornell:scenes/cornell.test"
+    "dragon:scenes/dragon.test"
+)
+
+# --raw-time for a full-quality scene
+RAW_SCENES=(
+    "drei-koerper:scenes/drei-koerper.test"
 )
 
 # <=4 general-purpose events per pass, or the PMU multiplexes and extrapolates
@@ -55,9 +77,10 @@ while [ $# -gt 0 ]; do
     case "$1" in
     --profile) PROFILE=1; shift ;;
     --callgrind) CALLGRIND=1; shift ;;
+    --raw-time) RAW_TIME=1; shift ;;
     --base) BASE="$2"; shift 2 ;;
     --runs) RUNS="$2"; shift 2 ;;
-    --threads) THREADS="$2"; shift 2 ;;
+    --threads) THREADS="$2"; THREADS_SET=1; shift 2 ;;
     --limit) LIMIT="$2"; shift 2 ;;
     --freq) FREQ="$2"; shift 2 ;;
     --args) SCENE_ARGS="$2"; shift 2 ;;
@@ -77,16 +100,26 @@ fi
 if [ -z "$BASE" ] && { [ "${#BINS[@]}" -eq 0 ] || [ "${#BINS[@]}" -gt 2 ]; }; then
     echo "usage: ci/perfstat.sh [--profile] [--callgrind] [-s NAME] BIN [HEAD_BIN]" >&2
     echo "       ci/perfstat.sh [--profile] [--callgrind] [-s NAME] --base REF" >&2
+    echo "       ci/perfstat.sh --raw-time [--runs N] BIN [HEAD_BIN] | --base REF" >&2
     exit 2
 fi
-for bin in ${BINS[@]+"${BINS[@]}"}; do
-    if [ ! -x "$bin" ]; then
-        echo "perfstat: '$bin' is not an executable (run ci/build.sh first)" >&2
-        exit 2
-    fi
-done
+if [ "$RAW_TIME" -eq 1 ] && { [ "$PROFILE" -eq 1 ] || [ "$CALLGRIND" -eq 1 ]; }; then
+    echo "perfstat: --raw-time measures wall clock only; drop --profile/--callgrind" >&2
+    exit 2
+fi
+if [ "${#BINS[@]}" -gt 0 ]; then
+    for idx in "${!BINS[@]}"; do
+        BINS[idx]=$(from_pwd "${BINS[idx]}")
+        if [ ! -x "${BINS[idx]}" ]; then
+            echo "perfstat: '${BINS[idx]}' is not an executable (run ci/build.sh first)" >&2
+            exit 2
+        fi
+    done
+fi
 
-if [ "$CALLGRIND" -eq 1 ]; then
+if [ "$RAW_TIME" -eq 1 ]; then
+    : # bash times the process itself, so there is no tool to look for
+elif [ "$CALLGRIND" -eq 1 ]; then
     if ! command -v valgrind >/dev/null; then
         echo "perfstat: --callgrind needs valgrind (absent on macOS; use the ci image)" >&2
         exit 2
@@ -130,7 +163,7 @@ if [ -n "$BASE" ]; then
 fi
 
 # perf stat -x, fields: value,unit,event,stddev%,runtime,enabled%
-declare -A VAL DEV
+# VAL/DEV are declared by counters(); collect() and derive() fill them in
 collect() {
     local idx="$1" bin="$2" scene="$3" extra="$4" group value event dev pct
     for group in "${EVENT_GROUPS[@]}"; do
@@ -186,6 +219,7 @@ collect_callgrind() {
 
 counters() {
     local name="$1" scene="$2" extra="$3" idx metric rows=""
+    declare -A VAL DEV
     if [ "$CALLGRIND" -eq 1 ]; then
         echo "== counters: $name ($extra, callgrind -- simulated, deterministic)"
     else
@@ -222,7 +256,13 @@ counters() {
     derive "L1-miss%" L1-dcache-load-misses L1-dcache-loads 100
     derive "LLC-miss%" cache-misses cache-references 100
 
-    printf '%s' "$rows" | awk -v two="${#BINS[@]}" -v runs="$RUNS" '
+    printf '%s' "$rows" | print_table
+    echo
+}
+
+# rows on stdin: "metric base-value base-dev% head-value head-dev%", "-" if absent
+print_table() {
+    awk -v two="${#BINS[@]}" -v runs="$RUNS" '
         function comma(v,   s, out, n) {
             if (v ~ /\./ || v == "-") return v
             s = sprintf("%d", v); n = length(s)
@@ -242,6 +282,60 @@ counters() {
             d = ($2 + 0 && $4 != "-") ? sprintf("%+8.2f%%", ($4 - $2) / $2 * 100) : "        -"
             printf "%-22s %20s %20s %9s\n", $1, b, h, d
         }'
+}
+
+# Wall clock
+time_once() {
+    local bin="$1" scene="$2" extra="$3" out
+    local TIMEFORMAT='%3R %3U %3S'
+    # shellcheck disable=SC2086  # $extra is a deliberate argument list
+    out=$( { time "$bin" ${RAW_ARGS[@]+"${RAW_ARGS[@]}"} $extra --seed "$SEED" \
+        --out "$WORK/render" "$scene" >/dev/null 2>"$WORK/raw-err"; } 2>&1 ) || return 1
+    printf '%s\n' "$out" | tail -1
+}
+
+# stdin: one "real user sys" line per run; prints "mean relative-stddev%"
+summarize() {
+    awk -v col="$1" '
+        { n++; v[n] = $col + 0; sum += $col }
+        END {
+            if (!n) { print "- -"; exit }
+            mean = sum / n
+            for (i = 1; i <= n; i++) sq += (v[i] - mean) ^ 2
+            printf "%.3f %.1f\n", mean, (n > 1 && mean > 0) ? sqrt(sq / (n - 1)) / mean * 100 : 0
+        }'
+}
+
+raw_time() {
+    local name="$1" scene="$2" extra="$3" idx run out label col rows="" samples
+    samples=()
+    echo "== raw time: $name (plain run${extra:+, $extra}, $RUNS run(s))"
+    for idx in "${!BINS[@]}"; do
+        samples[idx]=""
+        for ((run = 1; run <= RUNS; run++)); do
+            out=$(time_once "${BINS[$idx]}" "$scene" "$extra") || {
+                echo "perfstat: run failed for ${BINS[$idx]} on $scene" >&2
+                cat "$WORK/raw-err" >&2
+                exit 1
+            }
+            samples[idx]="${samples[idx]}$out"$'\n'
+        done
+    done
+
+    col=0
+    for label in "real(s)" "user(s)" "sys(s)"; do
+        col=$((col + 1))
+        rows+="$label"
+        for idx in 0 1; do
+            if [ -n "${samples[$idx]:-}" ]; then
+                rows+=" $(printf '%s' "${samples[$idx]}" | summarize "$col")"
+            else
+                rows+=" - -"
+            fi
+        done
+        rows+=$'\n'
+    done
+    printf '%s' "$rows" | print_table
     echo
 }
 
@@ -362,25 +456,62 @@ profile_callgrind() {
     done
 }
 
-for entry in "${PERF_SCENES[@]}"; do
-    name="${entry%%:*}"
-    rest="${entry#*:}"
-    scene="${rest%%:*}"
-    extra="${SCENE_ARGS:-${rest#*:}}"
+RAW_ARGS=()
+[ "$THREADS_SET" -eq 1 ] && RAW_ARGS+=(--threads "$THREADS")
 
-    if [ "${#WANT[@]}" -gt 0 ]; then
-        match=0
-        for want in "${WANT[@]}"; do
-            [ "$want" = "$name" ] && match=1
-        done
-        [ "$match" -eq 1 ] || continue
+# -s takes a name from either table, a bare scene name (scenes/NAME.test), or
+# a path to any .test file
+resolve_scene() {
+    local want="$1" entry path
+    for entry in "${PERF_SCENES[@]}" "${RAW_SCENES[@]}"; do
+        if [ "${entry%%:*}" = "$want" ]; then
+            printf '%s\n' "$entry"
+            return 0
+        fi
+    done
+    for path in "$(from_pwd "$want")" "scenes/$want.test"; do
+        if [ -f "$path" ]; then
+            entry="${path##*/}"
+            printf '%s:%s\n' "${entry%.test}" "$path"
+            return 0
+        fi
+    done
+    return 1
+}
+
+SCENES=()
+if [ "${#WANT[@]}" -gt 0 ]; then
+    for want in "${WANT[@]}"; do
+        entry=$(resolve_scene "$want") || {
+            echo "perfstat: no scene '$want' -- name it as in scenes/, or give a path" >&2
+            exit 2
+        }
+        SCENES+=("$entry")
+    done
+elif [ "$RAW_TIME" -eq 1 ]; then
+    SCENES=("${RAW_SCENES[@]}")
+else
+    SCENES=("${PERF_SCENES[@]}")
+fi
+
+for entry in "${SCENES[@]}"; do
+    name="${entry%%:*}"
+    scene="${entry#*:}"
+    # a raw run is a plain run: no default arguments, only what --args asks for
+    if [ "$RAW_TIME" -eq 1 ]; then
+        extra="$SCENE_ARGS"
+    else
+        extra="${SCENE_ARGS:-$COUNTER_ARGS}"
     fi
+
     if [ ! -f "$scene" ]; then
         echo "perfstat: skip $name (no $scene)"
         continue
     fi
 
-    if [ "$CALLGRIND" -eq 1 ]; then
+    if [ "$RAW_TIME" -eq 1 ]; then
+        raw_time "$name" "$scene" "$extra"
+    elif [ "$CALLGRIND" -eq 1 ]; then
         counters "$name" "$scene" "$extra"
         if [ "$PROFILE" -eq 1 ]; then
             profile_callgrind "$name" "$scene" "$extra"

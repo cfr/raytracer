@@ -6,16 +6,14 @@
 
 #include <glm/common.hpp>
 
-#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <format>
-#include <memory>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 namespace aktis::parser {
@@ -27,13 +25,31 @@ class ParseException : public std::runtime_error {
 
 using Tokens = std::vector<std::string_view>;
 
-inline MaterialPtr makeMaterial(Material m) {
+inline MaterialId makeMaterial(Material m, std::vector<Material>& store) {
     m.precomputeT();
-    return std::make_shared<Material>(m);
+    // consecutive shapes share a material
+    if (!store.empty() && store.back() == m) {
+        return static_cast<MaterialId>(store.size() - 1);
+    }
+    if (store.size() >= std::numeric_limits<MaterialId>::max()) {
+        throw ParseException("Too many materials");
+    }
+    store.push_back(m);
+    return static_cast<MaterialId>(store.size() - 1);
 }
 
-inline TransformsPtr sharedTransforms(Transforms const& xf) {
-    return xf.m == identity ? nullptr : std::make_shared<Transforms>(xf);
+inline TransformId makeTransform(Transforms const& xf, std::vector<Transforms>& store) {
+    if (xf.m == identity) {
+        return noTransform;
+    }
+    if (!store.empty() && store.back().m == xf.m) {
+        return static_cast<TransformId>(store.size() - 1);
+    }
+    if (store.size() >= noTransform) {
+        throw ParseException("Too many transforms");
+    }
+    store.push_back(xf);
+    return static_cast<TransformId>(store.size() - 1);
 }
 
 inline constexpr size_t maxPixels = size_t(1) << 26;  // 8k x 8k

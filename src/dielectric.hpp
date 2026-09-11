@@ -1,7 +1,7 @@
 #pragma once
 
 #include "brdf.hpp"
-#include "hittable.hpp"
+#include "material.hpp"
 #include "values.hpp"
 
 #include <glm/common.hpp>
@@ -18,8 +18,8 @@ struct Fresnel {
     bool tir;
 };
 
-inline Fresnel fresnel(Hit const& hit) {
-    Float const ior = hit.object->material->refraction;
+inline Fresnel fresnel(Material const& material, Hit const& hit) {
+    Float const ior = material.refraction;
     Vec3 const n = hit.normal;
     Float const eta = hit.front ? Float(1) / ior : ior;
     Float const cosI = glm::clamp(glm::dot(hit.wo, n), Float(0), Float(1));
@@ -42,8 +42,8 @@ inline Fresnel fresnel(Hit const& hit) {
 }
 
 // NOTE: omits the 1/η² radiance scaling
-inline Sample sample(Hit const& hit, Float u) {
-    auto f = fresnel(hit);
+inline Sample sample(Material const& material, Hit const& hit, Float u) {
+    auto f = fresnel(material, hit);
     return Sample{.wi = (f.tir || u < f.reflectance) ? f.wr : f.wt,
                   .f = colors::white,
                   .pdf = Float(1),
